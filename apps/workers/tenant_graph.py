@@ -8,6 +8,7 @@ from langgraph.prebuilt import ToolNode, tools_condition, InjectedState
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from langchain_core.tools import tool
 from e2b_code_interpreter import Sandbox
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
 # --- IMPORT THE POSTGRES SAVER INSTEAD OF MEMORY SAVER ---
 from langgraph.checkpoint.postgres import PostgresSaver
@@ -21,6 +22,12 @@ load_dotenv()
 
 supabase_url: str = os.environ.get("SUPABASE_URL")
 supabase_anon_key: str = os.environ.get("SUPABASE_ANON_KEY")
+
+# Initialize the native Google embedding model for vector math
+embeddings = GoogleGenerativeAIEmbeddings(
+    model="models/text-embedding-004", 
+    google_api_key=os.environ.get("GOOGLE_API_KEY")
+)
 
 # 2. DEFINE THE TOOLS
 @tool
@@ -110,6 +117,34 @@ def mutate_database(
         print(f"!!! [Database Mutation Error] {str(e)} !!!")
         return f"Database Mutation Error: {str(e)}"
 
+@tool
+def save_skill_to_memory(skill_name: str, description: str, python_code: str) -> str:
+    """Saves a successfully tested Python script to the vector database for future reuse.
+    Call this ONLY after you have verified the code works using the run_python_code tool."""
+    print(f"\n--- [Skill Library] Memorizing new skill: {skill_name} ---")
+    
+    try:
+        # 1. Generate the mathematical vector for the code
+        vector_content = f"Task: {description}\nCode:\n{python_code}"
+        embedding_vector = embeddings.embed_query(vector_content)
+        
+        # 2. Save to Supabase (Using the global client since skills are shared across the org)
+        global_client: Client = create_client(supabase_url, supabase_anon_key)
+        payload = {
+            "skill_name": skill_name,
+            "description": description,
+            "python_code": python_code,
+            "embedding": embedding_vector
+        }
+        
+        response = global_client.table("agent_skills").insert(payload).execute()
+        print(f"--- [Skill Library] Skill '{skill_name}' successfully embedded and saved! ---")
+        return f"Success! Skill '{skill_name}' has been permanently saved to the vector database."
+        
+    except Exception as e:
+        print(f"!!! [Skill Library Error] {str(e)} !!!")
+        return f"Error saving skill: {str(e)}"
+
 # 3. CONFIGURE THE PORTKEY UNIVERSAL GATEWAY (BYOK Architecture)
 portkey_headers = createHeaders(
     api_key=os.environ.get("PORTKEY_API_KEY"),
@@ -125,7 +160,7 @@ llm = ChatOpenAI(
 )
 
 # BIND BOTH TOOLS TO THE LLM
-tools = [run_python_code, mutate_database]
+tools = [run_python_code, mutate_database, save_skill_to_memory]
 llm_with_tools = llm.bind_tools(tools)
 
 class TenantState(TypedDict):

@@ -26,9 +26,6 @@ COPY pyproject.toml poetry.lock* ./
 RUN poetry config virtualenvs.create false \
     && poetry install --no-interaction --no-ansi --no-root
 
-# --- UPDATE THIS LINE ---
-RUN pip install langgraph-checkpoint-postgres "psycopg[binary]" psycopg-pool
-
 # Copy the rest of your worker code into the container
 COPY . .
 
