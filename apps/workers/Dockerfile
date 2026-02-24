@@ -26,8 +26,8 @@ COPY pyproject.toml poetry.lock* ./
 RUN poetry config virtualenvs.create false \
     && poetry install --no-interaction --no-ansi --no-root
 
-    # --- ADD THIS NEW LINE TO INJECT THE MISSING PACKAGES ---
-RUN pip install langgraph-checkpoint-postgres psycopg psycopg-pool
+# --- UPDATE THIS LINE ---
+RUN pip install langgraph-checkpoint-postgres "psycopg[binary]" psycopg-pool
 
 # Copy the rest of your worker code into the container
 COPY . .
