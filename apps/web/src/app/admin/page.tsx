@@ -12,7 +12,9 @@ export default function AdminDashboard() {
 
   const pingWorkers = async () => {
     try {
-      const res = await fetch('http://localhost:8000/health')
+      // To this dynamic environment variable:
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${API_URL}/api/tenant-agent`, { ... })
       const data = await res.json()
       setWorkerStatus(data.message)
     } catch (error) {
@@ -26,7 +28,8 @@ export default function AdminDashboard() {
     setGraphResult("Graph executing...")
 
     try {
-      const res = await fetch('http://localhost:8000/api/agent', {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const res = await fetch(`${API_URL}/api/agent`, { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: prompt })
