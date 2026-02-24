@@ -149,11 +149,16 @@ def database_node(state: TenantState):
         user_client: Client = create_client(supabase_url, supabase_anon_key, options=options)
         response = user_client.table('profiles').select('*').execute()
         records = response.data
+        
+        # --- NEW DEBUG LINE ---
+        print(f"CRITICAL DEBUG - DATABASE RETURNED: {records}")
+        
         db_data = f"[System DB Tool Output] RLS Query Successful. Fetched records:\n{records}"
         return {"messages": [SystemMessage(content=db_data)]}
     except Exception as e:
+        print(f"CRITICAL DEBUG - DATABASE ERROR: {str(e)}")
         return {"messages": [SystemMessage(content=f"[System DB Tool] Secure Database Error: {str(e)}")]}
-
+        
 def general_node(state: TenantState):
     print("--- [Tenant Workspace] Executing AI (Reasoning & Tool Calling) ---")
     instruction = SystemMessage(content='''
