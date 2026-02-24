@@ -159,7 +159,7 @@ def search_skill_library(query: str) -> str:
         global_client: Client = create_client(supabase_url, supabase_anon_key)
         response = global_client.rpc(
             'match_skills',
-            {'query_embedding': query_vector, 'match_threshold': 0.7, 'match_count': 1}
+            {'query_embedding': query_vector, 'match_threshold': 0.3, 'match_count': 1}
         ).execute()
         
         matches = response.data
