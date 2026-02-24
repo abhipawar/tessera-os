@@ -146,6 +146,37 @@ def save_skill_to_memory(skill_name: str, description: str, python_code: str) ->
         print(f"!!! [Skill Library Error] {str(e)} !!!")
         return f"Error saving skill: {str(e)}"
 
+@tool
+def search_skill_library(query: str) -> str:
+    """Searches the vector database for previously written Python code/skills that match the user's request.
+    Call this BEFORE writing new code from scratch to see if you already know how to solve the problem."""
+    print(f"\n--- [Skill Library] Searching for existing skill related to: '{query}' ---")
+    try:
+        # 1. Embed the search query
+        query_vector = embeddings.embed_query(query)
+        
+        # 2. Query Supabase using the RPC function
+        global_client: Client = create_client(supabase_url, supabase_anon_key)
+        response = global_client.rpc(
+            'match_skills',
+            {'query_embedding': query_vector, 'match_threshold': 0.7, 'match_count': 1}
+        ).execute()
+        
+        matches = response.data
+        if not matches:
+            print("--- [Skill Library] No matching skills found. ---")
+            return "No relevant skills found in memory. You will need to write a new script from scratch."
+            
+        best_match = matches[0]
+        print(f"--- [Skill Library] Found match: {best_match['skill_name']} ({best_match['similarity']:.2f} similarity) ---")
+        
+        return f"Found an existing skill: '{best_match['skill_name']}'.\nDescription: {best_match['description']}\nCode:\n{best_match['python_code']}\n\nYou can now execute this code using the run_python_code tool."
+        
+    except Exception as e:
+        print(f"!!! [Skill Library Error] Search failed: {str(e)} !!!")
+        return f"Error searching skill library: {str(e)}"
+
+
 # 3. CONFIGURE THE PORTKEY UNIVERSAL GATEWAY (BYOK Architecture)
 portkey_headers = createHeaders(
     api_key=os.environ.get("PORTKEY_API_KEY"),
@@ -161,7 +192,7 @@ llm = ChatOpenAI(
 )
 
 # BIND BOTH TOOLS TO THE LLM
-tools = [run_python_code, mutate_database, save_skill_to_memory]
+tools = [run_python_code, mutate_database, save_skill_to_memory, search_skill_library]
 llm_with_tools = llm.bind_tools(tools)
 
 class TenantState(TypedDict):
