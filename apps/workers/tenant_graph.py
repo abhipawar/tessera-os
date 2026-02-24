@@ -24,8 +24,9 @@ supabase_url: str = os.environ.get("SUPABASE_URL")
 supabase_anon_key: str = os.environ.get("SUPABASE_ANON_KEY")
 
 # Initialize the native Google embedding model for vector math
+# Initialize the native Google embedding model for vector math
 embeddings = GoogleGenerativeAIEmbeddings(
-    model="models/text-embedding-004", 
+    model="models/gemini-embedding-001", 
     google_api_key=os.environ.get("GOOGLE_API_KEY")
 )
 
