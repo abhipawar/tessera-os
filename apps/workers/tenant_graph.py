@@ -162,18 +162,42 @@ def database_node(state: TenantState):
 def general_node(state: TenantState):
     print("--- [Tenant Workspace] Executing AI (Reasoning & Tool Calling) ---")
     
-    instruction = SystemMessage(content='''
+    # 1. Bulletproof Extraction: Pull DB records out of the chat history
+    db_context_list = []
+    chat_history = []
+    
+    for m in state["messages"]:
+        # Handle both object attributes (BaseMessage) and dictionary keys (Raw JSON from MemorySaver)
+        m_type = getattr(m, "type", "") if hasattr(m, "type") else m.get("type", "")
+        m_content = getattr(m, "content", "") if hasattr(m, "content") else m.get("content", "")
+        
+        if m_type == "system":
+            db_context_list.append(str(m_content))
+        else:
+            chat_history.append(m)
+            
+    db_context = "\n".join(db_context_list) if db_context_list else "No database records were found in memory."
+    
+    # 2. Build ONE massive SystemMessage at the very front containing both rules and data
+    instruction = SystemMessage(content=f'''
     You are Tessera, a secure enterprise AI worker. 
     
-    CRITICAL INSTRUCTION REGARDING DATABASE READS:
-    Do NOT say you cannot read the database. The system architecture automatically performs secure database reads on your behalf.
-    Look immediately at the message history provided to you. The user's secure database records (including their email, ID, and account role) have ALREADY been fetched and injected into your context. 
-    You MUST read that injected data and use it to answer the user's question directly. 
+    CRITICAL INSTRUCTION:
+    You MUST answer the user's questions based strictly on the following database records. 
+    Do NOT invent, guess, or hallucinate names, emails, or roles. If you do not see the answer in the data below, you must say "I do not have that information."
     
-    If asked to update or insert data, you have permission to use the mutate_database tool.
+    --- SECURE DATABASE RECORDS ---
+    {db_context}
+    -------------------------------
+    
+    If asked to update or insert data, use the mutate_database tool.
     ''')
     
-    messages_to_send = [instruction] + state["messages"]
+    # --- NEW DEBUG LINE ---
+    print(f"CRITICAL DEBUG - FINAL LLM PROMPT:\n{instruction.content}\n----------------------------------")
+    
+    # 3. Safely combine the new consolidated instruction with the clean chat history
+    messages_to_send = [instruction] + chat_history
     response = llm_with_tools.invoke(messages_to_send)
     
     raw_content = response.content
@@ -186,7 +210,7 @@ def general_node(state: TenantState):
     result_text = clean_string if not response.tool_calls else "Agent is executing a tool..."
     
     return {"result": result_text, "messages": [response]}
-    
+
 def route_query(state: TenantState) -> Literal["database_node", "general_node"]:
     if state["route"] == "DATABASE":
         return "database_node"
