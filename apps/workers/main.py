@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from langchain_core.messages import HumanMessage
+import jwt
 
 # Import both of our compiled graphs
 from graph import app_graph  
@@ -44,9 +45,21 @@ async def run_tenant_agent(request: AgentRequest, req: Request):
     
     token = auth_header.split(" ")[1]
     
-    # 1. We use the last 15 characters of the user's secure token as their unique memory Thread ID
-    thread_id = token[-15:]
-    config = {"configurable": {"thread_id": thread_id}}
+    # 1. Decode the JWT to get the permanent User UUID for memory routing
+    try:
+        # We don't need to verify the signature here because Supabase RLS handles the actual 
+        # database security downstream. We just need to read the payload for memory routing.
+        decoded_token = jwt.decode(token, options={"verify_signature": False})
+        user_uuid = str(decoded_token.get("sub"))
+        
+        if not user_uuid:
+            return {"result": "Invalid token: No user ID found."}
+            
+        # Use the permanent UUID as the thread_id
+        config = {"configurable": {"thread_id": user_uuid}}
+        
+    except Exception as e:
+        return {"result": f"Token decoding error: {str(e)}"}
     
     # 2. Add the user's prompt as a HumanMessage so the graph checkpointer can log it
     initial_state = {
