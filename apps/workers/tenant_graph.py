@@ -4,11 +4,14 @@ from dotenv import load_dotenv
 from supabase import create_client, Client, ClientOptions
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
-from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import ToolNode, tools_condition, InjectedState
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from langchain_core.tools import tool
 from e2b_code_interpreter import Sandbox
+
+# --- IMPORT THE POSTGRES SAVER INSTEAD OF MEMORY SAVER ---
+from langgraph.checkpoint.postgres import PostgresSaver
+from psycopg_pool import ConnectionPool
 
 # 1. IMPORT OPENAI AND PORTKEY (The Universal Gateway)
 from langchain_openai import ChatOpenAI
@@ -232,5 +235,10 @@ workflow.add_edge("database_node", "general_node")
 workflow.add_conditional_edges("general_node", tools_condition)
 workflow.add_edge("tools", "general_node") 
 
-memory = MemorySaver()
+# --- INITIALIZE POSTGRES CHECKPOINTER ---
+DB_URI = os.environ.get("SUPABASE_DB_URI") 
+pool = ConnectionPool(conninfo=DB_URI, max_size=5, kwargs={"autocommit": True})
+memory = PostgresSaver(pool)
+memory.setup()
+
 tenant_app_graph = workflow.compile(checkpointer=memory)
