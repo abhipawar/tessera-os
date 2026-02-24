@@ -14,7 +14,7 @@ export default function AdminDashboard() {
     try {
       // To this dynamic environment variable:
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-      const response = await fetch(`${API_URL}/api/tenant-agent`, { ... })
+      const response = await fetch(`${API_URL}/health`)
       const data = await res.json()
       setWorkerStatus(data.message)
     } catch (error) {
