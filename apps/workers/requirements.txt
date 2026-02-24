@@ -1,0 +1,12 @@
+langgraph
+langchain-core
+langchain-openai
+portkey-ai
+supabase
+python-dotenv
+e2b-code-interpreter
+langgraph-checkpoint-postgres
+psycopg
+psycopg-pool
+fastapi
+uvicorn
