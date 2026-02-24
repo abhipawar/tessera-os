@@ -158,20 +158,19 @@ def database_node(state: TenantState):
     except Exception as e:
         print(f"CRITICAL DEBUG - DATABASE ERROR: {str(e)}")
         return {"messages": [SystemMessage(content=f"[System DB Tool] Secure Database Error: {str(e)}")]}
-
+        
 def general_node(state: TenantState):
     print("--- [Tenant Workspace] Executing AI (Reasoning & Tool Calling) ---")
     
-    # We explicitly authorize the LLM to share the data it receives
     instruction = SystemMessage(content='''
     You are Tessera, a secure enterprise AI worker. 
-    You have access to a secure Python sandbox to execute code and a secure database mutation tool.
     
-    CRITICAL AUTHORIZATION: You are securely authenticated. If the message history contains database records from your tools, you have EXPLICIT PERMISSION to share that data with the user. 
-    You MUST use the provided database records to answer the user's question directly (including their email, ID, or role). 
-    Do NOT refuse to share the data, and do NOT say you don't have access. The user is authorized to see their own information.
+    CRITICAL INSTRUCTION REGARDING DATABASE READS:
+    Do NOT say you cannot read the database. The system architecture automatically performs secure database reads on your behalf.
+    Look immediately at the message history provided to you. The user's secure database records (including their email, ID, and account role) have ALREADY been fetched and injected into your context. 
+    You MUST read that injected data and use it to answer the user's question directly. 
     
-    If you encounter a permission error from the database itself, inform the user they do not have the clearance.
+    If asked to update or insert data, you have permission to use the mutate_database tool.
     ''')
     
     messages_to_send = [instruction] + state["messages"]
