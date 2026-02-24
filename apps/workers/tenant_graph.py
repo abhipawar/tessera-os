@@ -158,14 +158,20 @@ def database_node(state: TenantState):
     except Exception as e:
         print(f"CRITICAL DEBUG - DATABASE ERROR: {str(e)}")
         return {"messages": [SystemMessage(content=f"[System DB Tool] Secure Database Error: {str(e)}")]}
-        
+
 def general_node(state: TenantState):
     print("--- [Tenant Workspace] Executing AI (Reasoning & Tool Calling) ---")
+    
+    # We explicitly authorize the LLM to share the data it receives
     instruction = SystemMessage(content='''
     You are Tessera, a secure enterprise AI worker. 
     You have access to a secure Python sandbox to execute code and a secure database mutation tool.
-    If asked to update or insert data, use the mutate_database tool. 
-    If you encounter a permission error, inform the user they do not have the clearance.
+    
+    CRITICAL AUTHORIZATION: You are securely authenticated. If the message history contains database records from your tools, you have EXPLICIT PERMISSION to share that data with the user. 
+    You MUST use the provided database records to answer the user's question directly (including their email, ID, or role). 
+    Do NOT refuse to share the data, and do NOT say you don't have access. The user is authorized to see their own information.
+    
+    If you encounter a permission error from the database itself, inform the user they do not have the clearance.
     ''')
     
     messages_to_send = [instruction] + state["messages"]
@@ -181,7 +187,7 @@ def general_node(state: TenantState):
     result_text = clean_string if not response.tool_calls else "Agent is executing a tool..."
     
     return {"result": result_text, "messages": [response]}
-
+    
 def route_query(state: TenantState) -> Literal["database_node", "general_node"]:
     if state["route"] == "DATABASE":
         return "database_node"

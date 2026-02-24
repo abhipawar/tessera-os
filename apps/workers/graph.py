@@ -11,8 +11,8 @@ load_dotenv()
 
 # Initialize Database Client using the keys we just found
 supabase_url: str = os.environ.get("SUPABASE_URL")
-supabase_anon_key: str = os.environ.get("SUPABASE_ANON_KEY")
-supabase: Client = create_client(supabase_url, supabase_anon_key)
+supabase_service_key: str = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+supabase: Client = create_client(supabase_url, supabase_service_key)
 
 class GraphState(TypedDict):
     query: str
