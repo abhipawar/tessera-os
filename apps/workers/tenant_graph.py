@@ -21,6 +21,7 @@ from portkey_ai import createHeaders, PORTKEY_GATEWAY_URL
 load_dotenv()
 
 supabase_url: str = os.environ.get("SUPABASE_URL")
+supabase_key: str = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 supabase_anon_key: str = os.environ.get("SUPABASE_ANON_KEY")
 
 # Initialize the native Google embedding model for vector math
