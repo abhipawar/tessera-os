@@ -1,14 +1,13 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-
-// 1. Import the new navigation rail
 import GlobalNav from "@/components/GlobalNav";
+import TopNav from "@/components/TopNav"; // ✅ Import the new TopNav
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Tessera OS | Enterprise AI",
+  title: "Tessera OS",
   description: "Autonomous digital workforce orchestration.",
 };
 
@@ -19,15 +18,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      {/* 2. Set the body to a row-based flex container */}
-      <body className={`${inter.className} flex h-screen w-screen overflow-hidden bg-slate-50`}>
-        {/* 3. The Nav Rail sits on the left */}
+      <body className={`${inter.className} bg-zinc-950 text-white flex h-screen overflow-hidden`}>
+        {/* Global Sidebar */}
         <GlobalNav />
         
-        {/* 4. The main content area takes up the rest of the screen */}
-        <main className="flex-1 h-screen overflow-y-auto relative">
-          {children}
-        </main>
+        {/* Main Content Area */}
+        <div className="flex flex-col flex-1 overflow-hidden">
+          {/* Global Header */}
+          <TopNav /> 
+          
+          {/* Individual Page Content */}
+          <main className="flex-1 overflow-auto">
+            {children}
+          </main>
+        </div>
       </body>
     </html>
   );

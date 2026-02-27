@@ -47,7 +47,7 @@ const MARKETPLACE_CATALOG = [
   }
 ];
 
-export default function Sidebar() {
+export default function AgentToolbox() {
   // Keep all categories open by default so the user sees the options immediately
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(
     MARKETPLACE_CATALOG.reduce((acc, cat) => ({ ...acc, [cat.id]: true }), {})

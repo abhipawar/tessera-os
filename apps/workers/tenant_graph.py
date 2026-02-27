@@ -204,7 +204,7 @@ class TenantState(TypedDict):
     result: str
 
 def analyzer_node(state: TenantState):
-    print(f"--- [Tenant Workspace] Analyzing Intent ---")
+    print(f"--- [Tenant Chat] Analyzing Intent ---")
     system_prompt = SystemMessage(content='''
     You are an intelligent routing assistant. 
     If the user asks to fetch, read, or get their database records, respond with EXACTLY "DATABASE".
@@ -214,7 +214,7 @@ def analyzer_node(state: TenantState):
     return {"route": response.content.strip().upper()}
 
 def database_node(state: TenantState):
-    print("--- [Tenant Workspace] Fetching RLS-Secured Records ---")
+    print("--- [Tenant Chat] Fetching RLS-Secured Records ---")
     try:
         options = ClientOptions(headers={'Authorization': f"Bearer {state['token']}"})
         user_client: Client = create_client(supabase_url, supabase_anon_key, options=options)
@@ -231,7 +231,7 @@ def database_node(state: TenantState):
         return {"messages": [SystemMessage(content=f"[System DB Tool] Secure Database Error: {str(e)}")]}
         
 def general_node(state: TenantState):
-    print("--- [Tenant Workspace] Executing AI (Reasoning & Tool Calling) ---")
+    print("--- [Tenant Chat] Executing AI (Reasoning & Tool Calling) ---")
     
     # 1. Bulletproof Extraction: Pull DB records out of the chat history
     db_context_list = []

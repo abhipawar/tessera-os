@@ -1,36 +1,52 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Handle, Position } from 'reactflow';
 import { Bot } from 'lucide-react';
 
-// Added 'selected' to the props so React Flow can tell us when it's clicked
-export default function AgentNode({ data, selected }: { data: any, selected: boolean }) {
+function AgentNode({ data, selected }: { data: any, selected: boolean }) {
   return (
-    <div className={`px-4 py-3 shadow-lg rounded-xl bg-white border min-w-[250px] transition-all hover:shadow-xl ${
-      selected ? 'border-blue-500 ring-4 ring-blue-100' : 'border-slate-200 hover:border-blue-400'
-    }`}>
-      <div className="flex items-center">
-        <div className="rounded-full w-12 h-12 flex justify-center items-center bg-blue-50 text-blue-600 border border-blue-100">
-          <Bot size={24} />
-        </div>
-        <div className="ml-4">
-          <div className="text-sm font-bold text-slate-800">{data.label}</div>
-          <div className="text-xs text-slate-500 mt-0.5">{data.description || 'Autonomous Worker'}</div>
-        </div>
-      </div>
-
-      {/* Target Handle (Top) - Where incoming lines connect */}
+    <div 
+      className={`
+        relative min-w-[220px] max-w-[280px] bg-zinc-950 border-2 rounded-xl p-3 shadow-2xl transition-all duration-200
+        ${selected ? 'border-blue-500 shadow-blue-900/20' : 'border-zinc-800 hover:border-zinc-700'}
+      `}
+    >
+      {/* Top Handle (Incoming Connections) */}
       <Handle 
         type="target" 
         position={Position.Top} 
-        className="w-4 h-4 !bg-slate-400 border-2 border-white shadow-sm" 
+        className="w-3 h-3 bg-zinc-950 border-2 border-zinc-500 rounded-full -mt-1.5 hover:bg-blue-400 hover:border-blue-400 transition-colors"
       />
-      
-      {/* Source Handle (Bottom) - Where you drag from to create a new line */}
+
+      <div className="flex items-start gap-3">
+        {/* Agent Icon Area */}
+        <div 
+          className={`
+            w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-colors
+            ${selected ? 'bg-blue-500/20 text-blue-400' : 'bg-zinc-900 border border-zinc-800 text-zinc-400'}
+          `}
+        >
+          <Bot size={20} />
+        </div>
+        
+        {/* Text Area */}
+        <div className="flex flex-col overflow-hidden pt-0.5">
+          <span className="text-sm font-semibold text-zinc-100 truncate">
+            {data.label}
+          </span>
+          <span className="text-xs text-zinc-500 line-clamp-2 mt-0.5 leading-snug">
+            {data.description || 'Autonomous Agent'}
+          </span>
+        </div>
+      </div>
+
+      {/* Bottom Handle (Outgoing Connections) */}
       <Handle 
         type="source" 
         position={Position.Bottom} 
-        className="w-4 h-4 !bg-blue-500 border-2 border-white shadow-sm" 
+        className="w-3 h-3 bg-zinc-950 border-2 border-zinc-500 rounded-full -mb-1.5 hover:bg-blue-400 hover:border-blue-400 transition-colors"
       />
     </div>
   );
 }
+
+export default memo(AgentNode);
