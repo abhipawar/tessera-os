@@ -33,16 +33,17 @@ export async function proxy(request: NextRequest) {
 
     // 2. Define our route groups
     // 2. Define our route groups
-    const isAuthRoute = request.nextUrl.pathname === '/login' || 
-                        request.nextUrl.pathname === '/' || 
-                        request.nextUrl.pathname.startsWith('/onboarding') // ✅ Add it here
-                        
+    const isAuthRoute = request.nextUrl.pathname === '/login' ||
+        request.nextUrl.pathname === '/' ||
+        request.nextUrl.pathname.startsWith('/onboarding') // ✅ Add it here
+
     const isAdminRoute = request.nextUrl.pathname.startsWith('/admin')
-    
+
     // Group all the standard SaaS pages together
     const isTenantRoute = request.nextUrl.pathname.startsWith('/chat') ||
-                          request.nextUrl.pathname.startsWith('/studio') ||
-                          request.nextUrl.pathname.startsWith('/dashboard')
+        request.nextUrl.pathname.startsWith('/studio') ||
+        request.nextUrl.pathname.startsWith('/dashboard') ||
+        request.nextUrl.pathname.startsWith('/integrations')
 
     // 3. The Loop Fix: Boot unauthenticated users to /login instead of /
     if (!user && (isAdminRoute || isTenantRoute)) {
@@ -50,25 +51,41 @@ export async function proxy(request: NextRequest) {
     }
 
     // 4. If user exists, check their RBAC role AND super admin flag
-    // 4. If user exists, check their super admin flag
     if (user) {
         const { data: profile } = await supabase
             .from('profiles')
-            .select('is_tessera_admin') // 🔥 Ghost column removed!
+            .select('is_tessera_admin')
             .eq('id', user.id)
             .single()
 
         const isSuperAdmin = profile?.is_tessera_admin === true
 
+        // 4b. Check if they belong to any organization
+        const { data: tenantData } = await supabase
+            .from('tenant_members')
+            .select('tenant_id')
+            .eq('user_id', user.id)
+
+        const hasTenant = tenantData && tenantData.length > 0;
+
         // Enforce the boundary
         // If they are NOT a Super Admin, kick them out of the Control Plane
         if (isAdminRoute && !isSuperAdmin) {
-            return NextResponse.redirect(new URL('/dashboard', request.url))
+            return NextResponse.redirect(new URL(hasTenant ? '/dashboard' : '/join', request.url))
+        }
+
+        // If they are trying to access a tenant route but don't belong to a tenant
+        if (isTenantRoute && !isSuperAdmin && !hasTenant) {
+            return NextResponse.redirect(new URL('/join', request.url))
         }
 
         // If they are logged in and hit the login page, send them to their respective home
         if (isAuthRoute) {
-            return NextResponse.redirect(new URL(isSuperAdmin ? '/admin' : '/dashboard', request.url))
+            let targetUrl = '/dashboard';
+            if (isSuperAdmin) targetUrl = '/admin';
+            else if (!hasTenant) targetUrl = '/join';
+
+            return NextResponse.redirect(new URL(targetUrl, request.url))
         }
     }
 

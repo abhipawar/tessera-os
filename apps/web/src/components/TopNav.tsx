@@ -10,15 +10,24 @@ export default function TopNav() {
   const [role, setRole] = useState("Loading...");
   const [email, setEmail] = useState("");
 
-  const supabase = createBrowserClient(
+  const [supabase] = useState(() => createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  ));
 
   useEffect(() => {
+    let mounted = true;
+
     const fetchUser = async (user: any) => {
-      setEmail(user.email || "");
-      
+      if (!user) {
+        if (mounted) {
+          setRole("Not Logged In");
+          setEmail("");
+        }
+        return;
+      }
+      if (mounted) setEmail(user.email || "");
+
       const { data: profile } = await supabase
         .from('profiles')
         .select('is_tessera_admin')
@@ -26,7 +35,7 @@ export default function TopNav() {
         .single();
 
       if (profile?.is_tessera_admin) {
-        setRole("Super Admin");
+        if (mounted) setRole("Super Admin");
       } else {
         const { data: tenantMember } = await supabase
           .from('tenant_members')
@@ -36,24 +45,31 @@ export default function TopNav() {
 
         if (tenantMember) {
           const formattedRole = tenantMember.tenant_role.charAt(0).toUpperCase() + tenantMember.tenant_role.slice(1);
-          setRole(`Tenant ${formattedRole}`);
+          if (mounted) setRole(`Tenant ${formattedRole}`);
         } else {
-          setRole("User");
+          if (mounted) setRole("User");
         }
       }
     };
 
-    // 1. Check current session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) fetchUser(session.user);
-    });
+    // Fetch the absolute truth from the database cookie
+    const checkState = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      await fetchUser(user);
+    };
 
-    // 2. Listen for login events
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) fetchUser(session.user);
-    });
+    // 1. Check immediately on mount
+    checkState();
 
-    return () => subscription.unsubscribe();
+    // 2. Poll the state to escape Next.js hydration races
+    const interval = setInterval(() => {
+      if (mounted) checkState();
+    }, 1000);
+
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
   }, [supabase]);
 
   // Hide the TopNav on auth/onboarding routes

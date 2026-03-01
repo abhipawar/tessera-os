@@ -8,33 +8,53 @@ import { createBrowserClient } from '@supabase/ssr';
 
 export default function GlobalNav() {
   const pathname = usePathname();
-  const router = useRouter(); 
+  const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
-  
-  const supabase = createBrowserClient(
+
+  const [supabase] = useState(() => createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  ));
 
   // Check if the current user is a Super Admin
   useEffect(() => {
-    const checkAdminStatus = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        // REMOVED 'role' from the select statement
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('is_tessera_admin')
-          .eq('id', user.id)
-          .single();
-        
-        // ONLY check the boolean now
-        if (profile?.is_tessera_admin) {
-          setIsAdmin(true);
-        }
+    let mounted = true;
+
+    const checkAdminStatus = async (user: any) => {
+      if (!user) {
+        if (mounted) setIsAdmin(false);
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_tessera_admin')
+        .eq('id', user.id)
+        .single();
+
+      if (mounted) {
+        setIsAdmin(!!profile?.is_tessera_admin);
       }
     };
-    checkAdminStatus();
+
+    // Fetch the absolute truth from the database cookie
+    const checkState = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      await checkAdminStatus(user);
+    };
+
+    // 1. Check immediately on mount
+    checkState();
+
+    // 2. Poll the state to escape Next.js hydration races
+    const interval = setInterval(() => {
+      if (mounted) checkState();
+    }, 1000);
+
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
   }, [supabase]);
 
   const handleLogout = async () => {
@@ -44,7 +64,7 @@ export default function GlobalNav() {
     document.cookie.split(";").forEach((c) => {
       document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
     });
-    window.location.replace('/'); 
+    window.location.replace('/');
   };
 
   const hideOnRoutes = ['/', '/login', '/onboarding'];
@@ -73,17 +93,16 @@ export default function GlobalNav() {
         {navLinks.map((link) => {
           const Icon = link.icon;
           const isActive = pathname.startsWith(link.path);
-          
+
           return (
-            <Link 
-              key={link.name} 
+            <Link
+              key={link.name}
               href={link.path}
               title={link.name}
-              className={`w-12 h-12 mx-auto rounded-xl flex items-center justify-center transition-all group relative ${
-                isActive 
-                  ? 'bg-blue-600 text-white shadow-md' 
-                  : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-              }`}
+              className={`w-12 h-12 mx-auto rounded-xl flex items-center justify-center transition-all group relative ${isActive
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                }`}
             >
               <Icon size={20} />
             </Link>

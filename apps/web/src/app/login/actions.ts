@@ -22,15 +22,23 @@ export async function login(formData: FormData) {
     // 2. Fetch their secure admin flag from the database
     const { data: profile } = await supabase
         .from('profiles')
-        .select('is_tessera_admin') // 🔥 Ghost column removed!
+        .select('is_tessera_admin')
         .eq('id', data.user.id)
         .single()
 
+    // 3. Check if they belong to any organization
+    const { data: tenantData } = await supabase
+        .from('tenant_members')
+        .select('tenant_id')
+        .eq('user_id', data.user.id)
+
     revalidatePath('/', 'layout')
 
-    // 3. Route them dynamically based on their admin flag
+    // 4. Route them dynamically based on their roles
     if (profile?.is_tessera_admin) {
         redirect('/admin')
+    } else if (!tenantData || tenantData.length === 0) {
+        redirect('/join')
     } else {
         redirect('/dashboard')
     }

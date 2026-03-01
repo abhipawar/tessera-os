@@ -1,0 +1,91 @@
+import React from 'react';
+import { Network, Search, GripVertical, Bot } from 'lucide-react';
+import { useStudioStore, GlobalAgent } from '@/store/studioStore';
+
+export default function MarketplaceSidebar() {
+    const { agents, isLoadingAgents, searchQuery, setSearchQuery } = useStudioStore();
+
+    const onDragStart = (event: React.DragEvent, agent: GlobalAgent) => {
+        const payload = {
+            type: 'customAgent',
+            label: agent.name,
+            description: agent.description,
+            systemPrompt: agent.system_prompt,
+            tools: []
+        };
+        event.dataTransfer.setData('application/reactflow', JSON.stringify(payload));
+        event.dataTransfer.effectAllowed = 'move';
+    };
+
+    const groupedAgents = agents.reduce((acc, agent) => {
+        const categoryName = agent.tool_categories?.display_name || 'General Agents';
+        if (!acc[categoryName]) acc[categoryName] = [];
+        acc[categoryName].push(agent);
+        return acc;
+    }, {} as Record<string, GlobalAgent[]>);
+
+    const filteredCategories = Object.entries(groupedAgents).map(([category, catAgents]) => ({
+        category,
+        agents: catAgents.filter(a => a.name.toLowerCase().includes(searchQuery.toLowerCase()) || a.description.toLowerCase().includes(searchQuery.toLowerCase()))
+    })).filter(group => group.agents.length > 0);
+
+    return (
+        <div className="w-80 flex flex-col border-r border-zinc-800 bg-zinc-950 shrink-0 z-10">
+            <div className="p-4 border-b border-zinc-800 space-y-4">
+                <div className="flex items-center gap-2 text-zinc-100">
+                    <Network className="text-blue-500" size={20} />
+                    <h2 className="text-lg font-bold">Agent Marketplace</h2>
+                </div>
+                <div className="relative">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+                    <input
+                        type="text"
+                        placeholder="Search catalog..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded-md py-1.5 pl-9 pr-3 text-sm focus:outline-none focus:border-blue-500 transition-colors text-zinc-300"
+                    />
+                </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-6">
+                {isLoadingAgents ? (
+                    <div className="text-center text-sm text-zinc-500 mt-10">Loading catalog...</div>
+                ) : filteredCategories.length === 0 ? (
+                    <div className="text-center text-sm text-zinc-500 mt-10">No agents found.</div>
+                ) : (
+                    filteredCategories.map(({ category, agents }) => (
+                        <div key={category} className="space-y-3">
+                            <h3 className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">{category}</h3>
+                            <div className="space-y-2">
+                                {agents.map((agent) => (
+                                    <div
+                                        key={agent.id}
+                                        draggable
+                                        onDragStart={(e) => onDragStart(e, agent)}
+                                        className="p-3 bg-zinc-900 border border-zinc-800 rounded-lg cursor-grab active:cursor-grabbing hover:border-blue-500/50 hover:bg-zinc-800/50 transition-all group"
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            <div className="mt-0.5 text-zinc-600 group-hover:text-blue-500 transition-colors">
+                                                <GripVertical size={16} />
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <Bot size={14} className="text-blue-400" />
+                                                    <span className="text-sm font-semibold text-zinc-200">{agent.name}</span>
+                                                </div>
+                                                <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed">
+                                                    {agent.description}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
+        </div>
+    );
+}

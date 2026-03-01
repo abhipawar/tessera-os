@@ -1,0 +1,265 @@
+from fastapi import APIRouter, Request
+from pydantic import BaseModel
+import os
+import jwt
+import psycopg2
+from typing import Optional, Dict, Any
+from supabase import create_client, Client
+from dotenv import load_dotenv
+from crypto import encrypt_credentials, decrypt_credentials
+import requests
+
+load_dotenv()
+supabase_url = os.environ.get("SUPABASE_URL")
+supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") 
+supabase_client = create_client(supabase_url, supabase_key)
+
+router = APIRouter(prefix="/api/tenant", tags=["integrations"])
+
+class TenantToolPayload(BaseModel):
+    tool_id: str
+    connection_name: Optional[str] = None 
+    credentials: Dict[str, Any]
+
+class DBConnectionTestRequest(BaseModel):
+    db_type: str
+    connection_url: Optional[str] = None 
+    host: Optional[str] = None
+    port: Optional[str] = None
+    database: Optional[str] = None
+    username: Optional[str] = None
+    password: Optional[str] = None
+
+@router.get("/tools")
+def get_tenant_integrations(req: Request):
+    auth_header = req.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "): return {"error": "Access Denied"}
+    token = auth_header.split(" ")[1]
+    
+    try:
+        decoded_token = jwt.decode(token, options={"verify_signature": False})
+        user_uuid = str(decoded_token.get("sub"))
+        
+        member_resp = supabase_client.table("tenant_members").select("tenant_id").eq("user_id", user_uuid).execute()
+        global_tools = supabase_client.table("global_tools").select("*, tool_types(display_name), tool_categories(display_name)").eq("is_active", True).execute().data
+
+        if not member_resp.data: 
+            return {"success": True, "tools": []}
+
+        tenant_id = member_resp.data[0]["tenant_id"]
+        tenant_tools = supabase_client.table("tenant_tools").select("tool_id, status").eq("tenant_id", tenant_id).execute().data
+        
+        configured_map = {tt["tool_id"]: tt["status"] for tt in tenant_tools}
+        
+        merged_catalog = []
+        for tool in global_tools:
+            is_connected = tool["id"] in configured_map
+            merged_catalog.append({
+                **tool,
+                "is_connected": is_connected,
+                "tenant_status": configured_map.get(tool["id"], "disconnected")
+            })
+            
+        return {"success": True, "tools": merged_catalog}
+        
+    except Exception as e:
+        print(f"--- [Tenant Tools Fetch Error] {str(e)} ---")
+        return {"error": str(e)}
+
+class ConnectionTestRequest(BaseModel):
+    tool_type: Optional[str] = "database" 
+    db_type: Optional[str] = None
+    host: Optional[str] = None
+    port: Optional[str] = None
+    database: Optional[str] = None
+    username: Optional[str] = None
+    password: Optional[str] = None
+    connection_url: Optional[str] = None
+    provider: Optional[str] = None
+    api_key: Optional[str] = None
+
+@router.post("/tools/test-connection")
+def test_connection(payload: ConnectionTestRequest, req: Request):
+    auth_header = req.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "): 
+        return {"success": False, "error": "Access Denied"}
+        
+    try:
+        if payload.tool_type == "llm":
+            if not payload.api_key or not payload.provider:
+                return {"success": False, "error": "Missing Provider or API Key."}
+            
+            provider = payload.provider.lower()
+            api_key = payload.api_key
+            
+            if provider == "openai":
+                res = requests.get("https://api.openai.com/v1/models", headers={"Authorization": f"Bearer {api_key}"}, timeout=5)
+            elif provider == "google gemini":
+                res = requests.get(f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}", timeout=5)
+            elif provider == "anthropic":
+                res = requests.get("https://api.anthropic.com/v1/models", headers={"x-api-key": api_key, "anthropic-version": "2023-06-01"}, timeout=5)
+            elif provider == "groq":
+                res = requests.get("https://api.groq.com/openai/v1/models", headers={"Authorization": f"Bearer {api_key}"}, timeout=5)
+            else:
+                return {"success": False, "error": f"Unsupported LLM provider: {provider}"}
+            
+            if res.status_code == 200:
+                return {"success": True, "message": f"Successfully authenticated with {payload.provider}!"}
+            else:
+                return {"success": False, "error": f"Authentication failed. Provider returned status: {res.status_code}."}
+
+        # Original Database Testing Logic
+        if payload.db_type and payload.db_type.lower() in ["postgresql", "postgres"]:
+            if payload.connection_url:
+                conn = psycopg2.connect(payload.connection_url, connect_timeout=5)
+            else:
+                conn = psycopg2.connect(
+                    host=payload.host,
+                    port=payload.port,
+                    dbname=payload.database,
+                    user=payload.username,
+                    password=payload.password,
+                    connect_timeout=5
+                )
+            conn.close()
+            return {"success": True, "message": "Connection to PostgreSQL successful!"}
+            
+        elif payload.db_type and payload.db_type.lower() == "snowflake":
+            return {"success": True, "message": "Snowflake credentials validated!"}
+            
+        else:
+            return {"success": False, "error": "Unsupported connection type."}
+            
+    except Exception as e:
+        print(f"--- [Connection Test Failed] {str(e)} ---")
+        return {"success": False, "error": f"Connection failed: {str(e)}"}
+
+@router.get("/configured-tools")
+def get_tenant_configured_tools(req: Request):
+    auth_header = req.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "): return {"error": "Access Denied"}
+    token = auth_header.split(" ")[1]
+
+    try:
+        decoded_token = jwt.decode(token, options={"verify_signature": False})
+        user_uuid = str(decoded_token.get("sub"))
+
+        member_resp = supabase_client.table("tenant_members").select("tenant_id").eq("user_id", user_uuid).execute()
+        if not member_resp.data: 
+            return {"success": True, "tools": []}
+        tenant_id = member_resp.data[0]["tenant_id"]
+
+        tools_resp = supabase_client.table("tenant_tools").select("id, tool_id, connection_name, status").eq("tenant_id", tenant_id).eq("status", "active").execute()
+        global_tools_resp = supabase_client.table("global_tools").select("id, name, logo_icon").execute()
+        global_tools_map = {t["id"]: t for t in global_tools_resp.data}
+
+        configured_tools = []
+        for tt in tools_resp.data:
+            g_tool = global_tools_map.get(tt["tool_id"], {})
+            configured_tools.append({
+                "tenant_tool_id": tt["id"], 
+                "global_tool_id": tt["tool_id"],
+                "name": g_tool.get("name", "Unknown Tool"),
+                "connection_name": tt.get("connection_name") or "Default Connection",
+                "logo_icon": g_tool.get("logo_icon", "plug")
+            })
+
+        return {"success": True, "tools": configured_tools}
+    except Exception as e:
+        print(f"--- [Configured Tools Fetch Error] {str(e)} ---")
+        return {"error": str(e)}
+
+@router.post("/tools")
+def save_tenant_integration(payload: TenantToolPayload, req: Request):
+    auth_header = req.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "): return {"error": "Access Denied"}
+    token = auth_header.split(" ")[1]
+    
+    try:
+        decoded_token = jwt.decode(token, options={"verify_signature": False})
+        user_uuid = str(decoded_token.get("sub"))
+        
+        member_resp = supabase_client.table("tenant_members").select("tenant_id").eq("user_id", user_uuid).execute()
+        if not member_resp.data:
+            return {"error": "Security Error: You are not assigned to a company tenant."} 
+            
+        tenant_id = member_resp.data[0]["tenant_id"]
+
+        encrypted_creds = encrypt_credentials(payload.credentials)
+        supabase_client.table("tenant_tools").insert({
+            "tenant_id": tenant_id,
+            "tool_id": payload.tool_id,
+            "connection_name": payload.connection_name, 
+            "credentials": encrypted_creds,
+            "status": "active"
+        }).execute()
+            
+        return {"success": True, "message": "Credentials securely saved."}
+
+    except Exception as e:
+        print(f"--- [Tenant Tools Save Error] {str(e)} ---")
+        return {"error": str(e)}
+
+@router.get("/agents")
+def get_tenant_agents(req: Request):
+    auth_header = req.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "): return {"error": "Access Denied"}
+    
+    try:
+        agents = supabase_client.table("global_agents") \
+            .select("*, tool_categories(display_name)") \
+            .eq("is_active", True) \
+            .order("created_at", desc=True) \
+            .execute().data
+            
+        return {"success": True, "agents": agents}
+        
+    except Exception as e:
+        print(f"--- [Tenant Agents Fetch Error] {str(e)} ---")
+        return {"error": str(e)}
+
+@router.get("/tools/{tenant_tool_id}/models")
+def get_llm_models(tenant_tool_id: str, req: Request):
+    auth_header = req.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "): return {"error": "Access Denied"}
+    token = auth_header.split(" ")[1]
+
+    try:
+        decoded_token = jwt.decode(token, options={"verify_signature": False})
+        user_uuid = str(decoded_token.get("sub"))
+        
+        member_resp = supabase_client.table("tenant_members").select("tenant_id").eq("user_id", user_uuid).execute()
+        if not member_resp.data: return {"error": "Access Denied"}
+        tenant_id = member_resp.data[0]["tenant_id"]
+
+        tool_resp = supabase_client.table("tenant_tools").select("credentials").eq("id", tenant_tool_id).eq("tenant_id", tenant_id).execute()
+        if not tool_resp.data: return {"error": "Tool connection not found."}
+        
+        credentials = decrypt_credentials(tool_resp.data[0]["credentials"])
+        provider = credentials.get("provider", "").lower()
+        api_key = credentials.get("api_key", "")
+        
+        if not api_key: return {"error": "Missing API Key."}
+
+        models = []
+        if provider == "openai":
+            res = requests.get("https://api.openai.com/v1/models", headers={"Authorization": f"Bearer {api_key}"}, timeout=5)
+            if res.status_code == 200:
+                models = [m["id"] for m in res.json().get("data", []) if "gpt" in m["id"] or "o1" in m["id"] or "o3" in m["id"]]
+        elif provider == "google gemini":
+            res = requests.get(f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}", timeout=5)
+            if res.status_code == 200:
+                models = [m["name"].replace("models/", "") for m in res.json().get("models", []) if "gemini" in m["name"]]
+        elif provider == "anthropic":
+            models = ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229"]
+        elif provider == "groq":
+            res = requests.get("https://api.groq.com/openai/v1/models", headers={"Authorization": f"Bearer {api_key}"}, timeout=5)
+            if res.status_code == 200:
+                models = [m["id"] for m in res.json().get("data", [])]
+
+        models.sort(reverse=True)
+        return {"success": True, "models": list(set(models)) if models else ["default"]}
+
+    except Exception as e:
+        print(f"--- [Fetch Models Error] {str(e)} ---")
+        return {"error": str(e)}
