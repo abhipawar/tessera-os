@@ -21,7 +21,7 @@ export default function LoginPage() {
                 </div>
 
                 <div className="bg-zinc-900/50 backdrop-blur-xl border border-zinc-800/50 rounded-3xl p-8 shadow-2xl">
-                    <form className="space-y-6">
+                    <form action={login} className="space-y-6">
                         <div className="space-y-4">
 
                             {/* Email Input */}
@@ -63,7 +63,7 @@ export default function LoginPage() {
 
                         <div className="flex flex-col gap-3 pt-6">
                             <button
-                                formAction={login}
+                                type="submit"
                                 className="group w-full flex justify-center items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3.5 px-4 rounded-xl transition-all shadow-[0_0_15px_rgba(37,99,235,0.3)] hover:shadow-[0_0_25px_rgba(37,99,235,0.5)]"
                             >
                                 <Fingerprint size={18} className="group-hover:scale-110 transition-transform" />
