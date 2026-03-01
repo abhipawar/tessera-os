@@ -30,8 +30,8 @@ export default function MarketplaceSidebar() {
     })).filter(group => group.agents.length > 0);
 
     return (
-        <div className="w-80 flex flex-col border-r border-zinc-800 bg-zinc-950 shrink-0 z-10">
-            <div className="p-4 border-b border-zinc-800 space-y-4">
+        <div className="w-80 flex flex-col border-r border-zinc-800/50 bg-zinc-950/80 backdrop-blur-xl shrink-0 z-10 font-sans">
+            <div className="p-4 border-b border-zinc-800/50 space-y-4">
                 <div className="flex items-center gap-2 text-zinc-100">
                     <Network className="text-blue-500" size={20} />
                     <h2 className="text-lg font-bold">Agent Marketplace</h2>
@@ -63,7 +63,7 @@ export default function MarketplaceSidebar() {
                                         key={agent.id}
                                         draggable
                                         onDragStart={(e) => onDragStart(e, agent)}
-                                        className="p-3 bg-zinc-900 border border-zinc-800 rounded-lg cursor-grab active:cursor-grabbing hover:border-blue-500/50 hover:bg-zinc-800/50 transition-all group"
+                                        className="p-4 bg-zinc-900/50 border border-zinc-800/50 rounded-xl cursor-grab active:cursor-grabbing hover:border-blue-500/50 hover:bg-blue-900/10 hover:shadow-[0_0_15px_rgba(37,99,235,0.15)] transition-all group"
                                     >
                                         <div className="flex items-start gap-3">
                                             <div className="mt-0.5 text-zinc-600 group-hover:text-blue-500 transition-colors">

@@ -59,7 +59,11 @@ export default function StudioCanvas() {
     const onPaneClick = React.useCallback(() => setSelectedNode(null), [setSelectedNode]);
 
     return (
-        <div className="flex-1 h-full relative overflow-hidden" ref={reactFlowWrapper}>
+        <div className="flex-1 h-full relative overflow-hidden bg-zinc-950" ref={reactFlowWrapper}>
+            {/* Ambient Canvas Glows */}
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/5 blur-[120px] rounded-full pointer-events-none z-0" />
+            <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-emerald-500/5 blur-[150px] rounded-full pointer-events-none z-0" />
+
             <ReactFlow
                 nodes={nodes}
                 edges={edges}
@@ -74,7 +78,7 @@ export default function StudioCanvas() {
                 nodeTypes={nodeTypes}
                 fitView
                 fitViewOptions={{ maxZoom: 0.85 }}
-                className="bg-zinc-950"
+                className="bg-transparent z-10"
             >
                 <Controls className="bg-zinc-900 border-zinc-800 fill-zinc-400" />
                 <MiniMap

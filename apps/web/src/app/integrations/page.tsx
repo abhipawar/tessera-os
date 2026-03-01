@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
-import { Plug, Database, Server, CheckCircle2, XCircle, Loader2, Key, Plus } from 'lucide-react';
+import { Plug, Database, Server, CheckCircle2, XCircle, Loader2, Key, Plus, Lock } from 'lucide-react';
 
 type Tool = {
   id: string;
@@ -144,16 +144,20 @@ export default function IntegrationsPage() {
   const catalogTools = tools.filter(tool => !tool.is_connected);
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 p-8">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 p-8 relative overflow-hidden font-sans">
+      {/* Ambient Background Glows */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/5 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-emerald-500/5 blur-[150px] rounded-full pointer-events-none" />
+
+      <div className="max-w-6xl mx-auto space-y-8 relative z-10">
 
         <header className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-3">
+          <div className="animate-in fade-in slide-in-from-left-4 duration-700">
+            <h1 className="text-3xl font-extrabold flex items-center gap-3 tracking-tight">
               <Plug className="text-blue-500" size={32} />
               Integrations Hub
             </h1>
-            <p className="text-zinc-400 mt-2">Securely connect your enterprise data sources to your AI workforce (BYOK).</p>
+            <p className="text-zinc-400 mt-2 font-medium">Securely connect your enterprise data sources to your AI workforce (BYOK).</p>
           </div>
         </header>
 
@@ -164,8 +168,8 @@ export default function IntegrationsPage() {
 
             {/* 1. ACTIVE CONNECTIONS SECTION */}
             {activeTools.length > 0 && (
-              <section className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <h2 className="text-xl font-bold text-zinc-100 mb-6 flex items-center gap-2 border-b border-zinc-800 pb-2">
+              <section className="animate-in fade-in slide-in-from-bottom-8 duration-700">
+                <h2 className="text-xl font-bold text-zinc-100 mb-6 flex items-center gap-2 border-b border-zinc-800/50 pb-3 tracking-wide">
                   <CheckCircle2 className="text-emerald-500" size={24} />
                   Active for this Tenant
                 </h2>
@@ -173,22 +177,26 @@ export default function IntegrationsPage() {
                   {activeTools.map((tool) => (
                     <div
                       key={tool.id}
-                      className="bg-zinc-900 border border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.05)] rounded-xl p-6 hover:border-emerald-500/60 transition-all group flex flex-col h-full relative overflow-hidden"
+                      className="bg-zinc-900/50 backdrop-blur-xl border border-emerald-500/30 shadow-[0_0_25px_rgba(16,185,129,0.1)] rounded-2xl p-6 hover:border-emerald-500/60 transition-all group flex flex-col h-full relative overflow-hidden"
                     >
-                      <div className="absolute top-0 right-0 bg-emerald-500/10 text-emerald-400 text-[10px] font-bold px-3 py-1 rounded-bl-lg border-b border-l border-emerald-500/20 flex items-center gap-1">
-                        <CheckCircle2 size={12} /> ACTIVE
+                      <div className="absolute top-0 right-0 bg-emerald-500/10 text-emerald-400 text-[10px] font-bold px-3 py-1.5 rounded-bl-xl border-b border-l border-emerald-500/20 flex items-center gap-1.5 tracking-wider shadow-[0_0_10px_rgba(16,185,129,0.2)]">
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                        ACTIVE
                       </div>
 
-                      <div className="w-12 h-12 rounded-lg bg-zinc-950 border border-zinc-800 flex items-center justify-center mb-4 text-emerald-400 group-hover:scale-110 transition-transform">
-                        {tool.logo_icon === 'database' ? <Database size={24} /> : <Server size={24} />}
+                      <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border border-emerald-500/20 flex items-center justify-center mb-5 text-emerald-400 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+                        {tool.logo_icon === 'database' ? <Database size={26} /> : <Server size={26} />}
                       </div>
 
-                      <h3 className="text-lg font-bold text-zinc-100 mb-2">{tool.name}</h3>
-                      <p className="text-sm text-zinc-400 flex-1">{tool.description}</p>
+                      <h3 className="text-xl font-bold text-zinc-100 mb-2">{tool.name}</h3>
+                      <p className="text-sm text-zinc-400 flex-1 leading-relaxed">{tool.description}</p>
 
                       <button
                         onClick={() => openToolModal(tool)}
-                        className="mt-6 w-full py-2.5 bg-zinc-950 hover:bg-emerald-600/10 border border-zinc-800 hover:border-emerald-500 text-zinc-300 hover:text-emerald-400 text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2"
+                        className="mt-6 w-full py-2.5 bg-zinc-950/50 hover:bg-emerald-500/10 border border-zinc-800 hover:border-emerald-500/50 text-zinc-300 hover:text-emerald-400 text-sm font-semibold rounded-xl transition-all flex items-center justify-center gap-2"
                       >
                         <Plus size={16} /> Add Another Instance
                       </button>
@@ -199,36 +207,40 @@ export default function IntegrationsPage() {
             )}
 
             {/* 2. GLOBAL CATALOG SECTION */}
-            <section className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
-              <h2 className="text-xl font-bold text-zinc-100 mb-6 border-b border-zinc-800 pb-2">
+            <section className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-150">
+              <h2 className="text-xl font-bold text-zinc-100 mb-6 border-b border-zinc-800/50 pb-3 tracking-wide">
                 Global Catalog
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {catalogTools.map((tool) => (
                   <div
                     key={tool.id}
-                    className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 hover:border-blue-500/50 transition-all group flex flex-col h-full relative overflow-hidden"
+                    className="bg-zinc-900/40 backdrop-blur-sm border border-zinc-800/50 rounded-2xl p-6 hover:bg-zinc-900/80 hover:border-blue-500/30 transition-all group flex flex-col h-full relative overflow-hidden"
                   >
-                    <div className="w-12 h-12 rounded-lg bg-zinc-950 border border-zinc-800 flex items-center justify-center mb-4 text-zinc-400 group-hover:text-blue-400 transition-colors">
-                      {tool.logo_icon === 'database' ? <Database size={24} /> : <Server size={24} />}
+                    <div className="w-14 h-14 rounded-xl bg-zinc-950 border border-zinc-800/50 flex items-center justify-center mb-5 text-zinc-400 group-hover:text-blue-400 group-hover:border-blue-500/30 group-hover:shadow-[0_0_15px_rgba(37,99,235,0.2)] transition-all">
+                      {tool.logo_icon === 'database' ? <Database size={26} /> : <Server size={26} />}
                     </div>
 
-                    <h3 className="text-lg font-bold text-zinc-100 mb-2">{tool.name}</h3>
-                    <p className="text-sm text-zinc-400 flex-1">{tool.description}</p>
+                    <h3 className="text-xl font-bold text-zinc-100 mb-2">{tool.name}</h3>
+                    <p className="text-sm text-zinc-500 flex-1 leading-relaxed group-hover:text-zinc-400 transition-colors">{tool.description}</p>
 
                     <button
                       onClick={() => openToolModal(tool)}
-                      className="mt-6 w-full py-2.5 bg-zinc-950 hover:bg-blue-600 border border-zinc-800 hover:border-blue-500 text-zinc-300 hover:text-white text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2"
+                      className="mt-6 w-full py-2.5 bg-zinc-950/50 hover:bg-blue-600 border border-zinc-800 hover:border-blue-500 text-zinc-300 hover:text-white text-sm font-semibold rounded-xl transition-all flex items-center justify-center gap-2 group-hover:shadow-[0_0_15px_rgba(37,99,235,0.3)]"
                     >
-                      <Key size={16} /> Configure
+                      <Key size={16} /> Configure Setup
                     </button>
                   </div>
                 ))}
               </div>
 
               {catalogTools.length === 0 && (
-                <div className="text-center py-12 text-zinc-500 border border-dashed border-zinc-800 rounded-xl">
-                  You have configured every tool available in the global catalog!
+                <div className="text-center py-16 text-zinc-500 border border-dashed border-zinc-800/50 rounded-2xl bg-zinc-900/20 backdrop-blur-sm mt-6">
+                  <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto mb-4 text-emerald-500">
+                    <CheckCircle2 size={32} />
+                  </div>
+                  <h3 className="text-lg font-bold text-zinc-300 mb-2">Platform Mastered</h3>
+                  <p>You have configured every tool available in the global catalog.</p>
                 </div>
               )}
             </section>
@@ -240,15 +252,18 @@ export default function IntegrationsPage() {
 
       {/* CONFIGURATION MODAL */}
       {selectedTool && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
+        <div className="fixed inset-0 bg-zinc-950/80 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+          <div className="bg-zinc-900/90 backdrop-blur-xl border border-zinc-800 rounded-3xl w-full max-w-md overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)]">
 
-            <div className="p-6 border-b border-zinc-800 flex justify-between items-start">
+            <div className="p-6 border-b border-zinc-800/50 flex justify-between items-start bg-zinc-950/30">
               <div>
-                <h2 className="text-xl font-bold text-zinc-100">{selectedTool.name}</h2>
-                <p className="text-xs text-zinc-500 mt-1">Credentials are encrypted at rest.</p>
+                <h2 className="text-2xl font-bold text-zinc-100 tracking-tight">{selectedTool.name}</h2>
+                <div className="flex items-center gap-1.5 mt-2">
+                  <Lock size={12} className="text-emerald-500" />
+                  <p className="text-xs text-zinc-400 font-medium">Credentials encrypted at rest</p>
+                </div>
               </div>
-              <button onClick={closeToolModal} className="text-zinc-500 hover:text-zinc-300"><XCircle size={20} /></button>
+              <button onClick={closeToolModal} className="text-zinc-500 hover:text-zinc-300 transition-colors p-1"><XCircle size={24} /></button>
             </div>
 
             <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">

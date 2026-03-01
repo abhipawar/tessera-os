@@ -91,8 +91,8 @@ export default function ConfigurationPanel() {
 
 
     return (
-        <div className="absolute top-4 right-4 w-80 bg-zinc-900 shadow-2xl rounded-xl border border-zinc-800 flex flex-col z-50 overflow-hidden">
-            <div className="px-4 py-3 border-b border-zinc-800 flex justify-between items-center bg-zinc-950">
+        <div className="absolute top-4 right-4 w-80 bg-zinc-900/80 backdrop-blur-xl shadow-[0_0_30px_rgba(0,0,0,0.5)] rounded-2xl border border-zinc-800/50 flex flex-col z-50 overflow-hidden font-sans">
+            <div className="px-5 py-4 border-b border-zinc-800/50 flex justify-between items-center bg-zinc-950/50 backdrop-blur-md">
                 <div className="flex items-center gap-2 text-zinc-100 font-semibold text-sm">
                     <Settings size={16} /> Agent Configuration
                 </div>
@@ -108,7 +108,7 @@ export default function ConfigurationPanel() {
                         type="text"
                         value={selectedNode.data.label}
                         onChange={(e) => updateNodeData('label', e.target.value)}
-                        className="w-full text-sm p-2 bg-zinc-950 border border-zinc-800 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-zinc-100"
+                        className="w-full text-sm p-2.5 bg-zinc-950/50 border border-zinc-800/50 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-zinc-100"
                     />
                 </div>
                 <div>
@@ -117,7 +117,7 @@ export default function ConfigurationPanel() {
                         type="text"
                         value={selectedNode.data.description}
                         onChange={(e) => updateNodeData('description', e.target.value)}
-                        className="w-full text-sm p-2 bg-zinc-950 border border-zinc-800 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-zinc-100"
+                        className="w-full text-sm p-2.5 bg-zinc-950/50 border border-zinc-800/50 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-zinc-100"
                     />
                 </div>
                 <div>
@@ -126,7 +126,7 @@ export default function ConfigurationPanel() {
                         value={selectedNode.data.systemPrompt || ''}
                         onChange={(e) => updateNodeData('systemPrompt', e.target.value)}
                         placeholder="Define how this agent should behave..."
-                        className="w-full text-sm p-2 bg-zinc-950 border border-zinc-800 rounded h-32 resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-zinc-100"
+                        className="w-full text-sm p-2.5 bg-zinc-950/50 border border-zinc-800/50 rounded-lg h-32 resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-zinc-100"
                     />
                 </div>
 
@@ -148,7 +148,7 @@ export default function ConfigurationPanel() {
                                     updateNodeData('llm_engine', e.target.value);
                                     updateNodeData('llm_model', '');
                                 }}
-                                className="w-full text-sm p-2 bg-zinc-900 border border-zinc-800 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-zinc-100 placeholder-zinc-500"
+                                className="w-full text-sm p-2.5 bg-zinc-900/50 border border-zinc-800/50 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-zinc-100 placeholder-zinc-500"
                             >
                                 <option value="" disabled>Select a Compute Engine...</option>
                                 {computeEngines.map(engine => (
@@ -168,7 +168,7 @@ export default function ConfigurationPanel() {
                                         value={selectedModel}
                                         onChange={(e) => updateNodeData('llm_model', e.target.value)}
                                         disabled={isLoadingModels || models.length === 0}
-                                        className="w-full text-sm p-2 bg-zinc-900 border border-zinc-800 rounded focus:ring-2 focus:ring-blue-500 disabled:opacity-50 outline-none transition-all text-zinc-100"
+                                        className="w-full text-sm p-2.5 bg-zinc-900/50 border border-zinc-800/50 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:opacity-50 outline-none transition-all text-zinc-100"
                                     >
                                         <option value="" disabled>
                                             {isLoadingModels ? "Loading models..." : "Select a model..."}
@@ -195,7 +195,7 @@ export default function ConfigurationPanel() {
                                 const isAssigned = selectedNode.data.tools?.includes(tool.tenant_tool_id);
 
                                 return (
-                                    <label key={tool.tenant_tool_id} className="flex items-center space-x-3 bg-zinc-900 border border-zinc-800 p-3 rounded-lg cursor-pointer hover:border-blue-500 transition-colors">
+                                    <label key={tool.tenant_tool_id} className="flex items-center space-x-3 bg-zinc-900/50 border border-zinc-800/50 p-3 rounded-xl cursor-pointer hover:border-blue-500/50 hover:bg-zinc-800/50 transition-all">
                                         <input
                                             type="checkbox"
                                             checked={isAssigned || false}

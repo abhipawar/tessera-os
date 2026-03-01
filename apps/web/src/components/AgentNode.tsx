@@ -4,30 +4,30 @@ import { Bot } from 'lucide-react';
 
 function AgentNode({ data, selected }: { data: any, selected: boolean }) {
   return (
-    <div 
+    <div
       className={`
-        relative min-w-[220px] max-w-[280px] bg-zinc-950 border-2 rounded-xl p-3 shadow-2xl transition-all duration-200
-        ${selected ? 'border-blue-500 shadow-blue-900/20' : 'border-zinc-800 hover:border-zinc-700'}
+        relative min-w-[220px] max-w-[280px] bg-zinc-900/80 backdrop-blur-xl border border-zinc-800/50 rounded-xl p-3 transition-all duration-300
+        ${selected ? 'border-blue-500 shadow-[0_0_25px_rgba(37,99,235,0.3)] scale-[1.02]' : 'shadow-[0_0_15px_rgba(0,0,0,0.5)] hover:border-zinc-700/80'}
       `}
     >
       {/* Top Handle (Incoming Connections) */}
-      <Handle 
-        type="target" 
-        position={Position.Top} 
-        className="w-3 h-3 bg-zinc-950 border-2 border-zinc-500 rounded-full -mt-1.5 hover:bg-blue-400 hover:border-blue-400 transition-colors"
+      <Handle
+        type="target"
+        position={Position.Top}
+        className="w-3 h-3 bg-zinc-950 border-2 border-zinc-600 rounded-full -mt-1.5 hover:bg-blue-400 hover:border-blue-400 hover:shadow-[0_0_10px_rgba(59,130,246,0.8)] transition-all"
       />
 
       <div className="flex items-start gap-3">
         {/* Agent Icon Area */}
-        <div 
+        <div
           className={`
-            w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-colors
-            ${selected ? 'bg-blue-500/20 text-blue-400' : 'bg-zinc-900 border border-zinc-800 text-zinc-400'}
+            w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 shadow-inner
+            ${selected ? 'bg-gradient-to-br from-blue-500/20 to-blue-500/5 border border-blue-500/30 text-blue-400 shadow-[0_0_15px_rgba(37,99,235,0.2)]' : 'bg-zinc-950 border border-zinc-800 text-zinc-400'}
           `}
         >
           <Bot size={20} />
         </div>
-        
+
         {/* Text Area */}
         <div className="flex flex-col overflow-hidden pt-0.5">
           <span className="text-sm font-semibold text-zinc-100 truncate">
@@ -40,10 +40,10 @@ function AgentNode({ data, selected }: { data: any, selected: boolean }) {
       </div>
 
       {/* Bottom Handle (Outgoing Connections) */}
-      <Handle 
-        type="source" 
-        position={Position.Bottom} 
-        className="w-3 h-3 bg-zinc-950 border-2 border-zinc-500 rounded-full -mb-1.5 hover:bg-blue-400 hover:border-blue-400 transition-colors"
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        className="w-3 h-3 bg-zinc-950 border-2 border-zinc-600 rounded-full -mb-1.5 hover:bg-emerald-400 hover:border-emerald-400 hover:shadow-[0_0_10px_rgba(52,211,153,0.8)] transition-all"
       />
     </div>
   );
