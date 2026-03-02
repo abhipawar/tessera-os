@@ -30,6 +30,10 @@ class AgentCatalogPayload(BaseModel):
     logo_icon: str
     is_active: bool
 
+class SystemSettingPayload(BaseModel):
+    key: str
+    value: str
+
 def verify_admin(req: Request):
     auth_header = req.headers.get("Authorization")
     if not auth_header or not auth_header.startswith("Bearer "): raise Exception("Access Denied")
@@ -174,5 +178,28 @@ def delete_agent(agent_id: str, req: Request):
         verify_admin(req)
         supabase_client.table("global_agents").delete().eq("id", agent_id).execute()
         return {"success": True}
+    except Exception as e:
+        return {"error": str(e)}
+
+@router.get("/system-settings")
+def get_system_settings(req: Request):
+    try:
+        verify_admin(req)
+        settings = supabase_client.table("system_settings").select("*").order("key").execute().data
+        return {"success": True, "settings": settings}
+    except Exception as e:
+        return {"error": str(e)}
+
+@router.put("/system-settings")
+def update_system_setting(payload: SystemSettingPayload, req: Request):
+    try:
+        verify_admin(req)
+        res = supabase_client.table("system_settings").update({"value": payload.value}).eq("key", payload.key).execute()
+        
+        from config_db import _settings_cache
+        if payload.key in _settings_cache:
+            _settings_cache[payload.key] = payload.value
+            
+        return {"success": True, "setting": res.data[0] if res.data else None}
     except Exception as e:
         return {"error": str(e)}

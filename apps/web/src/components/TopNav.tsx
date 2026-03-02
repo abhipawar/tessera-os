@@ -52,10 +52,17 @@ export default function TopNav() {
       }
     };
 
-    // Fetch the absolute truth from the database cookie
+    // Fetch the absolute truth from the local session cache
     const checkState = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      await fetchUser(user);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        if (mounted) {
+          setRole("Not Logged In");
+          setEmail("");
+        }
+        return;
+      }
+      await fetchUser(session.user);
     };
 
     // 1. Check immediately on mount

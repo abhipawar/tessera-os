@@ -2,7 +2,8 @@ import os
 import re
 import json
 from typing import Annotated, TypedDict
-from langchain_core.messages import SystemMessage, AIMessage, ToolMessage
+from pydantic import BaseModel, Field
+from langchain_core.messages import SystemMessage, AIMessage, ToolMessage, HumanMessage
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
 from langchain_groq import ChatGroq
@@ -10,6 +11,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI, HarmCategory, HarmBlo
 from langgraph.graph.message import add_messages
 from supabase import create_client, Client
 from dotenv import load_dotenv
+from config_db import get_system_setting
 
 load_dotenv()
 
@@ -20,29 +22,69 @@ supabase_client: Client = create_client(supabase_url, supabase_key) if supabase_
 def resolve_routing_collision(left: str, right: str) -> str:
     return right
 
+def merge_dicts(left: dict, right: dict) -> dict:
+    if not isinstance(left, dict): left = {}
+    if not isinstance(right, dict): right = {}
+    
+    merged = left.copy()
+    for k, v in right.items():
+        if k in merged and isinstance(merged[k], dict) and isinstance(v, dict):
+            merged[k] = merge_dicts(merged[k], v)
+        else:
+            merged[k] = v
+    return merged
+
+def resolve_templates(text: str, context: dict) -> str:
+    """
+    Looks for {{variable.path}} in `text` and replaces it with the value from `context`.
+    Example: `{{trigger.payload.email}}` against `{"trigger": {"payload": {"email": "test@test.com"}}}`
+    """
+    if not text or not isinstance(text, str): return text
+    
+    def replacer(match):
+        path = match.group(1).strip()
+        keys = path.split('.')
+        current = context
+        for key in keys:
+            if isinstance(current, dict) and key in current:
+                current = current[key]
+            else:
+                return match.group(0) # Keep exact string {{x}} if not found
+        
+        # If the resolved variable is a dict/list, format it nicely, else stringify
+        if isinstance(current, (dict, list)):
+            return json.dumps(current, indent=2)
+        return str(current)
+
+    return re.sub(r'\{\{(.*?)\}\}', replacer, text)
+
+
 class AgentState(TypedDict):
     messages: Annotated[list, add_messages]
     next_agent: Annotated[str, resolve_routing_collision]
+    context_variables: Annotated[dict, merge_dicts]
 
 def get_llm(llm_config: dict = None):
     provider = "google gemini"
     api_key = os.environ.get("GEMINI_API_KEY", "")
-    model_name = "gemini-1.5-flash"
+    model_name = None
 
     if llm_config:
         provider = llm_config.get("provider", "google gemini").lower()
         api_key = llm_config.get("api_key", api_key)
-        model_name = llm_config.get("model_name", model_name)
+        model_name = llm_config.get("model_name", None)
 
     if provider == "openai":
-        return ChatOpenAI(model=model_name or "gpt-4o", api_key=api_key, temperature=0.0)
+        fallback = get_system_setting("default_openai_model", "gpt-4o")
+        return ChatOpenAI(model=model_name or fallback, api_key=api_key, temperature=0.0)
     elif provider == "anthropic":
-        return ChatAnthropic(model_name=model_name or "claude-3-5-sonnet-20241022", api_key=api_key, temperature=0.0)
+        return ChatAnthropic(model=model_name or "claude-3-5-sonnet-20241022", api_key=api_key, temperature=0.0)
     elif provider == "groq":
         return ChatGroq(model=model_name or "llama-3.1-70b-versatile", api_key=api_key, temperature=0.0)
     else:
+        fallback = get_system_setting("default_google_model", "gemini-1.5-flash")
         return ChatGoogleGenerativeAI(
-            model=model_name or "gemini-1.5-flash", 
+            model=model_name or fallback, 
             api_key=api_key,
             temperature=0,
             safety_settings={
@@ -51,21 +93,39 @@ def get_llm(llm_config: dict = None):
         )
 
 def get_safe_string(content) -> str:
-    if isinstance(content, str): return content
-    if isinstance(content, list): return " ".join([str(item.get("text", "")) if isinstance(item, dict) else str(item) for item in content])
+    if isinstance(content, str): 
+        return content
+    if isinstance(content, list): 
+        extracted = []
+        for item in content:
+            if isinstance(item, dict) and "text" in item:
+                extracted.append(str(item["text"]))
+            elif isinstance(item, str):
+                extracted.append(item)
+            else:
+                extracted.append(str(item))
+        return " ".join(extracted)
     return str(content)
 
-def create_worker_node(agent_name: str, system_prompt: str, tools: list, workspace_id: str, llm_config: dict = None):
+def create_worker_node(agent_name: str, system_prompt: str, tools: list, workspace_id: str, tenant_id: str, llm_config: dict = None):
     tool_map = {t.name: t for t in tools}
     
     def node_func(state: AgentState):
+        safe_name = re.sub(r'[^a-zA-Z0-9_-]', '_', agent_name)
         print(f"\n--- [Execution Engine] Waking up Worker: {agent_name} ---")
         messages = state.get("messages", [])
+        context_vars = state.get("context_variables", {})
         
-        background = f"BACKGROUND CONTEXT:\n{system_prompt}\n\n" if system_prompt else ""
+        # Format the system prompt dynamically if templates exist
+        resolved_sys_prompt = resolve_templates(system_prompt, context_vars) if system_prompt else ""
+        background = f"BACKGROUND CONTEXT:\n{resolved_sys_prompt}\n\n" if resolved_sys_prompt else ""
+        
         instructions = background + f"You are a helpful worker named {agent_name}."
         instructions += f"\n\nCRITICAL INSTRUCTION: You are part of a multi-agent team. You MUST provide a response ONLY from the perspective of '{agent_name}'."
         instructions += "\nSECURITY & ACCESS: You are an individual contributor. You do NOT have the ability to route messages."
+        
+        if tenant_id:
+            instructions += f"\n\n🚨 CRITICAL TENANT ISOLATION REQUIREMENT: You are operating on behalf of a specific tenant. Their `tenant_id` is: {tenant_id}. If you ever need to craft SQL queries, filter APIs, or query databases that contain a `tenant_id` column, you MUST append a `WHERE tenant_id = '{tenant_id}'` clause to absolutely ensure you do not bleed data from other organizations!"
         
         llm = get_llm(llm_config)
         if tools:
@@ -83,10 +143,12 @@ def create_worker_node(agent_name: str, system_prompt: str, tools: list, workspa
             response = worker_llm.invoke([sys_msg] + current_messages)
         except Exception as e:
             print(f"      -> [CRITICAL LLM ERROR] {str(e)}")
-            return {"messages": []}
+            return {"messages": [HumanMessage(content=f"System Critical Error in '{agent_name}': {str(e)}\n\n*Did you forget to attach an AI Compute Engine to this workspace's Active Tools?*", name=safe_name)]}
 
-        if response.tool_calls:
-            print(f"      -> [Tool Execution] '{agent_name}' decided to use tools!")
+        iterations = 0
+        while response.tool_calls and iterations < 3:
+            iterations += 1
+            print(f"      -> [Tool Execution] '{agent_name}' decided to use tools (Iteration {iterations})!")
             current_messages.append(response) 
             
             for tool_call in response.tool_calls:
@@ -136,47 +198,54 @@ def create_worker_node(agent_name: str, system_prompt: str, tools: list, workspa
         content = get_safe_string(response.content).strip()
         
         if not content:
-            content = f"Hello, I am {agent_name}. I have processed your request."
+            if current_messages and isinstance(current_messages[-1], ToolMessage):
+                content = f"I am {agent_name}. I executed my tool and found this data: {current_messages[-1].content}"
+            else:
+                content = f"Hello, I am {agent_name}. I have processed your request."
             
-        safe_name = re.sub(r'[^a-zA-Z0-9_-]', '_', agent_name)
-        
-        return {"messages": [AIMessage(content=content, name=safe_name)]}
+        return {
+            "messages": [HumanMessage(content=content, name=safe_name)],
+            "context_variables": {safe_name: {"output": content}}
+        }
     return node_func
 
-def create_supervisor_node(agent_name: str, system_prompt: str, workers: list, tools: list, workspace_id: str, llm_config: dict = None):
+class RoutingDecision(BaseModel):
+    thought_process: str = Field(description="Your internal reasoning for why you are routing this task.")
+    response: str = Field(description="The final message to display back to the user.")
+    next_agent: str = Field(description="The name of the agent to route to, or 'FINISH' if you are done.")
+
+def create_supervisor_node(agent_name: str, system_prompt: str, workers: list, tools: list, workspace_id: str, tenant_id: str, llm_config: dict = None):
     tool_map = {t.name: t for t in tools}
     
-    schema_instruction = f"""
-    FINAL ROUTING DECISION:
-    You are an automated routing system. You MUST output your ENTIRE response as a raw JSON object.
-    DO NOT include any conversational text before or after the JSON.
-    DO NOT wrap the JSON in markdown formatting (no ```json).
-    
-    Format your response EXACTLY like this example:
-    {{
-        "thought_process": "I need the worker to look up this data.",
-        "response": "I am routing your request to my team member right now.",
-        "next_agent": "Name of the worker"
-    }}
-    """
-    
     def node_func(state: AgentState):
+        safe_name = re.sub(r'[^a-zA-Z0-9_-]', '_', agent_name)
         messages = state.get("messages", [])
+        context_vars = state.get("context_variables", {})
         worker_list_str = ", ".join(workers)
         
-        background = f"BACKGROUND CONTEXT:\n{system_prompt}\n\n" if system_prompt else ""
+        resolved_sys_prompt = resolve_templates(system_prompt, context_vars) if system_prompt else ""
+        background = f"BACKGROUND CONTEXT:\n{resolved_sys_prompt}\n\n" if resolved_sys_prompt else ""
         instructions = background + f"You are a manager named {agent_name}."
         
+        if tenant_id:
+            instructions += f"\n\n🚨 CRITICAL TENANT ISOLATION REQUIREMENT: You are operating on behalf of a specific tenant. Their `tenant_id` is: {tenant_id}. If you ever delegate tasks involving database queries or data lookup to your workers, you MUST remind them explicitly to filter their searches for this specific tenant_id to prevent cross-tenant data leaks!"
+
         instructions += f"\n\nCRITICAL INSTRUCTION: You manage this team: {worker_list_str}."
         instructions += f"\n1. IDENTITY: You are '{agent_name}'. NEVER impersonate your workers."
-        instructions += "\n2. AVOID REPETITION: If you already responded to the user's latest request, set your JSON 'response' value to an empty string (\"\")."
-        instructions += f"\n3. ROSTER ENFORCEMENT: You may ONLY route to your direct reports: [{worker_list_str}], or 'FINISH'. NEVER route to yourself ({agent_name})."
-        instructions += f"\n4. SECURITY & ACCESS: If the user asks you to interact with an agent or department that is NOT in your allowed roster ({worker_list_str}), you MUST politely inform them in your 'response' that you do not have access or authorization to communicate with that team, and set 'next_agent' to 'FINISH'."
+        
+        if len(workers) == 1:
+            instructions += f"\n2. SEQUENTIAL PIPELINE: You have exactly ONE downstream worker available: '{workers[0]}'. When you have finished processing data or handling your piece of the task, you MUST set 'next_agent' to '{workers[0]}' so they can continue the pipeline. Do NOT set 'next_agent' to 'FINISH' until '{workers[0]}' has executed."
+        else:
+            instructions += "\n2. CONVERSATION & DELEGATION: For general conversational questions or tasks you can do yourself (e.g., 'What is today's date?', 'Hello'), you MUST answer them directly in your 'response' and set 'next_agent' to 'FINISH'. ONLY delegate to workers if their specific highly-specialized expertise or private tools are strictly required."
+            
+        instructions += "\n3. SOLE COMMUNICATOR: You are the ONLY agent that speaks to the user. Workers operate silently in the background. When a worker returns data or a response, you MUST summarize or present their findings to the user. NEVER return an empty response after a worker has completed a task."
+        instructions += f"\n4. ROSTER ENFORCEMENT: When delegating, you may ONLY route to your direct reports: [{worker_list_str}], or 'FINISH'. NEVER route to yourself."
+        instructions += f"\n5. SECURITY & ACCESS: If the user asks you to interact with an agent or department that is NOT in your allowed roster ({worker_list_str}), you MUST politely inform them in your 'response' that you do not have access or authorization to communicate with that team, and set 'next_agent' to 'FINISH'."
 
         if tools:
-            instructions += "\n5. EXTERNAL TOOLS: You have access to external tools. If the user asks for data that requires a tool, you MUST invoke the tool natively FIRST. Do NOT output your JSON routing block until AFTER you receive the tool results."
+            instructions += "\n6. EXTERNAL TOOLS: You have access to external tools. If the user asks for data that requires a tool, you MUST invoke the tool natively FIRST. Do NOT output your JSON routing block until AFTER you receive the tool results."
 
-        instructions += f"\n\n{schema_instruction}"
+        instructions += "\n7. LOOP PREVENTION: If you have already delegated a task to a worker and they failed to provide a satisfactory answer, DO NOT delegate to them again. Instead, apologize to the user, summarize whatever data was returned, and set 'next_agent' to 'FINISH'."
         
         sys_msg = SystemMessage(content=instructions)
         llm = get_llm(llm_config)
@@ -186,11 +255,15 @@ def create_supervisor_node(agent_name: str, system_prompt: str, workers: list, t
 
         current_messages = messages.copy()
         
+        # 1. First, we need to allow the Manager to natively run its own dynamic tools if provided.
+        #    This happens exactly like a worker loop, using the raw untyped manager_llm (without structured output).
         try:
             response = manager_llm.invoke([sys_msg] + current_messages)
             
-            if response.tool_calls:
-                print(f"      -> [Tool Execution] Manager '{agent_name}' decided to use tools!")
+            iterations = 0
+            while hasattr(response, "tool_calls") and response.tool_calls and iterations < 3:
+                iterations += 1
+                print(f"      -> [Tool Execution] Manager '{agent_name}' decided to use tools (Iteration {iterations})!")
                 current_messages.append(response)
                 
                 for tool_call in response.tool_calls:
@@ -216,7 +289,6 @@ def create_supervisor_node(agent_name: str, system_prompt: str, workers: list, t
                                     }).execute()
                                 except Exception as db_err:
                                     print(f"         * [Telemetry Error] {db_err}")
-
                         else:
                             current_messages.append(ToolMessage(content=f"Error: Tool {tool_name} not found.", tool_call_id=tool_call["id"]))
                     except Exception as e:
@@ -234,55 +306,38 @@ def create_supervisor_node(agent_name: str, system_prompt: str, workers: list, t
                             except: pass
                 
                 print(f"      -> [Tool Execution] Feeding data back to '{agent_name}' for JSON routing decision...")
+                # We do NOT use the structured routing loop here so the LLM can freely think about the tools
                 response = manager_llm.invoke([sys_msg] + current_messages)
-
-            content_str = get_safe_string(response.content).strip()
             
-            if not content_str:
-                print(f"\n--- [Execution Engine] '{agent_name}' returned empty text. Auto-routing to FINISH. ---")
-                content_str = '{"thought_process": "I had nothing to say.", "response": "", "next_agent": "FINISH"}'
-
-            match = re.search(r'\{.*\}', content_str, re.DOTALL)
-            
-            if not match:
-                print(f"--- [WARNING] No JSON found. Capturing raw text to prevent crash! ---")
-                raw_clean = re.sub(r"^\*\*\[.*?\]\*\*:\s*", "", content_str).strip()
-                parsed_data = {
-                    "thought_process": "LLM failed JSON format. Captured raw text.",
-                    "response": raw_clean,
-                    "next_agent": "FINISH" 
-                }
-            else:
-                try:
-                    parsed_data = json.loads(match.group(0))
-                except json.JSONDecodeError:
-                    parsed_data = {
-                        "thought_process": "Invalid JSON generated.",
-                        "response": "I encountered an error formatting my response.",
-                        "next_agent": "FINISH"
-                    }
-
-            thought = parsed_data.get("thought_process", "No thought provided.")
-            resp_text = parsed_data.get("response", "")
-            next_agt = parsed_data.get("next_agent", "FINISH")
-            
+            # 2. Finally, once all tools successfully complete (or if none were needed),
+            #    we explicitly bind `.with_structured_output` to force it to return a valid pydantic graph edge object
             print(f"\n--- [Execution Engine] Supervisor '{agent_name}' is thinking... ---")
+            routing_llm = llm.with_structured_output(RoutingDecision)
+            final_routing_response = routing_llm.invoke([sys_msg] + current_messages)
+            
+            thought = final_routing_response.thought_process
+            resp_text = final_routing_response.response
+            next_agt = final_routing_response.next_agent
+            
             print(f"      -> Thought: {thought}")
             print(f"      -> Decided to route to: {next_agt}")
             
         except Exception as e:
             print(f"\n--- [SUPERVISOR CRASH] '{agent_name}' failed: {str(e)} ---")
-            return {"next_agent": "FINISH"} 
+            return {
+                "messages": [AIMessage(content=f"System Critical Error in Manager '{agent_name}': {str(e)}\n\n*Did you forget to attach an AI Compute Engine to this workspace's Active Tools?*", name=safe_name)],
+                "next_agent": "FINISH"
+            } 
         
         resp_text = resp_text.strip()
+        out_context = {safe_name: {"output": resp_text}}
         
         if not resp_text or resp_text.upper() == "FINISH" or resp_text == "None":
-            return {"next_agent": next_agt}
+            return {"next_agent": next_agt, "context_variables": out_context}
             
-        safe_name = re.sub(r'[^a-zA-Z0-9_-]', '_', agent_name)
-        
         return {
             "messages": [AIMessage(content=resp_text, name=safe_name)],
-            "next_agent": next_agt
+            "next_agent": next_agt,
+            "context_variables": out_context
         }
     return node_func

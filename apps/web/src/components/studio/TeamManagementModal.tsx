@@ -2,6 +2,7 @@ import React from 'react';
 import { UserPlus, X } from 'lucide-react';
 import { useStudioStore } from '@/store/studioStore';
 import { createBrowserClient } from '@supabase/ssr';
+import { API_URL } from '@/config';
 
 export default function TeamManagementModal() {
     const {
@@ -30,7 +31,6 @@ export default function TeamManagementModal() {
         if (!session) return;
 
         try {
-            const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
             const res = await fetch(`${API_URL}/api/chat/${currentChartId}/invite`, {
                 method: 'POST',
                 headers: {

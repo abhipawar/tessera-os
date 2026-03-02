@@ -2,9 +2,18 @@ import React, { useRef } from 'react';
 import ReactFlow, { Background, Controls, MiniMap } from 'reactflow';
 import 'reactflow/dist/style.css';
 import AgentNode from '@/components/AgentNode';
+import TriggerNode from '@/components/TriggerNode';
+import ApprovalNode from '@/components/ApprovalNode';
+import ConditionalNode from '@/components/ConditionalNode';
 import { useStudioStore, GlobalAgent } from '@/store/studioStore';
+import CanvasContextMenu from './CanvasContextMenu';
 
-const nodeTypes = { customAgent: AgentNode };
+const nodeTypes = {
+    customAgent: AgentNode,
+    triggerNode: TriggerNode,
+    approvalNode: ApprovalNode,
+    conditionalNode: ConditionalNode
+};
 
 export default function StudioCanvas() {
     const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -14,6 +23,9 @@ export default function StudioCanvas() {
         setNodes, setSelectedNode, setIsTeamPanelOpen
     } = useStudioStore();
     const [reactFlowInstance, setReactFlowInstance] = React.useState<any>(null);
+    const [menuState, setMenuState] = React.useState<{ show: boolean, x: number, y: number, type: 'node' | 'pane' | 'edge', nodeId?: string, edgeId?: string }>({
+        show: false, x: 0, y: 0, type: 'pane'
+    });
 
     const onDragOver = React.useCallback((event: React.DragEvent) => {
         event.preventDefault();
@@ -42,7 +54,8 @@ export default function StudioCanvas() {
                     label: payload.label,
                     description: payload.description,
                     systemPrompt: payload.systemPrompt || '',
-                    tools: payload.tools || []
+                    tools: payload.tools || [],
+                    condition: payload.condition || ''
                 },
             };
 
@@ -54,9 +67,45 @@ export default function StudioCanvas() {
     const onNodeClick = React.useCallback((_: React.MouseEvent, node: any) => {
         setSelectedNode(node);
         setIsTeamPanelOpen(false);
+        setMenuState(prev => ({ ...prev, show: false }));
     }, [setSelectedNode, setIsTeamPanelOpen]);
 
-    const onPaneClick = React.useCallback(() => setSelectedNode(null), [setSelectedNode]);
+    const onPaneClick = React.useCallback(() => {
+        setSelectedNode(null);
+        setMenuState(prev => ({ ...prev, show: false }));
+    }, [setSelectedNode]);
+
+    const onNodeContextMenu = React.useCallback((event: React.MouseEvent, node: any) => {
+        event.preventDefault();
+        setMenuState({
+            show: true,
+            x: event.clientX,
+            y: event.clientY,
+            type: 'node',
+            nodeId: node.id
+        });
+    }, []);
+
+    const onPaneContextMenu = React.useCallback((event: React.MouseEvent) => {
+        event.preventDefault();
+        setMenuState({
+            show: true,
+            x: event.clientX,
+            y: event.clientY,
+            type: 'pane'
+        });
+    }, []);
+
+    const onEdgeContextMenu = React.useCallback((event: React.MouseEvent, edge: any) => {
+        event.preventDefault();
+        setMenuState({
+            show: true,
+            x: event.clientX,
+            y: event.clientY,
+            type: 'edge',
+            edgeId: edge.id
+        });
+    }, []);
 
     return (
         <div className="flex-1 h-full relative overflow-hidden bg-zinc-950" ref={reactFlowWrapper}>
@@ -75,6 +124,9 @@ export default function StudioCanvas() {
                 onDragOver={onDragOver}
                 onNodeClick={onNodeClick}
                 onPaneClick={onPaneClick}
+                onNodeContextMenu={onNodeContextMenu}
+                onPaneContextMenu={onPaneContextMenu}
+                onEdgeContextMenu={onEdgeContextMenu}
                 nodeTypes={nodeTypes}
                 fitView
                 fitViewOptions={{ maxZoom: 0.85 }}
@@ -87,6 +139,16 @@ export default function StudioCanvas() {
                     nodeColor="#3b82f6"
                 />
                 <Background color="#27272a" gap={16} size={2} />
+                {menuState.show && (
+                    <CanvasContextMenu
+                        x={menuState.x}
+                        y={menuState.y}
+                        type={menuState.type}
+                        nodeId={menuState.nodeId}
+                        edgeId={menuState.edgeId}
+                        onClose={() => setMenuState(prev => ({ ...prev, show: false }))}
+                    />
+                )}
             </ReactFlow>
         </div>
     );

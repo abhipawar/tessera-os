@@ -18,6 +18,7 @@ router = APIRouter(prefix="/api/tenant", tags=["integrations"])
 
 class TenantToolPayload(BaseModel):
     tool_id: str
+    tenant_tool_id: Optional[str] = None
     connection_name: Optional[str] = None 
     credentials: Dict[str, Any]
 
@@ -47,20 +48,25 @@ def get_tenant_integrations(req: Request):
             return {"success": True, "tools": []}
 
         tenant_id = member_resp.data[0]["tenant_id"]
-        tenant_tools = supabase_client.table("tenant_tools").select("tool_id, status").eq("tenant_id", tenant_id).execute().data
+        tenant_tools = supabase_client.table("tenant_tools").select("*").eq("tenant_id", tenant_id).execute().data
         
-        configured_map = {tt["tool_id"]: tt["status"] for tt in tenant_tools}
-        
-        merged_catalog = []
-        for tool in global_tools:
-            is_connected = tool["id"] in configured_map
-            merged_catalog.append({
-                **tool,
-                "is_connected": is_connected,
-                "tenant_status": configured_map.get(tool["id"], "disconnected")
-            })
+        global_tools_map = {t["id"]: t for t in global_tools}
+        active_tools = []
+        for tt in tenant_tools:
+            g_tool = global_tools_map.get(tt["tool_id"])
+            if g_tool:
+                tool_copy = dict(g_tool)
+                tool_copy["tenant_tool_id"] = tt["id"]
+                tool_copy["connection_name"] = tt.get("connection_name")
+                
+                try:
+                    tool_copy["credentials"] = decrypt_credentials(tt.get("credentials"))
+                except Exception:
+                    tool_copy["credentials"] = {}
+                    
+                active_tools.append(tool_copy)
             
-        return {"success": True, "tools": merged_catalog}
+        return {"success": True, "active_tools": active_tools, "catalog_tools": global_tools}
         
     except Exception as e:
         print(f"--- [Tenant Tools Fetch Error] {str(e)} ---")
@@ -92,19 +98,29 @@ def test_connection(payload: ConnectionTestRequest, req: Request):
             provider = payload.provider.lower()
             api_key = payload.api_key
             
+            models = []
             if provider == "openai":
                 res = requests.get("https://api.openai.com/v1/models", headers={"Authorization": f"Bearer {api_key}"}, timeout=5)
+                if res.status_code == 200:
+                    models = [m["id"] for m in res.json().get("data", []) if "gpt" in m["id"] or "o1" in m["id"] or "o3" in m["id"]]
             elif provider == "google gemini":
                 res = requests.get(f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}", timeout=5)
+                if res.status_code == 200:
+                    models = [m["name"].replace("models/", "") for m in res.json().get("models", []) if "gemini" in m["name"]]
             elif provider == "anthropic":
                 res = requests.get("https://api.anthropic.com/v1/models", headers={"x-api-key": api_key, "anthropic-version": "2023-06-01"}, timeout=5)
+                if res.status_code == 200:
+                    models = ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229"]
             elif provider == "groq":
                 res = requests.get("https://api.groq.com/openai/v1/models", headers={"Authorization": f"Bearer {api_key}"}, timeout=5)
+                if res.status_code == 200:
+                    models = [m["id"] for m in res.json().get("data", [])]
             else:
                 return {"success": False, "error": f"Unsupported LLM provider: {provider}"}
             
             if res.status_code == 200:
-                return {"success": True, "message": f"Successfully authenticated with {payload.provider}!"}
+                models.sort(reverse=True)
+                return {"success": True, "message": f"Successfully authenticated with {payload.provider}!", "models": list(set(models)) if models else ["default"]}
             else:
                 return {"success": False, "error": f"Authentication failed. Provider returned status: {res.status_code}."}
 
@@ -186,13 +202,19 @@ def save_tenant_integration(payload: TenantToolPayload, req: Request):
         tenant_id = member_resp.data[0]["tenant_id"]
 
         encrypted_creds = encrypt_credentials(payload.credentials)
-        supabase_client.table("tenant_tools").insert({
-            "tenant_id": tenant_id,
-            "tool_id": payload.tool_id,
-            "connection_name": payload.connection_name, 
-            "credentials": encrypted_creds,
-            "status": "active"
-        }).execute()
+        if payload.tenant_tool_id:
+            supabase_client.table("tenant_tools").update({
+                "connection_name": payload.connection_name, 
+                "credentials": encrypted_creds,
+            }).eq("id", payload.tenant_tool_id).eq("tenant_id", tenant_id).execute()
+        else:
+            supabase_client.table("tenant_tools").insert({
+                "tenant_id": tenant_id,
+                "tool_id": payload.tool_id,
+                "connection_name": payload.connection_name, 
+                "credentials": encrypted_creds,
+                "status": "active"
+            }).execute()
             
         return {"success": True, "message": "Credentials securely saved."}
 

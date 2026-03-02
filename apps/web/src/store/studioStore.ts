@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { Node, Edge, Connection, addEdge, applyNodeChanges, applyEdgeChanges, NodeChange, EdgeChange } from 'reactflow';
+import { saveWorkspaceAction, deleteWorkspaceAction } from '@/app/studio/actions';
+import { API_URL } from '@/config';
 import { createBrowserClient } from '@supabase/ssr';
 
 export type GlobalAgent = {
@@ -16,12 +18,25 @@ export type ChartItem = {
     name: string;
 };
 
+export type Template = {
+    id: string;
+    name: string;
+    description: string;
+    target_audience: string;
+    icon: string;
+    prerequisite_tools: string[];
+    graph_json: any;
+    is_active: boolean;
+    created_at: string;
+};
+
 interface StudioState {
     // React Flow State
     nodes: Node[];
     edges: Edge[];
     selectedNode: Node | null;
     activeUserNode: string | null;
+    clipboardNode: any | null;
 
     // React Flow Actions
     setNodes: (nodes: Node[] | ((val: Node[]) => Node[])) => void;
@@ -31,6 +46,7 @@ interface StudioState {
     onConnect: (connection: Connection) => void;
     setSelectedNode: (node: Node | null) => void;
     setActiveUserNode: (id: string | null) => void;
+    setClipboardNode: (node: any | null) => void;
 
     // Marketplace & Tools
     agents: GlobalAgent[];
@@ -44,13 +60,17 @@ interface StudioState {
 
     // Workspace State
     chartList: ChartItem[];
+    globalTemplates: Template[];
     currentChartId: string | null;
     chartName: string;
     isSaving: boolean;
+    isAdmin: boolean;
     setChartList: (list: ChartItem[]) => void;
+    setGlobalTemplates: (templates: Template[]) => void;
     setCurrentChartId: (id: string | null) => void;
     setChartName: (name: string) => void;
     setIsSaving: (saving: boolean) => void;
+    setIsAdmin: (isAdmin: boolean) => void;
 
     // Team Management State
     isTeamPanelOpen: boolean;
@@ -63,10 +83,15 @@ interface StudioState {
     setInviteRole: (role: string) => void;
 
     // Actions
+    checkAdminStatus: () => Promise<void>;
     fetchChartList: () => Promise<void>;
     fetchAgentsAndTools: () => Promise<void>;
+    fetchGlobalTemplates: () => Promise<void>;
     loadChart: (id: string) => Promise<void>;
+    loadTemplate: (id: string) => void;
     saveOrgChart: () => Promise<void>;
+    publishGlobalTemplate: (templateData: Partial<Template>) => Promise<{ success: boolean, error?: string }>;
+    deleteWorkspace: () => Promise<void>;
     createNewChart: () => void;
 }
 
@@ -90,6 +115,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     edges: [],
     selectedNode: null,
     activeUserNode: null,
+    clipboardNode: null,
 
     agents: [],
     configuredTools: [],
@@ -97,9 +123,11 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     searchQuery: '',
 
     chartList: [],
+    globalTemplates: [],
     currentChartId: null,
     chartName: 'New Workspace',
     isSaving: false,
+    isAdmin: false,
 
     isTeamPanelOpen: false,
     nodeAssignments: {},
@@ -114,6 +142,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     onConnect: (connection: Connection) => set((state) => ({ edges: addEdge(connection, state.edges) })),
     setSelectedNode: (node) => set({ selectedNode: node }),
     setActiveUserNode: (id) => set({ activeUserNode: id }),
+    setClipboardNode: (node) => set({ clipboardNode: node }),
 
     setAgents: (agents) => set({ agents }),
     setConfiguredTools: (tools) => set({ configuredTools: tools }),
@@ -121,9 +150,11 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     setSearchQuery: (query) => set({ searchQuery: query }),
 
     setChartList: (list) => set({ chartList: list }),
+    setGlobalTemplates: (templates) => set({ globalTemplates: templates }),
     setCurrentChartId: (id) => set({ currentChartId: id }),
     setChartName: (name) => set({ chartName: name }),
     setIsSaving: (saving) => set({ isSaving: saving }),
+    setIsAdmin: (isAdmin) => set({ isAdmin }),
 
     setIsTeamPanelOpen: (open) => set({ isTeamPanelOpen: open }),
     setNodeAssignments: (assignments) => set({ nodeAssignments: assignments }),
@@ -131,6 +162,21 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     setInviteRole: (role) => set({ inviteRole: role }),
 
     // Async Actions
+    checkAdminStatus: async () => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('is_tessera_admin')
+                .eq('id', user.id)
+                .single();
+            set({ isAdmin: !!profile?.is_tessera_admin });
+        } catch (error) {
+            console.error("Failed to check admin status", error);
+        }
+    },
+
     fetchChartList: async () => {
         const { data, error } = await supabase
             .from('workspaces')
@@ -151,7 +197,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) return;
 
-            const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
             const headers = { 'Authorization': `Bearer ${session.access_token}` };
 
             const [agentsRes, toolsRes] = await Promise.all([
@@ -171,6 +217,22 @@ export const useStudioStore = create<StudioState>((set, get) => ({
         }
     },
 
+    fetchGlobalTemplates: async () => {
+        try {
+            const { data, error } = await supabase
+                .from('global_workspace_templates')
+                .select('*')
+                .eq('is_active', true)
+                .order('created_at', { ascending: true });
+
+            if (!error && data) {
+                set({ globalTemplates: data as Template[] });
+            }
+        } catch (e) {
+            console.error("Failed to load templates", e);
+        }
+    },
+
     loadChart: async (id: string) => {
         try {
             const { data: { session } } = await supabase.auth.getSession();
@@ -179,7 +241,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
             const { data: nameData } = await supabase.from('workspaces').select('name').eq('id', id).single();
             const loadedName = nameData ? nameData.name : 'Loaded Workspace';
 
-            const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
             const res = await fetch(`${API_URL}/api/chat/${id}/layout`, {
                 method: 'GET',
                 headers: {
@@ -216,6 +278,31 @@ export const useStudioStore = create<StudioState>((set, get) => ({
         }
     },
 
+    loadTemplate: (id: string) => {
+        const state = get();
+        const template = state.globalTemplates.find(t => t.id === id);
+        if (!template) return;
+
+        let parsedNodes = [];
+        let parsedEdges = [];
+
+        if (template.graph_json) {
+            parsedNodes = typeof template.graph_json.nodes === 'string' ? JSON.parse(template.graph_json.nodes) : template.graph_json.nodes;
+            parsedEdges = typeof template.graph_json.edges === 'string' ? JSON.parse(template.graph_json.edges) : template.graph_json.edges;
+        }
+
+        set({
+            currentChartId: null, // It's not saved yet, acts like "New Workspace"
+            chartName: template.name,
+            selectedNode: null,
+            activeUserNode: null,
+            isTeamPanelOpen: false,
+            nodes: parsedNodes || defaultNodes,
+            edges: parsedEdges || [],
+            nodeAssignments: {} // Will be requested to set on save
+        });
+    },
+
     createNewChart: () => {
         set({
             currentChartId: null,
@@ -231,84 +318,125 @@ export const useStudioStore = create<StudioState>((set, get) => ({
 
     saveOrgChart: async () => {
         const state = get();
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-            alert("You must be logged in to save.");
-            return;
-        }
-
-        if (state.activeUserNode && state.activeUserNode !== 'supervisor') {
-            alert("Security Lock: Only the Top Supervisor can save structural changes to the Studio.");
-            return;
-        }
-
         set({ isSaving: true });
+
         try {
-            const { data: tenantData, error: tenantError } = await supabase
-                .from('tenant_members')
-                .select('tenant_id')
-                .eq('user_id', session.user.id)
-                .single();
-
-            if (tenantError || !tenantData) {
-                alert("Authentication Error: Could not determine your tenant.");
-                set({ isSaving: false });
-                return;
-            }
-
-            const tenantId = tenantData.tenant_id;
             const strippedNodes = state.nodes.map(n => {
                 const { style, ...rest } = n;
                 return rest;
             });
-            const nodesJson = JSON.stringify(strippedNodes);
-            const edgesJson = JSON.stringify(state.edges);
 
-            if (state.currentChartId) {
-                // Update existing
-                const { error } = await supabase
-                    .from('workspaces')
-                    .update({
-                        name: state.chartName,
-                        nodes: nodesJson,
-                        edges: edgesJson,
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq('id', state.currentChartId)
-                    .eq('tenant_id', tenantId);
+            const result = await saveWorkspaceAction({
+                currentChartId: state.currentChartId,
+                chartName: state.chartName,
+                nodesJson: JSON.stringify(strippedNodes),
+                edgesJson: JSON.stringify(state.edges),
+                activeUserNode: state.activeUserNode
+            });
 
-                if (error) throw error;
-            } else {
-                // Insert new
-                const { data, error } = await supabase
-                    .from('workspaces')
-                    .insert({
-                        name: state.chartName,
-                        tenant_id: tenantId,
-                        nodes: nodesJson,
-                        edges: edgesJson
-                    })
-                    .select();
-
-                if (error) throw error;
-                if (data && data.length > 0) {
-                    const newId = data[0].id;
-
-                    await supabase.from('workspace_members').insert({
-                        workspace_id: newId,
-                        user_id: session.user.id,
-                        assigned_node_id: 'supervisor',
-                        role_id: null
-                    });
-
-                    set({ currentChartId: newId });
-                }
+            if (result.error) {
+                alert(result.error);
+                return;
             }
+
+            if (result.success && result.newChartId) {
+                set({ currentChartId: result.newChartId });
+            }
+
             await state.fetchChartList();
             alert('Graph Engine successfully synchronized and compiled.');
         } catch (err: any) {
             console.error(err);
             alert('Failed to save chart: ' + err.message);
+        } finally {
+            set({ isSaving: false });
+        }
+    },
+
+    publishGlobalTemplate: async (templateData: Partial<Template>) => {
+        const state = get();
+        set({ isSaving: true });
+
+        try {
+            const strippedNodes = state.nodes.map(n => {
+                const { style, ...rest } = n;
+                return rest;
+            });
+
+            const graphJson = {
+                nodes: strippedNodes,
+                edges: state.edges
+            };
+
+            // Derive prerequisite tools from nodes
+            const toolsSet = new Set<string>();
+            state.nodes.forEach(n => {
+                if (n.data?.tools && Array.isArray(n.data.tools)) {
+                    n.data.tools.forEach((t: any) => {
+                        if (t.name) toolsSet.add(t.name);
+                    });
+                }
+            });
+            const prerequisiteTools = Array.from(toolsSet);
+
+            const payload = {
+                name: templateData.name || state.chartName,
+                description: templateData.description || "",
+                target_audience: templateData.target_audience || "Everyone",
+                icon: templateData.icon || "Server",
+                prerequisite_tools: prerequisiteTools,
+                graph_json: graphJson,
+                is_active: true
+            };
+
+            // If we're updating an existing template specifically
+            if (templateData.id) {
+                const { error } = await supabase
+                    .from('global_workspace_templates')
+                    .update(payload)
+                    .eq('id', templateData.id);
+                if (error) throw error;
+            } else {
+                const { error } = await supabase
+                    .from('global_workspace_templates')
+                    .insert([payload]);
+                if (error) throw error;
+            }
+
+            await state.fetchGlobalTemplates();
+            return { success: true };
+
+        } catch (err: any) {
+            console.error("Failed to publish global template:", err);
+            return { success: false, error: err.message };
+        } finally {
+            set({ isSaving: false });
+        }
+    },
+
+    deleteWorkspace: async () => {
+        const state = get();
+        if (!state.currentChartId) return;
+
+        const isConfirmed = window.confirm("Are you sure you want to permanently delete this workspace and all its data? This action cannot be undone.");
+        if (!isConfirmed) return;
+
+        set({ isSaving: true });
+
+        try {
+            const result = await deleteWorkspaceAction(state.currentChartId);
+
+            if (result.error) {
+                alert(result.error);
+                return;
+            }
+
+            state.createNewChart();
+            await state.fetchChartList();
+            alert('Workspace deleted successfully.');
+        } catch (err: any) {
+            console.error(err);
+            alert('Failed to delete workspace: ' + err.message);
         } finally {
             set({ isSaving: false });
         }

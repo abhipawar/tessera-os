@@ -18,6 +18,9 @@ class PostgresQuerySchema(BaseModel):
 class SalesforceLookupSchema(BaseModel):
     query: str = Field(description="The name or email to look up in Salesforce.")
 
+class PythonSandboxSchema(BaseModel):
+    code: str = Field(description="The raw Python code string to execute inside the micro-VM. Do not include markdown formatting.")
+
 def build_tenant_tools(workspace_id: str, requested_tool_ids: List[str]) -> List[Any]:
     if not requested_tool_ids or not supabase_client:
         return []
@@ -51,18 +54,16 @@ def build_tenant_tools(workspace_id: str, requested_tool_ids: List[str]) -> List
                 def execute_postgres_query(sql_query: str) -> str:
                     print(f"      -> [Real Tool Execution] Running SQL: {sql_query}")
                     try:
-                        import psycopg2
+                        import psycopg
                         conn_url = t_creds.get("connection_url")
                         if conn_url:
-                            conn = psycopg2.connect(conn_url, connect_timeout=10)
+                            conn = psycopg.connect(conn_url, connect_timeout=10)
                         else:
-                            conn = psycopg2.connect(
-                                host=t_creds.get("host"), port=t_creds.get("port"), dbname=t_creds.get("database"),
-                                user=t_creds.get("username"), password=t_creds.get("password"), connect_timeout=10
-                            )
+                            dsn = f"host={t_creds.get('host')} port={t_creds.get('port')} dbname={t_creds.get('database')} user={t_creds.get('username')} password={t_creds.get('password')}"
+                            conn = psycopg.connect(dsn, connect_timeout=10)
                         
                         is_readonly = (t_creds.get("access_level", "read_only") == "read_only")
-                        conn.set_session(readonly=is_readonly)
+                        conn.read_only = is_readonly
                         cur = conn.cursor()
                         cur.execute(sql_query)
                         
@@ -99,6 +100,43 @@ def build_tenant_tools(workspace_id: str, requested_tool_ids: List[str]) -> List
                     args_schema=SalesforceLookupSchema
                 )
                 langchain_tools.append(sf_tool)
+
+            elif "E2B Python" in t_name:
+                def run_python_code(code: str) -> str:
+                    print("\n--- [E2B Sandbox] Spinning up BYOK MicroVM ---")
+                    try:
+                        from e2b_code_interpreter import Sandbox
+                        e2b_key = t_creds.get("e2b_api_key", os.environ.get("E2B_API_KEY"))
+                        
+                        if not e2b_key:
+                            return "Error: Missing E2B API Key in tenant credentials."
+                            
+                        with Sandbox.create(api_key=e2b_key) as sandbox:
+                            execution = sandbox.run_code(code)
+                            
+                            if execution.error:
+                                return f"Error: {execution.error.name}: {execution.error.value}\n{execution.error.traceback}"
+                            
+                            output_blocks = []
+                            if execution.logs.stdout: output_blocks.append("\n".join(execution.logs.stdout))
+                            if execution.logs.stderr: output_blocks.append("\n".join(execution.logs.stderr))
+                            if execution.text and not execution.logs.stdout: output_blocks.append(execution.text)
+                            if execution.results:
+                                for result in execution.results:
+                                    if result.text: output_blocks.append(result.text)
+                
+                            final_result = "\n".join(output_blocks).strip()
+                            return final_result if final_result else "Code executed successfully with no output."
+                    except Exception as e:
+                        return f"Sandbox exception: {str(e)}"
+                        
+                sandbox_tool = StructuredTool.from_function(
+                    func=run_python_code,
+                    name="run_python_code",
+                    description="Executes python code in a secure cloud sandbox and returns the terminal output. Use this to do complex math, process data, or write custom scripts.",
+                    args_schema=PythonSandboxSchema
+                )
+                langchain_tools.append(sandbox_tool)
                 
         print(f"--- [Tool Factory] Successfully built {len(langchain_tools)} dynamic tools! ---")
         return langchain_tools

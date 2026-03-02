@@ -42,11 +42,15 @@ export default function Dashboard() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-zinc-950 flex flex-col font-sans text-white">
+        <div className="min-h-screen bg-zinc-950 flex flex-col font-sans text-white relative overflow-hidden">
+            {/* Ambient Background Glows */}
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/10 blur-[120px] rounded-full pointer-events-none z-0" />
+            <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-emerald-500/10 blur-[150px] rounded-full pointer-events-none z-0" />
+
             {/* GLOBAL HEADER */}
 
 
-            <main className="flex-1 max-w-7xl w-full mx-auto p-8 flex flex-col gap-8">
+            <main className="flex-1 max-w-7xl w-full mx-auto p-8 flex flex-col gap-8 relative z-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 {/* WELCOME BANNER */}
                 <section>
                     <h2 className="text-3xl font-bold text-white">Welcome to your Command Center</h2>
@@ -55,16 +59,16 @@ export default function Dashboard() {
 
                 {/* METRICS OVERVIEW */}
                 <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 shadow-sm flex flex-col">
+                    <div className="bg-zinc-900/50 backdrop-blur-xl p-6 rounded-3xl border border-zinc-800/50 shadow-sm flex flex-col hover:border-zinc-700/50 transition-colors">
                         <span className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">Active Chats</span>
                         <span className="text-4xl font-bold text-white mt-2">{recentCharts.length || 0}</span>
                     </div>
-                    <div className="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 shadow-sm flex flex-col">
+                    <div className="bg-zinc-900/50 backdrop-blur-xl p-6 rounded-3xl border border-zinc-800/50 shadow-sm flex flex-col hover:border-zinc-700/50 transition-colors">
                         <span className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">Deployed Agents</span>
                         <span className="text-4xl font-bold text-white mt-2">--</span>
                         <span className="text-xs text-zinc-500 mt-1">Awaiting LangGraph sync</span>
                     </div>
-                    <div className="bg-zinc-900 p-6 rounded-2xl border border-zinc-800 shadow-sm flex flex-col">
+                    <div className="bg-zinc-900/50 backdrop-blur-xl p-6 rounded-3xl border border-zinc-800/50 shadow-sm flex flex-col hover:border-zinc-700/50 transition-colors">
                         <span className="text-sm font-semibold text-zinc-400 uppercase tracking-wider">Learned Skills (Vector DB)</span>
                         <span className="text-4xl font-bold text-white mt-2">--</span>
                         <span className="text-xs text-zinc-500 mt-1">Awaiting sync</span>
@@ -80,8 +84,8 @@ export default function Dashboard() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
                             {/* Studio Card */}
-                            <Link href="/studio" className="group bg-zinc-900 p-6 rounded-2xl border border-zinc-800 shadow-sm hover:shadow-md hover:border-blue-500 transition-all cursor-pointer flex flex-col h-full">
-                                <div className="w-12 h-12 bg-blue-500/10 text-blue-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <Link href="/studio" className="group bg-zinc-900/50 backdrop-blur-xl p-6 rounded-3xl border border-zinc-800/50 hover:border-blue-500/50 hover:bg-blue-900/10 hover:shadow-[0_0_20px_rgba(37,99,235,0.15)] transition-all cursor-pointer flex flex-col h-full">
+                                <div className="w-12 h-12 bg-blue-500/10 text-blue-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(37,99,235,0.2)]">
                                     <Network size={24} />
                                 </div>
                                 <h4 className="text-lg font-bold text-white mb-1">Studio Builder</h4>
@@ -92,8 +96,8 @@ export default function Dashboard() {
                             </Link>
 
                             {/* Chat Chat Card */}
-                            <Link href="/chat" className="group bg-zinc-900 p-6 rounded-2xl border border-zinc-800 shadow-sm hover:shadow-md hover:border-indigo-500 transition-all cursor-pointer flex flex-col h-full">
-                                <div className="w-12 h-12 bg-indigo-500/10 text-indigo-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <Link href="/chat" className="group bg-zinc-900/50 backdrop-blur-xl p-6 rounded-3xl border border-zinc-800/50 hover:border-indigo-500/50 hover:bg-indigo-900/10 hover:shadow-[0_0_20px_rgba(99,102,241,0.15)] transition-all cursor-pointer flex flex-col h-full">
+                                <div className="w-12 h-12 bg-indigo-500/10 text-indigo-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(99,102,241,0.2)]">
                                     <MessageSquare size={24} />
                                 </div>
                                 <h4 className="text-lg font-bold text-white mb-1">Agent Interface</h4>
@@ -104,7 +108,7 @@ export default function Dashboard() {
                             </Link>
 
                             {/* Skill Library Card (Future) */}
-                            <div className="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-800 flex flex-col h-full opacity-70">
+                            <div className="bg-zinc-900/30 backdrop-blur-xl p-6 rounded-3xl border border-zinc-800/50 flex flex-col h-full opacity-70">
                                 <div className="w-12 h-12 bg-zinc-800 text-zinc-500 rounded-xl flex items-center justify-center mb-4">
                                     <BrainCircuit size={24} />
                                 </div>
@@ -116,8 +120,8 @@ export default function Dashboard() {
                             </div>
 
                             {/* Integrations Card (Live!) */}
-                            <Link href="/integrations" className="group bg-zinc-900 p-6 rounded-2xl border border-zinc-800 shadow-sm hover:shadow-md hover:border-emerald-500 transition-all cursor-pointer flex flex-col h-full">
-                                <div className="w-12 h-12 bg-emerald-500/10 text-emerald-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <Link href="/integrations" className="group bg-zinc-900/50 backdrop-blur-xl p-6 rounded-3xl border border-zinc-800/50 hover:border-emerald-500/50 hover:bg-emerald-900/10 hover:shadow-[0_0_20px_rgba(16,185,129,0.15)] transition-all cursor-pointer flex flex-col h-full">
+                                <div className="w-12 h-12 bg-emerald-500/10 text-emerald-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(16,185,129,0.2)]">
                                     <Key size={24} />
                                 </div>
                                 <h4 className="text-lg font-bold text-white mb-1">Integrations & BYOK</h4>
@@ -133,14 +137,14 @@ export default function Dashboard() {
                     {/* RECENT WORKSPACES SIDEBAR */}
                     <section className="flex flex-col gap-4">
                         <h3 className="text-lg font-bold text-white">Recent Chats</h3>
-                        <div className="bg-zinc-900 rounded-2xl border border-zinc-800 shadow-sm p-4 flex flex-col gap-2">
+                        <div className="bg-zinc-900/50 backdrop-blur-xl rounded-3xl border border-zinc-800/50 shadow-sm p-5 flex flex-col gap-2 relative">
                             {isLoading ? (
                                 <div className="text-sm text-zinc-500 text-center py-8 animate-pulse">Loading chats...</div>
                             ) : recentCharts.length > 0 ? (
                                 recentCharts.map((chart) => (
-                                    <Link href="/studio" key={chart.id} className="p-3 hover:bg-zinc-800/50 rounded-xl border border-transparent hover:border-zinc-800 transition-colors flex items-center justify-between group">
+                                    <Link href="/studio" key={chart.id} className="p-3 hover:bg-zinc-800/50 rounded-xl border border-transparent hover:border-zinc-700/50 transition-colors flex items-center justify-between group">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded bg-blue-500/10 text-blue-500 flex items-center justify-center">
+                                            <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center group-hover:shadow-[0_0_10px_rgba(37,99,235,0.4)] transition-all">
                                                 <Network size={16} />
                                             </div>
                                             <div>
@@ -150,14 +154,14 @@ export default function Dashboard() {
                                                 </div>
                                             </div>
                                         </div>
-                                        <ArrowRight size={16} className="text-zinc-600 group-hover:text-blue-500 transition-colors" />
+                                        <ArrowRight size={16} className="text-zinc-600 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
                                     </Link>
                                 ))
                             ) : (
                                 <div className="text-sm text-zinc-500 text-center py-8">No chats found.</div>
                             )}
 
-                            <Link href="/studio" className="mt-2 flex items-center justify-center gap-2 w-full py-2.5 bg-zinc-800/30 hover:bg-zinc-800 text-white font-semibold text-sm rounded-xl border border-zinc-800 transition-colors">
+                            <Link href="/studio" className="mt-2 flex items-center justify-center gap-2 w-full py-3 bg-zinc-800/30 hover:bg-zinc-800/80 text-white font-semibold text-sm rounded-xl border border-zinc-800/50 transition-colors">
                                 <Plus size={16} /> Create New Workspace
                             </Link>
                         </div>

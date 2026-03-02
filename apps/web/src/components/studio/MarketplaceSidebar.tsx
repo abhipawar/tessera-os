@@ -5,28 +5,59 @@ import { useStudioStore, GlobalAgent } from '@/store/studioStore';
 export default function MarketplaceSidebar() {
     const { agents, isLoadingAgents, searchQuery, setSearchQuery } = useStudioStore();
 
-    const onDragStart = (event: React.DragEvent, agent: GlobalAgent) => {
+    const onDragStart = (event: React.DragEvent, agent: any) => {
         const payload = {
-            type: 'customAgent',
+            type: agent.type_override || 'customAgent',
             label: agent.name,
             description: agent.description,
-            systemPrompt: agent.system_prompt,
+            systemPrompt: agent.system_prompt || '',
+            condition: agent.type_override === 'conditionalNode' ? 'If the payload contains...' : undefined,
             tools: []
         };
         event.dataTransfer.setData('application/reactflow', JSON.stringify(payload));
         event.dataTransfer.effectAllowed = 'move';
     };
 
-    const groupedAgents = agents.reduce((acc, agent) => {
+    const groupedAgents = [
+        ...agents,
+        {
+            id: 'node_trigger',
+            name: 'Async Trigger',
+            description: 'Starts the execution thread based on a webhook or cron job event payload.',
+            system_prompt: '',
+            tool_categories: { display_name: 'Flow Control' },
+            type_override: 'triggerNode'
+        },
+        {
+            id: 'node_approval',
+            name: 'Approval Checkpoint',
+            description: 'Pauses the execution thread and alerts a human. Will resume upon explicit UI approval.',
+            system_prompt: '',
+            tool_categories: { display_name: 'Flow Control' },
+            type_override: 'approvalNode'
+        },
+        {
+            id: 'node_conditional',
+            name: 'Conditional Splitter',
+            description: 'Branches the execution flow (True/False) based on an AI-evaluated natural language condition.',
+            system_prompt: '',
+            tool_categories: { display_name: 'Flow Control' },
+            type_override: 'conditionalNode'
+        }
+    ].reduce((acc, agent) => {
         const categoryName = agent.tool_categories?.display_name || 'General Agents';
         if (!acc[categoryName]) acc[categoryName] = [];
         acc[categoryName].push(agent);
         return acc;
-    }, {} as Record<string, GlobalAgent[]>);
+    }, {} as Record<string, any[]>);
 
     const filteredCategories = Object.entries(groupedAgents).map(([category, catAgents]) => ({
         category,
-        agents: catAgents.filter(a => a.name.toLowerCase().includes(searchQuery.toLowerCase()) || a.description.toLowerCase().includes(searchQuery.toLowerCase()))
+        agents: catAgents.filter(a => {
+            const nameMatch = a.name ? a.name.toLowerCase().includes(searchQuery.toLowerCase()) : false;
+            const descMatch = a.description ? a.description.toLowerCase().includes(searchQuery.toLowerCase()) : false;
+            return nameMatch || descMatch;
+        })
     })).filter(group => group.agents.length > 0);
 
     return (

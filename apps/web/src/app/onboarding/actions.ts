@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
+import { API_URL } from '@/config'
 
 export async function onboardTenant(formData: FormData) {
     const supabase = await createClient()
@@ -12,7 +13,6 @@ export async function onboardTenant(formData: FormData) {
     const password = formData.get('password') as string
 
     // 1. Tell Python to securely create the User, Tenant, and Workspace
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
     try {
         const res = await fetch(`${API_URL}/api/signup-onboard`, {
             method: 'POST',

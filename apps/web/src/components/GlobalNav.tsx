@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Network, MessageSquare, Activity, Settings, LogOut, ShieldAlert, Plug } from 'lucide-react';
+import { LayoutDashboard, Network, MessageSquare, Activity, Settings, LogOut, ShieldAlert, Plug, LayoutTemplate, Inbox } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
 
 export default function GlobalNav() {
@@ -73,6 +73,8 @@ export default function GlobalNav() {
   // Base navigation links for everyone
   const navLinks = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+    { name: 'Command Center', path: '/inbox', icon: Inbox },
+    { name: 'Templates', path: '/templates', icon: LayoutTemplate },
     { name: 'Agent Studio', path: '/studio', icon: Network },
     { name: 'Integrations', path: '/integrations', icon: Plug }, // <-- Add this line!
     { name: 'Co-Pilot Chat', path: '/chat', icon: MessageSquare },
