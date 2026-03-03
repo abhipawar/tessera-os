@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { createBrowserClient } from '@supabase/ssr'
 import { Trash2, AlertTriangle, Users, Database, Network, RefreshCw, Wrench, CheckCircle2, XCircle, Bot, Settings } from 'lucide-react'
 import { API_URL } from '@/config'
+import { useNotificationStore } from '@/store/notificationStore'
 
 // Master Data & Types
 type MasterCategory = { id: string; slug: string; display_name: string; icon_name: string; }
@@ -110,7 +111,13 @@ export default function AdminDashboard() {
       await fetch(url, { method: editingTool ? 'PUT' : 'POST', headers: { 'Authorization': `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       setIsToolModalOpen(false);
       fetchDashboardData();
-    } catch (e) { alert("Failed to save tool."); }
+    } catch (e) {
+      useNotificationStore.getState().showNotification({
+        title: "Save Failed",
+        message: "Failed to persist tool changes to the database.",
+        type: "error"
+      });
+    }
   };
 
   const deleteTool = async (id: string) => {
@@ -140,7 +147,13 @@ export default function AdminDashboard() {
       await fetch(url, { method: editingAgent ? 'PUT' : 'POST', headers: { 'Authorization': `Bearer ${session?.access_token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(agentForm) });
       setIsAgentModalOpen(false);
       fetchDashboardData();
-    } catch (e) { alert("Failed to save agent."); }
+    } catch (e) {
+      useNotificationStore.getState().showNotification({
+        title: "Save Failed",
+        message: "Failed to save agent to the database.",
+        type: "error"
+      });
+    }
   };
 
   const deleteAgent = async (id: string) => {
@@ -169,7 +182,13 @@ export default function AdminDashboard() {
       await fetch(url, { method: editingTemplate ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(templateForm) });
       setIsTemplateModalOpen(false);
       fetchDashboardData();
-    } catch (e) { alert("Failed to save template."); }
+    } catch (e) {
+      useNotificationStore.getState().showNotification({
+        title: "Save Failed",
+        message: "Failed to save global template.",
+        type: "error"
+      });
+    }
   };
 
   const deleteTemplate = async (id: string) => {
@@ -196,7 +215,13 @@ export default function AdminDashboard() {
       });
       setIsSettingModalOpen(false);
       fetchDashboardData();
-    } catch (e) { alert("Failed to save setting."); }
+    } catch (e) {
+      useNotificationStore.getState().showNotification({
+        title: "Save Failed",
+        message: "Failed to save global setting.",
+        type: "error"
+      });
+    }
   };
 
   // --- SYSTEM FUNCTIONS ---
@@ -206,9 +231,19 @@ export default function AdminDashboard() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       await fetch(`${API_URL}/api/admin/reset-system`, { method: 'POST', headers: { 'Authorization': `Bearer ${session?.access_token}` } });
-      alert("System data wiped.");
+      useNotificationStore.getState().showNotification({
+        title: "System Purged",
+        message: "System data completely wiped and reset.",
+        type: "success"
+      });
       fetchDashboardData();
-    } catch (e) { alert("Error"); } finally { setIsWiping(false); }
+    } catch (e) {
+      useNotificationStore.getState().showNotification({
+        title: "Reset Failed",
+        message: "Database failed to wipe.",
+        type: "error"
+      });
+    } finally { setIsWiping(false); }
   }
 
   return (
@@ -470,13 +505,22 @@ export default function AdminDashboard() {
             </div>
             <div>
               <label className="text-xs text-zinc-500 mb-1 block">Value</label>
-              <Input
-                placeholder="Value"
-                type={(editingSetting?.key.includes("password") || editingSetting?.key.includes("secret")) ? "password" : "text"}
-                value={settingFormValue}
-                onChange={e => setSettingFormValue(e.target.value)}
-                className="bg-zinc-950 font-mono"
-              />
+              {editingSetting?.key.includes("prompt") ? (
+                <textarea
+                  placeholder="Value"
+                  value={settingFormValue}
+                  onChange={e => setSettingFormValue(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-md p-2 h-64 text-sm font-mono text-emerald-400"
+                />
+              ) : (
+                <Input
+                  placeholder="Value"
+                  type={(editingSetting?.key.includes("password") || editingSetting?.key.includes("secret")) ? "password" : "text"}
+                  value={settingFormValue}
+                  onChange={e => setSettingFormValue(e.target.value)}
+                  className="bg-zinc-950 font-mono"
+                />
+              )}
             </div>
             <div>
               <label className="text-xs text-zinc-500 mb-1 block">Description</label>

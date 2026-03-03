@@ -65,26 +65,26 @@ class AgentState(TypedDict):
     context_variables: Annotated[dict, merge_dicts]
 
 def get_llm(llm_config: dict = None):
-    provider = "google gemini"
-    api_key = os.environ.get("GEMINI_API_KEY", "")
-    model_name = None
+    if not llm_config:
+        raise ValueError("No LLM configuration provided. Please connect an LLM integration (like OpenAI or Anthropic) in your Tenant Tools.")
 
-    if llm_config:
-        provider = llm_config.get("provider", "google gemini").lower()
-        api_key = llm_config.get("api_key", api_key)
-        model_name = llm_config.get("model_name", None)
+    provider = llm_config.get("provider", "").lower()
+    api_key = llm_config.get("api_key", "")
+    model_name = llm_config.get("model_name")
+
+    if not api_key or not model_name:
+        raise ValueError(f"Incomplete LLM configuration for provider '{provider}'. Missing API key or model name.")
 
     if provider == "openai":
-        fallback = get_system_setting("default_openai_model", "gpt-4o")
-        return ChatOpenAI(model=model_name or fallback, api_key=api_key, temperature=0.0)
+        return ChatOpenAI(model=model_name, api_key=api_key, temperature=0.0)
     elif provider == "anthropic":
-        return ChatAnthropic(model=model_name or "claude-3-5-sonnet-20241022", api_key=api_key, temperature=0.0)
+        return ChatAnthropic(model=model_name, api_key=api_key, temperature=0.0)
     elif provider == "groq":
-        return ChatGroq(model=model_name or "llama-3.1-70b-versatile", api_key=api_key, temperature=0.0)
+        return ChatGroq(model=model_name, api_key=api_key, temperature=0.0)
     else:
-        fallback = get_system_setting("default_google_model", "gemini-1.5-flash")
+        # Defaults to google gemini if provider string matches or is unknown but valid key exists
         return ChatGoogleGenerativeAI(
-            model=model_name or fallback, 
+            model=model_name, 
             api_key=api_key,
             temperature=0,
             safety_settings={

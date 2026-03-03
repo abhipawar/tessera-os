@@ -5,6 +5,8 @@ import AgentNode from '@/components/AgentNode';
 import TriggerNode from '@/components/TriggerNode';
 import ApprovalNode from '@/components/ApprovalNode';
 import ConditionalNode from '@/components/ConditionalNode';
+import StartNode from '@/components/StartNode';
+import EndNode from '@/components/EndNode';
 import { useStudioStore, GlobalAgent } from '@/store/studioStore';
 import CanvasContextMenu from './CanvasContextMenu';
 
@@ -12,7 +14,9 @@ const nodeTypes = {
     customAgent: AgentNode,
     triggerNode: TriggerNode,
     approvalNode: ApprovalNode,
-    conditionalNode: ConditionalNode
+    conditionalNode: ConditionalNode,
+    startNode: StartNode,
+    endNode: EndNode
 };
 
 export default function StudioCanvas() {
@@ -77,10 +81,12 @@ export default function StudioCanvas() {
 
     const onNodeContextMenu = React.useCallback((event: React.MouseEvent, node: any) => {
         event.preventDefault();
+        const bounds = reactFlowWrapper.current?.getBoundingClientRect();
+        if (!bounds) return;
         setMenuState({
             show: true,
-            x: event.clientX,
-            y: event.clientY,
+            x: event.clientX - bounds.left,
+            y: event.clientY - bounds.top,
             type: 'node',
             nodeId: node.id
         });
@@ -88,20 +94,24 @@ export default function StudioCanvas() {
 
     const onPaneContextMenu = React.useCallback((event: React.MouseEvent) => {
         event.preventDefault();
+        const bounds = reactFlowWrapper.current?.getBoundingClientRect();
+        if (!bounds) return;
         setMenuState({
             show: true,
-            x: event.clientX,
-            y: event.clientY,
+            x: event.clientX - bounds.left,
+            y: event.clientY - bounds.top,
             type: 'pane'
         });
     }, []);
 
     const onEdgeContextMenu = React.useCallback((event: React.MouseEvent, edge: any) => {
         event.preventDefault();
+        const bounds = reactFlowWrapper.current?.getBoundingClientRect();
+        if (!bounds) return;
         setMenuState({
             show: true,
-            x: event.clientX,
-            y: event.clientY,
+            x: event.clientX - bounds.left,
+            y: event.clientY - bounds.top,
             type: 'edge',
             edgeId: edge.id
         });

@@ -10,6 +10,7 @@ import ConfigurationPanel from '@/components/studio/ConfigurationPanel';
 import TeamManagementModal from '@/components/studio/TeamManagementModal';
 
 import { useStudioStore } from '@/store/studioStore';
+import { useNotificationStore } from '@/store/notificationStore';
 
 export default function OrgChartCanvas() {
   const {
@@ -79,9 +80,17 @@ export default function OrgChartCanvas() {
     const res = await publishGlobalTemplate(payload);
     if (res.success) {
       setIsPublishModalOpen(false);
-      alert(activeTemplate ? "Global Template Updated!" : "New Global Template Published!");
+      useNotificationStore.getState().showNotification({
+        title: "Template Published",
+        message: activeTemplate ? "Global Template Updated!" : "New Global Template Published!",
+        type: "success"
+      });
     } else {
-      alert("Publish Failed: " + res.error);
+      useNotificationStore.getState().showNotification({
+        title: "Publish Failed",
+        message: res.error || "An unknown error occurred.",
+        type: "error"
+      });
     }
   };
 

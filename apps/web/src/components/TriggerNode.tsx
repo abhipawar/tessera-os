@@ -33,7 +33,7 @@ function TriggerNode({ data, selected }: { data: any, selected: boolean }) {
             <Handle
                 type="source"
                 position={Position.Bottom}
-                className="w-3 h-3 bg-zinc-950 border-2 border-indigo-500 rounded-full -mb-1.5 hover:bg-emerald-400 hover:border-emerald-400 hover:shadow-[0_0_10px_rgba(52,211,153,0.8)] transition-all"
+                className="w-5 h-5 bg-zinc-900 border-2 border-indigo-500 rounded-full -mb-2.5 hover:bg-emerald-500 hover:border-emerald-400 hover:scale-150 transition-all z-20"
             />
         </div>
     );

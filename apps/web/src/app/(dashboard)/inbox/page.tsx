@@ -3,8 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { Inbox, CheckCircle, XCircle, Loader2, ArrowRight } from 'lucide-react';
+import { useNotificationStore } from '@/store/notificationStore';
 import { API_URL } from '@/config';
-// Assuming a date formatter or using built in Intl
 
 export default function InboxPage() {
     const [tasks, setTasks] = useState<any[]>([]);
@@ -58,7 +58,11 @@ export default function InboxPage() {
 
         } catch (error) {
             console.error(`Error ${action}ing task:`, error);
-            alert(`Failed to ${action} task.`);
+            useNotificationStore.getState().showNotification({
+                title: "Action Failed",
+                message: `Failed to ${action} task.`,
+                type: "error"
+            });
         } finally {
             setActionLoading(null);
         }

@@ -10,6 +10,7 @@ def build_dynamic_graph(nodes: list, edges: list, user_node_id: str, memory=None
     
     builder = StateGraph(AgentState)
     node_id_to_label = {n.get("id"): n.get("data", {}).get("label", "Unknown") for n in nodes}
+    node_id_to_type = {n.get("id"): n.get("type") for n in nodes}
     
     manager_to_workers = {}
     worker_to_parent = {} 
@@ -87,10 +88,38 @@ def build_dynamic_graph(nodes: list, edges: list, user_node_id: str, memory=None
         node_tools = build_tenant_tools(workspace_id, tool_ids) if workspace_id and tool_ids else []
         node_type = node.get("type")
         
-        if node_type == "approvalNode":
+        if node_type in ["startNode", "triggerNode"]:
+            def create_start_node(node_lbl: str, next_agt: str):
+                def app_node(state: AgentState):
+                    print(f"\n--- [Execution Engine] Entry Point reached: '{node_lbl}' ---")
+                    return {"next_agent": next_agt} if next_agt else {}
+                return app_node
+            
+            start_workers = [node_id_to_label[w] for w in manager_to_workers.get(node_id, [])]
+            next_tgt = start_workers[0] if start_workers else None
+            node_function = create_start_node(label, next_tgt)
+            
+        elif node_type == "endNode":
+            def create_end_node(node_lbl: str):
+                def app_node(state: AgentState):
+                    print(f"\n--- [Execution Engine] Terminal Point reached: '{node_lbl}' ---")
+                    return {"next_agent": "FINISH"}
+                return app_node
+            node_function = create_end_node(label)
+            
+        elif node_type == "approvalNode":
             def create_approval_node(node_lbl: str, next_agt: str):
+                import re
+                safe_next_agt = re.sub(r'[^a-zA-Z0-9_-]', '_', next_agt)
+                
                 def app_node(state: AgentState):
                     from langgraph.types import interrupt
+                    messages = state.get("messages", [])
+                    
+                    # If the downstream worker just finished and returned to us, propagate FINISH upwards
+                    if messages and hasattr(messages[-1], "name") and messages[-1].name == safe_next_agt:
+                        return {"next_agent": "FINISH"}
+                        
                     print(f"\n--- [Execution Engine] Pausing at Approval Checkpoint: '{node_lbl}' ---")
                     
                     # We interrupt the execution, sending the current messages back to the caller
@@ -98,7 +127,7 @@ def build_dynamic_graph(nodes: list, edges: list, user_node_id: str, memory=None
                     action = interrupt({
                         "type": "approval_request",
                         "node": node_lbl,
-                        "messages": [m.content if hasattr(m, "content") else str(m) for m in state.get("messages", [])[-3:]] 
+                        "messages": [m.content if hasattr(m, "content") else str(m) for m in messages[-3:]] 
                     })
                     
                     print(f"      -> [Approval Result] Received action: {action}")
@@ -199,7 +228,7 @@ def build_dynamic_graph(nodes: list, edges: list, user_node_id: str, memory=None
         for w_id in worker_ids:
             w_label = node_id_to_label[w_id]
             if w_id not in manager_to_workers and w_id not in conditional_routes:
-                if w_id == user_node_id:
+                if w_id == user_node_id or node_id_to_type.get(w_id) == "endNode":
                     builder.add_edge(w_label, END)
                 else:
                     builder.add_edge(w_label, mgr_label)

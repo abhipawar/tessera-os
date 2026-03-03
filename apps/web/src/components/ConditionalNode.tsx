@@ -13,7 +13,7 @@ function ConditionalNode({ data, selected }: { data: any, selected: boolean }) {
             <Handle
                 type="target"
                 position={Position.Top}
-                className="w-3 h-3 bg-zinc-950 border-2 border-zinc-500 rounded-full -mt-1.5"
+                className="w-5 h-5 bg-zinc-900 border-2 border-zinc-500 rounded-full -mt-2.5 hover:bg-zinc-700 hover:border-zinc-400 hover:scale-150 transition-all z-20"
             />
 
             <div className="flex items-start gap-3">
@@ -46,14 +46,14 @@ function ConditionalNode({ data, selected }: { data: any, selected: boolean }) {
                 position={Position.Bottom}
                 id="true"
                 style={{ left: '30%' }}
-                className="w-3 h-3 bg-zinc-950 border-2 border-emerald-500 rounded-full -mb-1.5 hover:bg-emerald-400 hover:border-emerald-400 hover:shadow-[0_0_10px_rgba(16,185,129,0.8)] transition-all"
+                className="w-5 h-5 bg-zinc-900 border-2 border-emerald-500 rounded-full -mb-2.5 hover:bg-emerald-500 hover:border-emerald-400 hover:scale-150 transition-all z-20"
             />
             <Handle
                 type="source"
                 position={Position.Bottom}
                 id="false"
                 style={{ left: '70%' }}
-                className="w-3 h-3 bg-zinc-950 border-2 border-red-500 rounded-full -mb-1.5 hover:bg-red-400 hover:border-red-400 hover:shadow-[0_0_10px_rgba(239,68,68,0.8)] transition-all"
+                className="w-5 h-5 bg-zinc-900 border-2 border-red-500 rounded-full -mb-2.5 hover:bg-red-500 hover:border-red-400 hover:scale-150 transition-all z-20"
             />
         </div>
     );

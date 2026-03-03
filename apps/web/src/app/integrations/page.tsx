@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { Plug, Database, Server, CheckCircle2, XCircle, Loader2, Key, Plus, Lock, Settings } from 'lucide-react';
+import { useNotificationStore } from '@/store/notificationStore';
 import { API_URL } from '@/config';
 
 type Tool = {
@@ -168,14 +169,26 @@ export default function IntegrationsPage() {
 
       const data = await res.json();
       if (data.success) {
-        alert("Integration successfully saved!");
+        useNotificationStore.getState().showNotification({
+          title: "Integration Saved",
+          message: "The integration credentials were successfully saved to your tenant vault.",
+          type: "success"
+        });
         closeToolModal();
         fetchTools(); // This instantly moves the tool to the "Active" section!
       } else {
-        alert("Error saving integration: " + data.error);
+        useNotificationStore.getState().showNotification({
+          title: "Configuration Error",
+          message: "Error saving integration: " + data.error,
+          type: "error"
+        });
       }
     } catch (error) {
-      alert("Critical error saving integration.");
+      useNotificationStore.getState().showNotification({
+        title: "Network Error",
+        message: "Critical error connecting to the credential vault.",
+        type: "error"
+      });
     } finally {
       setIsSaving(false);
     }

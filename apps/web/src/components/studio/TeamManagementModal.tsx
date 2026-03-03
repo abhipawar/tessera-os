@@ -2,6 +2,7 @@ import React from 'react';
 import { UserPlus, X } from 'lucide-react';
 import { useStudioStore } from '@/store/studioStore';
 import { createBrowserClient } from '@supabase/ssr';
+import { useNotificationStore } from '@/store/notificationStore';
 import { API_URL } from '@/config';
 
 export default function TeamManagementModal() {
@@ -42,18 +43,30 @@ export default function TeamManagementModal() {
 
             const data = await res.json();
             if (data.error) {
-                alert(data.error);
+                useNotificationStore.getState().showNotification({
+                    title: "Invite Failed",
+                    message: data.error,
+                    type: "error"
+                });
                 return;
             }
 
             setNodeAssignments({ ...nodeAssignments, [nodeId]: `${inviteEmail} (${inviteRole})` });
-            alert(`Account created for ${inviteEmail}!\n\nTemporary Password: ${data.temp_password}`);
+            useNotificationStore.getState().showNotification({
+                title: "Teammate Invited",
+                message: `Account created for ${inviteEmail}!\n\nTemporary Password: ${data.temp_password}`,
+                type: "success"
+            });
             setInviteEmail("");
             setInviteRole("member");
 
         } catch (error) {
             console.error("Invite error:", error);
-            alert("Failed to send invitation.");
+            useNotificationStore.getState().showNotification({
+                title: "Network Error",
+                message: "Failed to send invitation.",
+                type: "error"
+            });
         }
     };
 

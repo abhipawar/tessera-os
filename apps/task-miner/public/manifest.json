@@ -1,0 +1,33 @@
+{
+    "manifest_version": 3,
+    "name": "Tessera Process Discovery",
+    "version": "1.0.0",
+    "description": "Passively observe user workflows to auto-generate Workspace Templates.",
+    "permissions": [
+        "activeTab",
+        "scripting",
+        "storage"
+    ],
+    "host_permissions": [
+        "http://localhost:8000/*",
+        "https://*/*"
+    ],
+    "background": {
+        "service_worker": "src/background.js",
+        "type": "module"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "src/content.js"
+            ]
+        }
+    ],
+    "action": {
+        "default_popup": "index.html",
+        "default_title": "Tessera Discovery"
+    }
+}

@@ -3,6 +3,7 @@ import { Node, Edge, Connection, addEdge, applyNodeChanges, applyEdgeChanges, No
 import { saveWorkspaceAction, deleteWorkspaceAction } from '@/app/studio/actions';
 import { API_URL } from '@/config';
 import { createBrowserClient } from '@supabase/ssr';
+import { useNotificationStore } from './notificationStore';
 
 export type GlobalAgent = {
     id: string;
@@ -253,7 +254,11 @@ export const useStudioStore = create<StudioState>((set, get) => ({
             const data = await res.json();
 
             if (data.error) {
-                alert(data.error);
+                useNotificationStore.getState().showNotification({
+                    title: "Access Denied",
+                    message: data.error,
+                    type: "error"
+                });
                 return;
             }
 
@@ -274,7 +279,11 @@ export const useStudioStore = create<StudioState>((set, get) => ({
             });
         } catch (error) {
             console.error("Failed to load secure chat layout:", error);
-            alert("Critical Error: Could not reach the security endpoint.");
+            useNotificationStore.getState().showNotification({
+                title: "Authentication Failed",
+                message: "Critical Error: Could not reach the security endpoint.",
+                type: "error"
+            });
         }
     },
 
@@ -335,7 +344,11 @@ export const useStudioStore = create<StudioState>((set, get) => ({
             });
 
             if (result.error) {
-                alert(result.error);
+                useNotificationStore.getState().showNotification({
+                    title: "Sync Failed",
+                    message: result.error,
+                    type: "error"
+                });
                 return;
             }
 
@@ -344,10 +357,18 @@ export const useStudioStore = create<StudioState>((set, get) => ({
             }
 
             await state.fetchChartList();
-            alert('Graph Engine successfully synchronized and compiled.');
+            useNotificationStore.getState().showNotification({
+                title: "Blueprint Compiled",
+                message: "Graph Engine successfully synchronized and saved.",
+                type: "success"
+            });
         } catch (err: any) {
             console.error(err);
-            alert('Failed to save chart: ' + err.message);
+            useNotificationStore.getState().showNotification({
+                title: "Save Error",
+                message: `Failed to save workspace blueprint: ${err.message}`,
+                type: "error"
+            });
         } finally {
             set({ isSaving: false });
         }
@@ -427,16 +448,28 @@ export const useStudioStore = create<StudioState>((set, get) => ({
             const result = await deleteWorkspaceAction(state.currentChartId);
 
             if (result.error) {
-                alert(result.error);
+                useNotificationStore.getState().showNotification({
+                    title: "Deletion Failed",
+                    message: result.error,
+                    type: "error"
+                });
                 return;
             }
 
             state.createNewChart();
             await state.fetchChartList();
-            alert('Workspace deleted successfully.');
+            useNotificationStore.getState().showNotification({
+                title: "Workspace Deleted",
+                message: "The workspace was successfully removed from the database.",
+                type: "success"
+            });
         } catch (err: any) {
             console.error(err);
-            alert('Failed to delete workspace: ' + err.message);
+            useNotificationStore.getState().showNotification({
+                title: "Server Error",
+                message: `Failed to delete workspace: ${err.message}`,
+                type: "error"
+            });
         } finally {
             set({ isSaving: false });
         }

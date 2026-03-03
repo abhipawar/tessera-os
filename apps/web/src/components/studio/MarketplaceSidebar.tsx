@@ -23,7 +23,15 @@ export default function MarketplaceSidebar() {
         {
             id: 'node_trigger',
             name: 'Async Trigger',
-            description: 'Starts the execution thread based on a webhook or cron job event payload.',
+            description: 'Starts the execution thread based on a webhook payload.',
+            system_prompt: '',
+            tool_categories: { display_name: 'Flow Control' },
+            type_override: 'triggerNode'
+        },
+        {
+            id: 'node_scheduler',
+            name: 'Scheduled Trigger',
+            description: 'Wakes the workspace at a precise frequency (e.g., hourly, daily) via cron job events.',
             system_prompt: '',
             tool_categories: { display_name: 'Flow Control' },
             type_override: 'triggerNode'

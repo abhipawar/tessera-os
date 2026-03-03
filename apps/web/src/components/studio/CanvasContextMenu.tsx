@@ -1,5 +1,5 @@
 import React from 'react';
-import { Copy, Trash2, Maximize, XCircle, Settings, Edit3, Unplug, ClipboardCopy, Palette, PlusSquare, Bot, ClipboardPaste, Activity } from 'lucide-react';
+import { Copy, Trash2, Maximize, XCircle, Settings, Edit3, Unplug, ClipboardCopy, Palette, PlusSquare, Bot, ClipboardPaste, Activity, Play, Square } from 'lucide-react';
 import { useReactFlow } from 'reactflow';
 import { useStudioStore } from '@/store/studioStore';
 
@@ -224,6 +224,13 @@ export default function CanvasContextMenu({ x, y, type, nodeId, edgeId, onClose 
 
             {type === 'pane' && (
                 <div className="flex flex-col py-1">
+                    <button onClick={() => handleAddNode('startNode', 'Start')} className="flex items-center gap-2 px-3 py-2 text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors w-full text-left">
+                        <Play size={14} className="text-zinc-500" /> Add Start Node
+                    </button>
+                    <button onClick={() => handleAddNode('endNode', 'End')} className="flex items-center gap-2 px-3 py-2 text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors w-full text-left">
+                        <Square size={14} className="text-zinc-500" /> Add End Node
+                    </button>
+                    <div className="h-px bg-zinc-800 my-1 mx-2" />
                     <button onClick={() => handleAddNode('customAgent', 'New Agent')} className="flex items-center gap-2 px-3 py-2 text-zinc-300 hover:bg-zinc-800 hover:text-white transition-colors w-full text-left">
                         <Bot size={14} className="text-zinc-500" /> Add Agent Node
                     </button>

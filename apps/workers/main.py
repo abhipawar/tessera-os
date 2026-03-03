@@ -1,7 +1,7 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import admin, auth, chat, integrations, async_tasks
+from routers import admin, auth, chat, integrations, async_tasks, telemetry
 import logging
 
 class EndpointFilter(logging.Filter):
@@ -12,15 +12,9 @@ logging.getLogger("uvicorn.access").addFilter(EndpointFilter())
 
 app = FastAPI(title="Tessera OS Worker Engine")
 
-FRONTEND_URL = os.environ.get("NEXT_PUBLIC_APP_URL", "http://localhost:3000")
-CORS_ORIGINS = os.environ.get("CORS_ORIGINS", FRONTEND_URL)
-allowed_origins = [origin.strip() for origin in CORS_ORIGINS.split(",") if origin.strip()]
-if not allowed_origins:
-    allowed_origins = ["*"]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=["*"], # Allow Chrome extension Origins (chrome-extension://...)
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -31,7 +25,7 @@ app.include_router(auth.router)
 app.include_router(chat.router)
 app.include_router(integrations.router)
 app.include_router(async_tasks.router)
-
+app.include_router(telemetry.router)
 import psycopg
 
 @app.on_event("startup")
