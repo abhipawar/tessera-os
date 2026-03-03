@@ -23,13 +23,13 @@ async function assertAdmin() {
     return { supabase, user };
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         const auth = await assertAdmin();
         if (auth.error) return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
 
         const body = await request.json();
-        const id = params.id;
+        const { id } = await params;
 
         const payload = {
             name: body.name,
@@ -57,12 +57,12 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         const auth = await assertAdmin();
         if (auth.error) return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
 
-        const id = params.id;
+        const { id } = await params;
         const supabase = auth.supabase;
         if (!supabase) return NextResponse.json({ success: false, error: 'Supabase client error' }, { status: 500 });
 

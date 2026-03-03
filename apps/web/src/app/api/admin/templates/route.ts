@@ -29,6 +29,8 @@ export async function GET(request: NextRequest) {
         if (auth.error) return NextResponse.json({ success: false, error: auth.error }, { status: auth.status });
 
         const supabase = auth.supabase;
+        if (!supabase) return NextResponse.json({ success: false, error: 'Supabase client error' }, { status: 500 });
+
         const { data, error } = await supabase
             .from('global_workspace_templates')
             .select('id, name, description, target_audience, icon, prerequisite_tools, is_active, created_at')
@@ -61,6 +63,8 @@ export async function POST(request: NextRequest) {
         };
 
         const supabase = auth.supabase;
+        if (!supabase) return NextResponse.json({ success: false, error: 'Supabase client error' }, { status: 500 });
+
         const { data, error } = await supabase
             .from('global_workspace_templates')
             .insert([payload])
