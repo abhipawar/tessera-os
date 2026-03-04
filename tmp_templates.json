@@ -1,0 +1,1098 @@
+[
+  {
+    "id": "4b83a82d-1e12-47d9-b258-be54e446554c",
+    "name": "Autonomous IT Helpdesk",
+    "description": "Resolve IT tickets autonomously.",
+    "graph_json": {
+      "edges": [
+        {
+          "id": "e-supervisor-agent_1",
+          "type": "default",
+          "source": "supervisor",
+          "target": "agent_1"
+        },
+        {
+          "id": "e-supervisor-agent_2",
+          "type": "default",
+          "source": "supervisor",
+          "target": "agent_2"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "supervisor",
+          "data": {
+            "label": "IT Helpdesk Lead",
+            "tools": [],
+            "description": "Lead Orchestrator",
+            "systemPrompt": "You orchestrate IT tickets."
+          },
+          "type": "customAgent",
+          "position": {
+            "x": 250,
+            "y": 50
+          }
+        },
+        {
+          "id": "agent_1",
+          "data": {
+            "label": "Customer Support Triage",
+            "tools": [
+              {
+                "id": "11c74522-e094-4574-a962-8817eeb9f163",
+                "name": "Zendesk"
+              },
+              {
+                "id": "207b3a64-af65-4c42-a8c1-a354f5d03874",
+                "name": "Slack"
+              }
+            ],
+            "description": "",
+            "systemPrompt": "You are a customer success agent. Categorize incoming queries, fetch help center docs, and draft empathetic responses."
+          },
+          "type": "customAgent",
+          "position": {
+            "x": 100,
+            "y": 200
+          }
+        },
+        {
+          "id": "agent_2",
+          "data": {
+            "label": "IT Support / DevOps",
+            "tools": [
+              {
+                "id": "unknown",
+                "name": "GitHub"
+              },
+              {
+                "id": "unknown",
+                "name": "E2B Python Sandbox"
+              }
+            ],
+            "description": "",
+            "systemPrompt": "You are an L1 IT Support and DevOps observer. Monitor queues, verify user access, and summarize server logs."
+          },
+          "type": "customAgent",
+          "position": {
+            "x": 400,
+            "y": 200
+          }
+        },
+        {
+          "id": "start_965d9aa8",
+          "data": {
+            "label": "Start"
+          },
+          "type": "startNode",
+          "position": {
+            "x": 250,
+            "y": -100
+          }
+        },
+        {
+          "id": "end_42f01655",
+          "data": {
+            "label": "End"
+          },
+          "type": "endNode",
+          "position": {
+            "x": 250,
+            "y": 350
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "563555b8-8f87-4f65-a43e-4107bf9cfd42",
+    "name": "Smart Procurement & AP",
+    "description": "Automate procurement workflows.",
+    "graph_json": {
+      "edges": [
+        {
+          "id": "e-supervisor-agent_1",
+          "type": "default",
+          "source": "supervisor",
+          "target": "agent_1"
+        },
+        {
+          "id": "e-supervisor-agent_2",
+          "type": "default",
+          "source": "supervisor",
+          "target": "agent_2"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "supervisor",
+          "data": {
+            "label": "Procurement Lead",
+            "tools": [],
+            "description": "Lead Orchestrator",
+            "systemPrompt": "You manage supply chain and AP."
+          },
+          "type": "customAgent",
+          "position": {
+            "x": 250,
+            "y": 50
+          }
+        },
+        {
+          "id": "agent_1",
+          "data": {
+            "label": "Supply Chain Analyst",
+            "tools": [
+              {
+                "id": "e9b54679-8779-40c2-b7a4-ee055a88e5a6",
+                "name": "Gmail API"
+              },
+              {
+                "id": "5aa418d1-00d0-42fd-b2c3-c6ee3fddbef3",
+                "name": "QuickBooks"
+              }
+            ],
+            "description": "Analyzes inventory levels and supplier performance.",
+            "systemPrompt": "You are an expert supply chain analyst. You evaluate procurement data to optimize inventory."
+          },
+          "type": "customAgent",
+          "position": {
+            "x": 100,
+            "y": 200
+          }
+        },
+        {
+          "id": "agent_2",
+          "data": {
+            "label": "Postgres Database Engineer",
+            "tools": [
+              {
+                "id": "c90703f5-23c2-48d0-ac2d-5fab0a23a218",
+                "name": "Application Database"
+              }
+            ],
+            "description": "Translates natural language into optimized SQL queries.",
+            "systemPrompt": "You are a Database Execution Agent. You MUST use your postgres_query tool to execute SQL and find real answers. NEVER just show the SQL code in the chat. NEVER guess data. You must execute the query using your tool first, and then tell the user the result."
+          },
+          "type": "customAgent",
+          "position": {
+            "x": 400,
+            "y": 200
+          }
+        },
+        {
+          "id": "start_4307c58b",
+          "data": {
+            "label": "Start"
+          },
+          "type": "startNode",
+          "position": {
+            "x": 250,
+            "y": -100
+          }
+        },
+        {
+          "id": "end_3c38fc86",
+          "data": {
+            "label": "End"
+          },
+          "type": "endNode",
+          "position": {
+            "x": 250,
+            "y": 350
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "fa19bbc6-392a-4163-8d71-49180ae8bd77",
+    "name": "Customer Success Triaging",
+    "description": "Prioritize and answer customer requests.",
+    "graph_json": {
+      "edges": [
+        {
+          "id": "e-supervisor-agent_1",
+          "type": "default",
+          "source": "supervisor",
+          "target": "agent_1"
+        },
+        {
+          "id": "e-supervisor-agent_2",
+          "type": "default",
+          "source": "supervisor",
+          "target": "agent_2"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "supervisor",
+          "data": {
+            "label": "CS Lead",
+            "tools": [],
+            "description": "Lead Orchestrator",
+            "systemPrompt": "You manage customer success escalations."
+          },
+          "type": "customAgent",
+          "position": {
+            "x": 250,
+            "y": 50
+          }
+        },
+        {
+          "id": "agent_1",
+          "data": {
+            "label": "Customer Support Triage",
+            "tools": [
+              {
+                "id": "11c74522-e094-4574-a962-8817eeb9f163",
+                "name": "Zendesk"
+              },
+              {
+                "id": "3fdee1c8-2707-427e-8cf1-6e071791b3c9",
+                "name": "Notion API"
+              }
+            ],
+            "description": "",
+            "systemPrompt": "You are a customer success agent. Categorize incoming queries, fetch help center docs, and draft empathetic responses."
+          },
+          "type": "customAgent",
+          "position": {
+            "x": 100,
+            "y": 200
+          }
+        },
+        {
+          "id": "agent_2",
+          "data": {
+            "label": "Data Analyst",
+            "tools": [
+              {
+                "id": "4b77d354-334f-49bc-ab4e-09460d33a22c",
+                "name": "Stripe"
+              }
+            ],
+            "description": "",
+            "systemPrompt": "You are a billing analyst assessing refund eligibility."
+          },
+          "type": "customAgent",
+          "position": {
+            "x": 400,
+            "y": 200
+          }
+        },
+        {
+          "id": "start_63ea6f9c",
+          "data": {
+            "label": "Start"
+          },
+          "type": "startNode",
+          "position": {
+            "x": 250,
+            "y": -100
+          }
+        },
+        {
+          "id": "end_829901b9",
+          "data": {
+            "label": "End"
+          },
+          "type": "endNode",
+          "position": {
+            "x": 250,
+            "y": 350
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "b8f9ebff-f7b2-4272-875b-f0cd42cd91d3",
+    "name": "Zero-Touch Employee Onboarding",
+    "description": "Automated accounts creation and welcoming.",
+    "graph_json": {
+      "edges": [
+        {
+          "id": "e-supervisor-agent_1",
+          "type": "default",
+          "source": "supervisor",
+          "target": "agent_1"
+        },
+        {
+          "id": "e-supervisor-agent_2",
+          "type": "default",
+          "source": "supervisor",
+          "target": "agent_2"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "supervisor",
+          "data": {
+            "label": "HR Orchestrator",
+            "tools": [],
+            "description": "Lead Orchestrator",
+            "systemPrompt": "You manage onboarding workflows."
+          },
+          "type": "customAgent",
+          "position": {
+            "x": 250,
+            "y": 50
+          }
+        },
+        {
+          "id": "agent_1",
+          "data": {
+            "label": "HR & Onboarding Coordinator",
+            "tools": [
+              {
+                "id": "e6107f50-af73-45ba-addb-40523e07d5c6",
+                "name": "Workday"
+              },
+              {
+                "id": "207b3a64-af65-4c42-a8c1-a354f5d03874",
+                "name": "Slack"
+              }
+            ],
+            "description": "",
+            "systemPrompt": "You are an HR Coordinator. Monitor new hires, provision corporate email accounts, and send personalized welcome packets."
+          },
+          "type": "customAgent",
+          "position": {
+            "x": 100,
+            "y": 200
+          }
+        },
+        {
+          "id": "agent_2",
+          "data": {
+            "label": "IT Support / DevOps",
+            "tools": [
+              {
+                "id": "ec3dc5a5-6a0d-4866-9b95-7e5707f94add",
+                "name": "Google Workspace Admin"
+              }
+            ],
+            "description": "",
+            "systemPrompt": "You are an L1 IT Support and DevOps observer. Monitor queues, verify user access, and summarize server logs."
+          },
+          "type": "customAgent",
+          "position": {
+            "x": 400,
+            "y": 200
+          }
+        },
+        {
+          "id": "start_b2869e6d",
+          "data": {
+            "label": "Start"
+          },
+          "type": "startNode",
+          "position": {
+            "x": 250,
+            "y": -100
+          }
+        },
+        {
+          "id": "end_8ddefa23",
+          "data": {
+            "label": "End"
+          },
+          "type": "endNode",
+          "position": {
+            "x": 250,
+            "y": 350
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "8f59b590-7460-4dff-aa8b-c4aaa43f1b66",
+    "name": "BI Command Center",
+    "description": "Your autonomous data analyst dashboard.",
+    "graph_json": {
+      "edges": [
+        {
+          "id": "e-supervisor-agent_1",
+          "type": "default",
+          "source": "supervisor",
+          "target": "agent_1"
+        },
+        {
+          "id": "e-supervisor-agent_2",
+          "type": "default",
+          "source": "supervisor",
+          "target": "agent_2"
+        },
+        {
+          "id": "e-supervisor-agent_3",
+          "type": "default",
+          "source": "supervisor",
+          "target": "agent_3"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "supervisor",
+          "data": {
+            "label": "Chief Data Officer",
+            "tools": [],
+            "description": "Lead Orchestrator",
+            "systemPrompt": "You manage BI requests."
+          },
+          "type": "customAgent",
+          "position": {
+            "x": 300,
+            "y": 50
+          }
+        },
+        {
+          "id": "agent_1",
+          "data": {
+            "label": "Postgres Database Engineer",
+            "tools": [
+              {
+                "id": "unknown",
+                "name": "Snowflake"
+              }
+            ],
+            "description": "Snowflake Engineer",
+            "systemPrompt": "You are a Database Execution Agent. You MUST use your postgres_query tool to execute SQL and find real answers. NEVER just show the SQL code in the chat. NEVER guess data. You must execute the query using your tool first, and then tell the user the result."
+          },
+          "type": "customAgent",
+          "position": {
+            "x": 50,
+            "y": 200
+          }
+        },
+        {
+          "id": "agent_2",
+          "data": {
+            "label": "Data Analyst",
+            "tools": [
+              {
+                "id": "unknown",
+                "name": "E2B Python Sandbox"
+              }
+            ],
+            "description": "",
+            "systemPrompt": "You are a quantitative data analyst. Ingest raw database tables, clean data, and output statistical summaries."
+          },
+          "type": "customAgent",
+          "position": {
+            "x": 300,
+            "y": 200
+          }
+        },
+        {
+          "id": "agent_3",
+          "data": {
+            "label": "Reporting Agent",
+            "tools": [
+              {
+                "id": "207b3a64-af65-4c42-a8c1-a354f5d03874",
+                "name": "Slack"
+              }
+            ],
+            "description": "Reporting Agent",
+            "systemPrompt": "Distribute reports to Slack."
+          },
+          "type": "customAgent",
+          "position": {
+            "x": 550,
+            "y": 200
+          }
+        },
+        {
+          "id": "start_7c2198f1",
+          "data": {
+            "label": "Start"
+          },
+          "type": "startNode",
+          "position": {
+            "x": 250,
+            "y": -100
+          }
+        },
+        {
+          "id": "end_981cf2a9",
+          "data": {
+            "label": "End"
+          },
+          "type": "endNode",
+          "position": {
+            "x": 250,
+            "y": 350
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "c7251861-5b98-4e03-95f8-1f626a9a362a",
+    "name": "The Growth Engine",
+    "description": "A complete system for driving targeted growth.",
+    "graph_json": {
+      "edges": [
+        {
+          "id": "e-supervisor-agent_1",
+          "type": "default",
+          "source": "supervisor",
+          "target": "agent_1"
+        },
+        {
+          "id": "e-supervisor-agent_2",
+          "type": "default",
+          "source": "supervisor",
+          "target": "agent_2"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "supervisor",
+          "data": {
+            "label": "Growth Orchestrator",
+            "tools": [],
+            "description": "Lead Orchestrator",
+            "systemPrompt": "You are the growth lead."
+          },
+          "type": "customAgent",
+          "position": {
+            "x": 250,
+            "y": 50
+          }
+        },
+        {
+          "id": "agent_1",
+          "data": {
+            "label": "Outbound SDR",
+            "tools": [
+              {
+                "id": "e9b54679-8779-40c2-b7a4-ee055a88e5a6",
+                "name": "Gmail API"
+              },
+              {
+                "id": "5cf13bcb-d3aa-4a5e-8a74-46cea2e85083",
+                "name": "HubSpot"
+              }
+            ],
+            "description": "",
+            "systemPrompt": "You are an Outbound SDR. Search for ideal customer profiles, enrich contact data, and write highly targeted cold outreach sequences."
+          },
+          "type": "customAgent",
+          "position": {
+            "x": 100,
+            "y": 200
+          }
+        },
+        {
+          "id": "agent_2",
+          "data": {
+            "label": "Content Marketing Manager",
+            "tools": [
+              {
+                "id": "ca118920-c9d1-444e-bcf3-99f693b3135c",
+                "name": "Exa Search"
+              },
+              {
+                "id": "620ae456-9628-4000-99f8-14b4cfa97afa",
+                "name": "Firecrawl"
+              }
+            ],
+            "description": "",
+            "systemPrompt": "You are a Content Marketer. Analyze trending industry data, draft SEO-optimized articles, and format them for publishing."
+          },
+          "type": "customAgent",
+          "position": {
+            "x": 400,
+            "y": 200
+          }
+        },
+        {
+          "id": "start_cfb26ce5",
+          "data": {
+            "label": "Start"
+          },
+          "type": "startNode",
+          "position": {
+            "x": 250,
+            "y": -100
+          }
+        },
+        {
+          "id": "end_e020dc4d",
+          "data": {
+            "label": "End"
+          },
+          "type": "endNode",
+          "position": {
+            "x": 250,
+            "y": 350
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "95c05a18-d2a2-4b86-8b04-8cf891c91fab",
+    "name": "The Agile Product Triad",
+    "description": "Streamline product management.",
+    "graph_json": {
+      "edges": [
+        {
+          "id": "e-supervisor-agent_1",
+          "type": "default",
+          "source": "supervisor",
+          "target": "agent_1"
+        },
+        {
+          "id": "e-supervisor-agent_2",
+          "type": "default",
+          "source": "supervisor",
+          "target": "agent_2"
+        },
+        {
+          "id": "e-supervisor-agent_3",
+          "type": "default",
+          "source": "supervisor",
+          "target": "agent_3"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "supervisor",
+          "data": {
+            "label": "Product Manager",
+            "tools": [],
+            "description": "Lead Orchestrator",
+            "systemPrompt": "You manage the product lifecycle."
+          },
+          "type": "customAgent",
+          "position": {
+            "x": 300,
+            "y": 50
+          }
+        },
+        {
+          "id": "agent_1",
+          "data": {
+            "label": "Project Manager",
+            "tools": [
+              {
+                "id": "c4db25e3-f357-4fa4-89be-f25b59db7639",
+                "name": "Jira"
+              },
+              {
+                "id": "207b3a64-af65-4c42-a8c1-a354f5d03874",
+                "name": "Slack"
+              }
+            ],
+            "description": "",
+            "systemPrompt": "You are a strict agile project manager. Groom backlogs, update sprint statuses, and summarize daily standups."
+          },
+          "type": "customAgent",
+          "position": {
+            "x": 50,
+            "y": 200
+          }
+        },
+        {
+          "id": "agent_2",
+          "data": {
+            "label": "Software Engineer",
+            "tools": [
+              {
+                "id": "unknown",
+                "name": "GitHub"
+              }
+            ],
+            "description": "",
+            "systemPrompt": "You are a senior engineer. Write, test, and refactor code in secure sandboxes. Resolve tickets accurately."
+          },
+          "type": "customAgent",
+          "position": {
+            "x": 300,
+            "y": 200
+          }
+        },
+        {
+          "id": "agent_3",
+          "data": {
+            "label": "Data Analyst",
+            "tools": [
+              {
+                "id": "3fdee1c8-2707-427e-8cf1-6e071791b3c9",
+                "name": "Notion API"
+              }
+            ],
+            "description": "",
+            "systemPrompt": "You are a quantitative data analyst. Ingest raw database tables, clean data, and output statistical summaries."
+          },
+          "type": "customAgent",
+          "position": {
+            "x": 550,
+            "y": 200
+          }
+        },
+        {
+          "id": "start_e5102d8f",
+          "data": {
+            "label": "Start"
+          },
+          "type": "startNode",
+          "position": {
+            "x": 250,
+            "y": -100
+          }
+        },
+        {
+          "id": "end_ef9378ff",
+          "data": {
+            "label": "End"
+          },
+          "type": "endNode",
+          "position": {
+            "x": 250,
+            "y": 350
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "b27c921f-29f5-45de-816c-ce5e237138bb",
+    "name": "The Outbound Growth Machine",
+    "description": "Personalized cold outreach at scale.",
+    "graph_json": {
+      "edges": [
+        {
+          "id": "e-supervisor-agent_1",
+          "type": "default",
+          "source": "supervisor",
+          "target": "agent_1"
+        },
+        {
+          "id": "e-supervisor-agent_2",
+          "type": "default",
+          "source": "supervisor",
+          "target": "agent_2"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "supervisor",
+          "data": {
+            "label": "Sales Development Manager",
+            "tools": [],
+            "description": "Lead Orchestrator",
+            "systemPrompt": "You manage outbound sales."
+          },
+          "type": "customAgent",
+          "position": {
+            "x": 250,
+            "y": 50
+          }
+        },
+        {
+          "id": "agent_1",
+          "data": {
+            "label": "Outbound SDR",
+            "tools": [
+              {
+                "id": "153cbe24-f482-4a45-a9eb-383208960e64",
+                "name": "Apollo API"
+              },
+              {
+                "id": "e9b54679-8779-40c2-b7a4-ee055a88e5a6",
+                "name": "Gmail API"
+              }
+            ],
+            "description": "",
+            "systemPrompt": "You are an Outbound SDR. Search for ideal customer profiles, enrich contact data, and write highly targeted cold outreach sequences."
+          },
+          "type": "customAgent",
+          "position": {
+            "x": 100,
+            "y": 200
+          }
+        },
+        {
+          "id": "agent_2",
+          "data": {
+            "label": "Research & Synthesis",
+            "tools": [
+              {
+                "id": "ca118920-c9d1-444e-bcf3-99f693b3135c",
+                "name": "Exa Search"
+              }
+            ],
+            "description": "",
+            "systemPrompt": "You are a deep-dive researcher. Scrape the web, synthesize findings, and output structured markdown reports."
+          },
+          "type": "customAgent",
+          "position": {
+            "x": 400,
+            "y": 200
+          }
+        },
+        {
+          "id": "start_bf6f3781",
+          "data": {
+            "label": "Start"
+          },
+          "type": "startNode",
+          "position": {
+            "x": 250,
+            "y": -100
+          }
+        },
+        {
+          "id": "end_347a9e65",
+          "data": {
+            "label": "End"
+          },
+          "type": "endNode",
+          "position": {
+            "x": 250,
+            "y": 350
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "8fd8f6b6-a1c1-437b-a606-ab76869e2d00",
+    "name": "The Content & SEO Engine",
+    "description": "Generate optimized articles from trending data.",
+    "graph_json": {
+      "edges": [
+        {
+          "id": "e-supervisor-agent_1",
+          "type": "default",
+          "source": "supervisor",
+          "target": "agent_1"
+        },
+        {
+          "id": "e-supervisor-agent_2",
+          "type": "default",
+          "source": "supervisor",
+          "target": "agent_2"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "supervisor",
+          "data": {
+            "label": "Content Director",
+            "tools": [],
+            "description": "Lead Orchestrator",
+            "systemPrompt": "You manage content marketing pipelines."
+          },
+          "type": "customAgent",
+          "position": {
+            "x": 250,
+            "y": 50
+          }
+        },
+        {
+          "id": "agent_1",
+          "data": {
+            "label": "Content Marketing Manager",
+            "tools": [
+              {
+                "id": "3fdee1c8-2707-427e-8cf1-6e071791b3c9",
+                "name": "Notion API"
+              },
+              {
+                "id": "207b3a64-af65-4c42-a8c1-a354f5d03874",
+                "name": "Slack"
+              }
+            ],
+            "description": "",
+            "systemPrompt": "You are a Content Marketer. Analyze trending industry data, draft SEO-optimized articles, and format them for publishing."
+          },
+          "type": "customAgent",
+          "position": {
+            "x": 100,
+            "y": 200
+          }
+        },
+        {
+          "id": "agent_2",
+          "data": {
+            "label": "Research & Synthesis",
+            "tools": [
+              {
+                "id": "ca118920-c9d1-444e-bcf3-99f693b3135c",
+                "name": "Exa Search"
+              }
+            ],
+            "description": "SEO Researcher",
+            "systemPrompt": "You are an SEO Researcher."
+          },
+          "type": "customAgent",
+          "position": {
+            "x": 400,
+            "y": 200
+          }
+        },
+        {
+          "id": "start_160da4d9",
+          "data": {
+            "label": "Start"
+          },
+          "type": "startNode",
+          "position": {
+            "x": 250,
+            "y": -100
+          }
+        },
+        {
+          "id": "end_1785d2d9",
+          "data": {
+            "label": "End"
+          },
+          "type": "endNode",
+          "position": {
+            "x": 250,
+            "y": 350
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "3d7aaa4d-98eb-4a88-aa3a-4570f170319f",
+    "name": "Global Web Research Syndicate",
+    "description": "An advanced 6-node hierarchical network. A Lead Supervisor coordinates parallel web scraper agents, summarizes the unstructured data, and holds the final executive brief with a Human-in-the-Loop approval gate before dispatch.",
+    "graph_json": {
+      "edges": [
+        {
+          "id": "e_ceo_to_a",
+          "style": {
+            "stroke": "#3b82f6",
+            "strokeWidth": 2
+          },
+          "source": "ceo_supervisor",
+          "target": "deep_scraper_1",
+          "animated": true
+        },
+        {
+          "id": "e_ceo_to_b",
+          "style": {
+            "stroke": "#3b82f6",
+            "strokeWidth": 2
+          },
+          "source": "ceo_supervisor",
+          "target": "deep_scraper_2",
+          "animated": true
+        },
+        {
+          "id": "e_a_to_synth",
+          "source": "deep_scraper_1",
+          "target": "synthesizer_node"
+        },
+        {
+          "id": "e_b_to_synth",
+          "source": "deep_scraper_2",
+          "target": "synthesizer_node"
+        },
+        {
+          "id": "e_synth_to_human",
+          "style": {
+            "stroke": "#10b981",
+            "strokeWidth": 2
+          },
+          "source": "synthesizer_node",
+          "target": "human_gate",
+          "animated": true
+        },
+        {
+          "id": "e_human_to_out",
+          "source": "human_gate",
+          "target": "output_node"
+        }
+      ],
+      "nodes": [
+        {
+          "id": "ceo_supervisor",
+          "data": {
+            "label": "Chief Research Officer",
+            "description": "Executive Orchestrator",
+            "systemPrompt": "You are the Chief Research Officer. Your job is to break down broad queries (e.g., \\\"Analyze competitor pricing\\\") and delegate specific sub-tasks to your specialized Scraping Agents below. You synthesize their final reports."
+          },
+          "type": "customAgent",
+          "position": {
+            "x": 400,
+            "y": 50
+          }
+        },
+        {
+          "id": "deep_scraper_1",
+          "data": {
+            "label": "Data Miner (Alpha)",
+            "description": "Deep Web Analysis",
+            "systemPrompt": "You are a specialized worker given narrow web-scraping targets by your Supervisor. You use the Tavily and Webpage Reading tools to aggressively extract exact data points. You do not summarize; you return raw facts."
+          },
+          "type": "customAgent",
+          "position": {
+            "x": 100,
+            "y": 250
+          }
+        },
+        {
+          "id": "deep_scraper_2",
+          "data": {
+            "label": "Data Miner (Beta)",
+            "description": "Secondary Validation",
+            "systemPrompt": "You operate in parallel with Miner Alpha. Your goal is to cross-reference their findings by scraping alternative academic or financial sources. Ensure zero hallucination."
+          },
+          "type": "customAgent",
+          "position": {
+            "x": 400,
+            "y": 250
+          }
+        },
+        {
+          "id": "synthesizer_node",
+          "data": {
+            "label": "Content Synthesizer",
+            "description": "Formatting Engine",
+            "systemPrompt": "You wait for the raw data from Alpha and Beta. You format their JSON output into a stunning markdown executive summary."
+          },
+          "type": "customAgent",
+          "position": {
+            "x": 700,
+            "y": 250
+          }
+        },
+        {
+          "id": "human_gate",
+          "data": {
+            "label": "Executive Sign-Off",
+            "prompt": "Review the synthesized web research before allowing the network to broadcast the findings via Email.",
+            "description": "Deterministic Pause"
+          },
+          "type": "humanApprovalNode",
+          "position": {
+            "x": 400,
+            "y": 450
+          }
+        },
+        {
+          "id": "output_node",
+          "data": {
+            "label": "Final Dispatch",
+            "description": "Mission Complete"
+          },
+          "type": "endNode",
+          "position": {
+            "x": 400,
+            "y": 600
+          }
+        }
+      ]
+    }
+  }
+]

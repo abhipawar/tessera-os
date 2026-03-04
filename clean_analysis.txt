@@ -1,0 +1,59 @@
+=== Autonomous IT Helpdesk ===
+Desc: Resolve IT tickets autonomously.
+Nodes: 5 | Edges: 2
+Types: customAgent, startNode, endNode
+Agent Labels: IT Helpdesk Lead, Customer Support Triage, IT Support / DevOps
+
+=== Smart Procurement & AP ===
+Desc: Automate procurement workflows.
+Nodes: 5 | Edges: 2
+Types: customAgent, startNode, endNode
+Agent Labels: Procurement Lead, Supply Chain Analyst, Postgres Database Engineer
+
+=== Customer Success Triaging ===
+Desc: Prioritize and answer customer requests.
+Nodes: 5 | Edges: 2
+Types: customAgent, startNode, endNode
+Agent Labels: CS Lead, Customer Support Triage, Data Analyst
+
+=== Zero-Touch Employee Onboarding ===
+Desc: Automated accounts creation and welcoming.
+Nodes: 5 | Edges: 2
+Types: customAgent, startNode, endNode
+Agent Labels: HR Orchestrator, HR & Onboarding Coordinator, IT Support / DevOps
+
+=== BI Command Center ===
+Desc: Your autonomous data analyst dashboard.
+Nodes: 6 | Edges: 3
+Types: customAgent, startNode, endNode
+Agent Labels: Chief Data Officer, Postgres Database Engineer, Data Analyst, Reporting Agent
+
+=== The Growth Engine ===
+Desc: A complete system for driving targeted growth.
+Nodes: 5 | Edges: 2
+Types: customAgent, startNode, endNode
+Agent Labels: Growth Orchestrator, Outbound SDR, Content Marketing Manager
+
+=== The Agile Product Triad ===
+Desc: Streamline product management.
+Nodes: 6 | Edges: 3
+Types: customAgent, startNode, endNode
+Agent Labels: Product Manager, Project Manager, Software Engineer, Data Analyst
+
+=== The Outbound Growth Machine ===
+Desc: Personalized cold outreach at scale.
+Nodes: 5 | Edges: 2
+Types: customAgent, startNode, endNode
+Agent Labels: Sales Development Manager, Outbound SDR, Research & Synthesis
+
+=== The Content & SEO Engine ===
+Desc: Generate optimized articles from trending data.
+Nodes: 5 | Edges: 2
+Types: customAgent, startNode, endNode
+Agent Labels: Content Director, Content Marketing Manager, Research & Synthesis
+
+=== Global Web Research Syndicate ===
+Desc: An advanced 6-node hierarchical network. A Lead Supervisor coordinates parallel web scraper agents, summarizes the unstructured data, and holds the final executive brief with a Human-in-the-Loop approval gate before dispatch.
+Nodes: 6 | Edges: 6
+Types: customAgent, humanApprovalNode, endNode
+Agent Labels: Chief Research Officer, Data Miner (Alpha), Data Miner (Beta), Content Synthesizer

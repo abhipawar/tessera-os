@@ -45,11 +45,11 @@ export default function Footer() {
                     <div>
                         <h4 className="text-white font-semibold mb-6">Platform</h4>
                         <ul className="space-y-4 text-zinc-500">
-                            <li><Link href="/login" className="hover:text-white transition-colors">Action Canvas</Link></li>
-                            <li><Link href="/login" className="hover:text-white transition-colors">Orchestration Engine</Link></li>
-                            <li><Link href="/login" className="hover:text-white transition-colors">Process Discovery</Link></li>
-                            <li><Link href="/login" className="hover:text-white transition-colors">Global Catalog</Link></li>
-                            <li><Link href="/login" className="hover:text-white transition-colors">Telemetry & Insights</Link></li>
+                            <li><Link href="/product/canvas" className="hover:text-white transition-colors">Action Canvas</Link></li>
+                            <li><Link href="/product/engine" className="hover:text-white transition-colors">Orchestration Engine</Link></li>
+                            <li><Link href="/product/discovery" className="hover:text-white transition-colors">Process Discovery</Link></li>
+                            <li><Link href="/product/catalog" className="hover:text-white transition-colors">Global Catalog</Link></li>
+                            <li><Link href="/product/telemetry" className="hover:text-white transition-colors">Telemetry & Insights</Link></li>
                         </ul>
                     </div>
 
@@ -57,11 +57,11 @@ export default function Footer() {
                     <div>
                         <h4 className="text-white font-semibold mb-6">Developers</h4>
                         <ul className="space-y-4 text-zinc-500">
-                            <li><Link href="/login" className="hover:text-white transition-colors">Documentation</Link></li>
-                            <li><Link href="/login" className="hover:text-white transition-colors">API Reference</Link></li>
-                            <li><Link href="/login" className="hover:text-white transition-colors">Custom Tool SDK</Link></li>
-                            <li><Link href="/login" className="hover:text-white transition-colors">Bring Your Own Cloud</Link></li>
-                            <li><Link href="/login" className="hover:text-white transition-colors flex items-center gap-2">Security & Trust <span className="px-1.5 py-0.5 rounded-md bg-blue-500/10 text-blue-400 text-[10px] uppercase font-bold tracking-wider">SOC2</span></Link></li>
+                            <li><Link href="/docs/overview" className="hover:text-white transition-colors">Documentation</Link></li>
+                            <li><Link href="/docs/api" className="hover:text-white transition-colors">API Reference</Link></li>
+                            <li><Link href="/docs/sdk" className="hover:text-white transition-colors">Custom Tool SDK</Link></li>
+                            <li><Link href="/docs/byoc" className="hover:text-white transition-colors">Bring Your Own Cloud</Link></li>
+                            <li><Link href="/security" className="hover:text-white transition-colors flex items-center gap-2">Security & Trust <span className="px-1.5 py-0.5 rounded-md bg-blue-500/10 text-blue-400 text-[10px] uppercase font-bold tracking-wider">SOC2</span></Link></li>
                         </ul>
                     </div>
 
@@ -69,10 +69,10 @@ export default function Footer() {
                     <div>
                         <h4 className="text-white font-semibold mb-6">Company</h4>
                         <ul className="space-y-4 text-zinc-500">
-                            <li><Link href="/login" className="hover:text-white transition-colors">About Tessera</Link></li>
+                            <li><Link href="/about" className="hover:text-white transition-colors">About Tessera</Link></li>
                             <li><a href="mailto:enterprise@tesseraos.ai" className="hover:text-white transition-colors">Enterprise Sales</a></li>
                             <li><a href="mailto:partners@tesseraos.ai" className="hover:text-white transition-colors">Partners & Integrators</a></li>
-                            <li><a href="mailto:careers@tesseraos.ai" className="hover:text-white transition-colors flex items-center gap-2">Careers <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 text-[10px] uppercase font-bold tracking-wider">Hiring</span></a></li>
+                            <li><Link href="/careers" className="hover:text-white transition-colors flex items-center gap-2">Careers <span className="px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 text-[10px] uppercase font-bold tracking-wider">Hiring</span></Link></li>
                             <li><a href="mailto:hello@tesseraos.ai" className="hover:text-white transition-colors">Contact Us</a></li>
                         </ul>
                     </div>
@@ -85,8 +85,8 @@ export default function Footer() {
                         &copy; {new Date().getFullYear()} Tessera AI, Inc. All rights reserved.
                     </div>
                     <div className="flex items-center gap-6 text-xs text-zinc-600">
-                        <Link href="/login" className="hover:text-zinc-400 transition-colors">Privacy Policy</Link>
-                        <Link href="/login" className="hover:text-zinc-400 transition-colors">Terms of Service</Link>
+                        <Link href="/legal/privacy" className="hover:text-zinc-400 transition-colors">Privacy Policy</Link>
+                        <Link href="/legal/terms" className="hover:text-zinc-400 transition-colors">Terms of Service</Link>
                         <a href="mailto:security@tesseraos.ai?subject=SOC2 Report Request" className="hover:text-zinc-400 transition-colors">SOC2 Report Request</a>
                     </div>
                 </div>
