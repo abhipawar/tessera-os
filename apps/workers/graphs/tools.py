@@ -21,6 +21,11 @@ class SalesforceLookupSchema(BaseModel):
 class PythonSandboxSchema(BaseModel):
     code: str = Field(description="The raw Python code string to execute inside the micro-VM. Do not include markdown formatting.")
 
+class ResendEmailSchema(BaseModel):
+    to_email: str = Field(description="The recipient email address.")
+    subject: str = Field(description="The subject line of the email.")
+    html_body: str = Field(description="The HTML formatted body of the email.")
+
 def build_tenant_tools(workspace_id: str, requested_tool_ids: List[str]) -> List[Any]:
     if not requested_tool_ids or not supabase_client:
         return []
@@ -137,6 +142,44 @@ def build_tenant_tools(workspace_id: str, requested_tool_ids: List[str]) -> List
                     args_schema=PythonSandboxSchema
                 )
                 langchain_tools.append(sandbox_tool)
+
+            elif "Email" in t_name or "Resend" in t_name:
+                def send_resend_email(to_email: str, subject: str, html_body: str) -> str:
+                    print(f"      -> [Real Tool Execution] Sending Email via Resend to: {to_email}")
+                    try:
+                        import requests
+                        resend_key = t_creds.get("resend_api_key", os.environ.get("RESEND_API_KEY"))
+                        if not resend_key:
+                            return "Error: Missing Resend API Key in tenant credentials or environment."
+
+                        payload = {
+                            "from": "Agents <onboarding@resend.dev>", # Default fallback if custom domain isn't fully verified yet
+                            "to": [to_email],
+                            "subject": subject,
+                            "html": html_body
+                        }
+                        
+                        headers = {
+                            "Authorization": f"Bearer {resend_key}",
+                            "Content-Type": "application/json"
+                        }
+                        
+                        response = requests.post("https://api.resend.com/emails", json=payload, headers=headers)
+                        
+                        if response.status_code in [200, 201]:
+                            return f"Successfully sent email to {to_email}."
+                        else:
+                            return f"Failed to send email. Status: {response.status_code}, Response: {response.text}"
+                    except Exception as e:
+                        return f"Email Tool Error: {str(e)}"
+                        
+                email_tool = StructuredTool.from_function(
+                    func=send_resend_email,
+                    name="send_resend_email",
+                    description="Sends an outbound email to a specified recipient. You MUST use this tool to reply to incoming human emails or to proactively reach out to a user.",
+                    args_schema=ResendEmailSchema
+                )
+                langchain_tools.append(email_tool)
                 
         print(f"--- [Tool Factory] Successfully built {len(langchain_tools)} dynamic tools! ---")
         return langchain_tools
