@@ -43,7 +43,9 @@ export async function proxy(request: NextRequest) {
     const isTenantRoute = request.nextUrl.pathname.startsWith('/chat') ||
         request.nextUrl.pathname.startsWith('/studio') ||
         request.nextUrl.pathname.startsWith('/dashboard') ||
-        request.nextUrl.pathname.startsWith('/integrations')
+        request.nextUrl.pathname.startsWith('/integrations') ||
+        request.nextUrl.pathname.startsWith('/templates') ||
+        request.nextUrl.pathname.startsWith('/inbox')
 
     // 3. The Loop Fix: Boot unauthenticated users to /login instead of /
     if (!user && (isAdminRoute || isTenantRoute)) {
