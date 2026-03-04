@@ -2,7 +2,7 @@ import type { EventPayload } from './types';
 
 let eventBatch: EventPayload[] = [];
 const BATCH_INTERVAL_MS = 30000; // 30 seconds
-const BACKEND_URL = 'http://localhost:8000/api/telemetry/ingest';
+const BACKEND_URL = 'https://api.tesseraos.ai/api/telemetry/ingest';
 
 // Basic PII Scrubbing
 function scrubPII(text: string): string {

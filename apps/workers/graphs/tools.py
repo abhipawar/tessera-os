@@ -26,6 +26,9 @@ class ResendEmailSchema(BaseModel):
     subject: str = Field(description="The subject line of the email.")
     html_body: str = Field(description="The HTML formatted body of the email.")
 
+class WebhookExecutionSchema(BaseModel):
+    payload_json: str = Field(description="The dynamically generated JSON string payload to send to the automation webhook. Make sure keys match the context you want to pass down.")
+
 def build_tenant_tools(workspace_id: str, requested_tool_ids: List[str]) -> List[Any]:
     if not requested_tool_ids or not supabase_client:
         return []
@@ -180,6 +183,50 @@ def build_tenant_tools(workspace_id: str, requested_tool_ids: List[str]) -> List
                     args_schema=ResendEmailSchema
                 )
                 langchain_tools.append(email_tool)
+                
+            elif "n8n Webhook" in t_name:
+                def execute_n8n_webhook(payload_json: str) -> str:
+                    print(f"      -> [Real Tool Execution] Triggering n8n Webhook")
+                    try:
+                        import requests
+                        import json
+                        hook_url = t_creds.get("webhook_url")
+                        if not hook_url: return "Error: Missing n8n Webhook URL in configuration."
+                        payload = json.loads(payload_json)
+                        resp = requests.post(hook_url, json=payload)
+                        return f"n8n Webhook Triggered. Status: {resp.status_code}. Response: {resp.text}"
+                    except Exception as e:
+                        return f"n8n Webhook Error: {str(e)}"
+                        
+                n8n_tool = StructuredTool.from_function(
+                    func=execute_n8n_webhook,
+                    name="execute_n8n_webhook",
+                    description="Triggers your n8n automation pipeline. Pass the newly synthesized json data format to kick off the remote workflow.",
+                    args_schema=WebhookExecutionSchema
+                )
+                langchain_tools.append(n8n_tool)
+
+            elif "Zapier Catch Hook" in t_name:
+                def execute_zapier_webhook(payload_json: str) -> str:
+                    print(f"      -> [Real Tool Execution] Triggering Zapier Catch Hook")
+                    try:
+                        import requests
+                        import json
+                        hook_url = t_creds.get("webhook_url")
+                        if not hook_url: return "Error: Missing Zapier Webhook URL in configuration."
+                        payload = json.loads(payload_json)
+                        resp = requests.post(hook_url, json=payload)
+                        return f"Zapier Webhook Triggered. Status: {resp.status_code}. Response: {resp.text}"
+                    except Exception as e:
+                        return f"Zapier Webhook Error: {str(e)}"
+                        
+                zapier_tool = StructuredTool.from_function(
+                    func=execute_zapier_webhook,
+                    name="execute_zapier_webhook",
+                    description="Triggers a Zapier automation via Catch Hook. Pass the structured JSON data you want to send to the Zap.",
+                    args_schema=WebhookExecutionSchema
+                )
+                langchain_tools.append(zapier_tool)
                 
         print(f"--- [Tool Factory] Successfully built {len(langchain_tools)} dynamic tools! ---")
         return langchain_tools
