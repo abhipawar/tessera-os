@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowRight, Bot, BrainCircuit, Database, Lock, Network, ShieldCheck, Cpu, GitBranch, Zap, Code2, Server } from 'lucide-react'
+import { ArrowRight, Bot, BrainCircuit, Database, Lock, Network, ShieldCheck, Cpu, GitBranch, Zap, Code2, Server, Users, Eye } from 'lucide-react'
 
 export default function LandingPage() {
   return (
@@ -38,13 +38,13 @@ export default function LandingPage() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
               </span>
-              Scaling Execution, Not Headcount. Welcome to the Organizational Digital Twin.
+              Enterprise-Grade Agent Orchestration.
             </div>
 
             <h1 className="text-6xl md:text-8xl font-extrabold tracking-tighter leading-[1.1] mb-8">
-              The Agent <br className="hidden md:block" />
+              The Autonomous <br className="hidden md:block" />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-emerald-400 to-emerald-300">
-                Value Multiple.
+                Workforce.
               </span>
             </h1>
 
@@ -102,14 +102,14 @@ export default function LandingPage() {
         <section className="max-w-7xl mx-auto px-6 py-32">
           <div className="grid lg:grid-cols-3 gap-8">
 
-            {/* Entrepreneurs */}
+            {/* Human-Machine Synergy */}
             <div className="bg-zinc-900/50 border border-zinc-800/50 p-8 rounded-3xl hover:border-zinc-700 transition-colors group">
               <div className="w-14 h-14 bg-zinc-800 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <ZodiacIcon />
+                <Users className="text-zinc-300" size={28} />
               </div>
-              <h3 className="text-2xl font-bold mb-3">The Company in a Box</h3>
+              <h3 className="text-2xl font-bold mb-3">Human-Machine Synergy</h3>
               <p className="text-zinc-400 leading-relaxed mb-6">
-                For Entrepreneurs. Spin up a fractional CMO, inbound Lead Gen, and Tier 1 Support agent on Day 1. Go from zero to infinity without hiring an entire department.
+                Autonomy with oversight. Deploy a digital workforce that executes 99% of the grunt work, but deterministically pauses to request human supervisor approval before triggering critical actions.
               </p>
             </div>
 
@@ -164,9 +164,9 @@ export default function LandingPage() {
                 desc="Powered by Supabase's PostgresSaver, agents have persistent memory. Pick up a conversation from exactly where it left off weeks ago."
               />
               <FeatureCard
-                icon={<Bot />}
-                title="Marketplace of Talent"
-                desc="Browse the Global Catalog to hire pre-prompted expert agents, from SQL analysts to creative copywriters."
+                icon={<Eye />}
+                title="Process Discovery"
+                desc="A background Chrome extension quietly observes your top performers and uses a Synthesis Engine to auto-generate the standard operating procedures for your agents."
               />
               <FeatureCard
                 icon={<Code2 />}
@@ -263,15 +263,6 @@ export default function LandingPage() {
         </section>
 
       </main>
-
-      {/* 8. Footer */}
-      <footer className="border-t border-zinc-900 bg-zinc-950 py-12 text-center text-zinc-600 text-sm">
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <Network size={16} />
-          <span className="font-bold text-zinc-500">Tessera OS</span>
-        </div>
-        <p>© 2026 Tessera AI, Inc. The Future of the Organization.</p>
-      </footer>
     </div>
   )
 }

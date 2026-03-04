@@ -3,10 +3,18 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
+import { rateLimit } from '@/utils/rateLimit'
 
 export async function login(formData: FormData) {
-    const supabase = await createClient()
     const email = formData.get('email') as string
+
+    // Anti-Bruteforce Bot Protection: Max 5 login attempts per minute per Email Address
+    const { success: allowed } = rateLimit(`login_${email}`, 5, 60000)
+    if (!allowed) {
+        redirect('/login?error=Too many attempts. Please try again later.')
+    }
+
+    const supabase = await createClient()
     const password = formData.get('password') as string
 
     // 1. Authenticate the user
@@ -44,20 +52,3 @@ export async function login(formData: FormData) {
     }
 }
 
-export async function signup(formData: FormData) {
-    const supabase = await createClient()
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
-
-    const { error } = await supabase.auth.signUp({
-        email,
-        password,
-    })
-
-    if (error) {
-        redirect('/login?error=Could not create user')
-    }
-
-    revalidatePath('/', 'layout')
-    redirect('/dashboard')
-}

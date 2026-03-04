@@ -16,10 +16,22 @@ class SignupOnboardRequest(BaseModel):
     password: str
     name: str
     company_name: str
+    otp_code: str
 
 @router.post("/signup-onboard")
 def signup_and_onboard(req: SignupOnboardRequest):
     try:
+        # 1. Validate the OTP First
+        otp_resp = supabase_client.table("otp_verifications").select("expires_at").eq("email", req.email).eq("code", req.otp_code).execute()
+        if not otp_resp.data:
+            return {"error": "Invalid verification code."}
+            
+        import datetime
+        expires_at = datetime.datetime.fromisoformat(otp_resp.data[0]["expires_at"].replace('Z', '+00:00'))
+        if datetime.datetime.now(datetime.timezone.utc) > expires_at:
+            return {"error": "Verification code has expired."}
+
+        # OTP is valid, proceed with creating the architecture
         user_resp = supabase_client.auth.admin.create_user({"email": req.email, "password": req.password, "email_confirm": True, "user_metadata": {"name": req.name}})
         new_user_id = user_resp.user.id
         

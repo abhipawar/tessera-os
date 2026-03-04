@@ -1,5 +1,5 @@
 import { Network, Fingerprint, Lock, Mail, ArrowRight, UserPlus } from "lucide-react"
-import { login, signup } from "./actions"
+import { login } from "./actions"
 import Link from "next/link"
 
 export default function LoginPage() {
@@ -26,7 +26,7 @@ export default function LoginPage() {
 
                             {/* Email Input */}
                             <div className="space-y-1.5">
-                                <label htmlFor="email" className="text-xs font-semibold text-zinc-400 uppercase tracking-wider ml-1">Email Node</label>
+                                <label htmlFor="email" className="text-xs font-semibold text-zinc-400 uppercase tracking-wider ml-1">Email Address</label>
                                 <div className="relative">
                                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                         <Mail className="h-4 w-4 text-zinc-500" />
@@ -44,7 +44,7 @@ export default function LoginPage() {
 
                             {/* Password Input */}
                             <div className="space-y-1.5">
-                                <label htmlFor="password" className="text-xs font-semibold text-zinc-400 uppercase tracking-wider ml-1">Decryption Key</label>
+                                <label htmlFor="password" className="text-xs font-semibold text-zinc-400 uppercase tracking-wider ml-1">Password</label>
                                 <div className="relative">
                                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                         <Lock className="h-4 w-4 text-zinc-500" />
@@ -70,20 +70,20 @@ export default function LoginPage() {
                                 Authenticate
                             </button>
 
-                            <button
-                                formAction={signup}
+                            <Link
+                                href="/onboarding"
                                 className="w-full flex justify-center items-center gap-2 bg-transparent border border-zinc-800 hover:bg-zinc-800 text-zinc-300 font-medium py-3 px-4 rounded-xl transition-colors"
                             >
                                 <UserPlus size={16} />
-                                Create Demo Account
-                            </button>
+                                Create Account
+                            </Link>
                         </div>
                     </form>
                 </div>
 
                 <div className="text-center mt-8">
                     <Link href="/" className="text-sm font-medium text-zinc-500 hover:text-zinc-300 transition-colors flex items-center justify-center gap-2">
-                        <ArrowRight size={14} className="rotate-180" /> Return to Genesis
+                        <ArrowRight size={14} className="rotate-180" /> Return to Home
                     </Link>
                 </div>
             </div>

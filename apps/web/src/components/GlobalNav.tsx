@@ -67,7 +67,7 @@ export default function GlobalNav() {
     window.location.replace('/');
   };
 
-  const hideOnRoutes = ['/', '/login', '/onboarding', '/join'];
+  const hideOnRoutes = ['/', '/login', '/onboarding', '/join', '/tour'];
   if (hideOnRoutes.includes(pathname)) return null;
 
   // Base navigation links for everyone

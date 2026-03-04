@@ -14,9 +14,11 @@ import {
     BarChart3,
     LucideIcon,
     CheckCircle2,
-    AlertTriangle
+    AlertTriangle,
+    Loader2
 } from "lucide-react"
 import { API_URL } from '@/config'
+import { useRouter } from "next/navigation"
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -47,9 +49,11 @@ const iconMap: Record<string, LucideIcon> = {
 }
 
 export default function TemplatesPage() {
+    const router = useRouter()
     const [templates, setTemplates] = useState<Template[]>([])
     const [connectedToolNames, setConnectedToolNames] = useState<string[]>([])
     const [loading, setLoading] = useState(true)
+    const [deployingId, setDeployingId] = useState<string | null>(null)
 
     useEffect(() => {
         async function fetchData() {
@@ -92,6 +96,31 @@ export default function TemplatesPage() {
 
         fetchData()
     }, [])
+
+    const handleDeploy = async (templateId: string) => {
+        setDeployingId(templateId);
+        try {
+            const res = await fetch('/api/tenant/workspaces/deploy', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ templateId })
+            });
+            const data = await res.json();
+
+            if (data.success && data.workspaceId) {
+                // Success! Teleport them into the Studio with the loaded graph
+                router.push(`/studio?workspaceId=${data.workspaceId}`);
+            } else {
+                console.error("Failed to deploy workspace", data.error);
+                alert("Failed to deploy workspace: " + data.error);
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Network error deploying workspace.");
+        } finally {
+            setDeployingId(null);
+        }
+    }
 
     return (
         <div className="min-h-screen bg-zinc-950 text-zinc-50 p-6 md:p-10 font-sans">
@@ -176,12 +205,22 @@ export default function TemplatesPage() {
 
                                     <div className="mt-8 pt-4 border-t border-zinc-800/50">
                                         {isFullyConfigured ? (
-                                            <button className="w-full relative inline-flex items-center justify-center px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 rounded-lg bg-zinc-800 hover:bg-zinc-700 hover:text-white overflow-hidden group-hover:ring-1 group-hover:ring-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 focus:ring-offset-zinc-900">
+                                            <button
+                                                onClick={() => handleDeploy(template.id)}
+                                                disabled={deployingId === template.id}
+                                                className="w-full relative inline-flex items-center justify-center px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 rounded-lg bg-zinc-800 hover:bg-zinc-700 hover:text-white overflow-hidden group-hover:ring-1 group-hover:ring-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 focus:ring-offset-zinc-900 disabled:opacity-50 disabled:cursor-wait"
+                                            >
                                                 <span className="relative z-10 flex items-center gap-2">
-                                                    Deploy Workspace
-                                                    <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                                                    </svg>
+                                                    {deployingId === template.id ? (
+                                                        <>Deploying... <Loader2 className="w-4 h-4 animate-spin" /></>
+                                                    ) : (
+                                                        <>
+                                                            Deploy Workspace
+                                                            <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                                            </svg>
+                                                        </>
+                                                    )}
                                                 </span>
                                                 <div className="absolute inset-0 z-0 bg-gradient-to-r from-blue-600 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                                             </button>

@@ -4,6 +4,7 @@ import "./globals.css";
 import GlobalNav from "@/components/GlobalNav";
 import TopNav from "@/components/TopNav";
 import NotificationModal from "@/components/NotificationModal";
+import Footer from "@/components/Footer";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -30,8 +31,11 @@ export default function RootLayout({
           <TopNav />
 
           {/* Individual Page Content */}
-          <main className="flex-1 overflow-auto">
-            {children}
+          <main className="flex-1 overflow-auto flex flex-col relative w-full h-full">
+            <div className="flex-1 w-full mx-auto">
+              {children}
+            </div>
+            <Footer />
           </main>
         </div>
       </body>

@@ -153,7 +153,7 @@ def build_tenant_tools(workspace_id: str, requested_tool_ids: List[str]) -> List
                             return "Error: Missing Resend API Key in tenant credentials or environment."
 
                         payload = {
-                            "from": "Agents <onboarding@resend.dev>", # Default fallback if custom domain isn't fully verified yet
+                            "from": "Agents <agents@tesseraos.ai>", # Custom domain verified
                             "to": [to_email],
                             "subject": subject,
                             "html": html_body

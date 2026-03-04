@@ -16,6 +16,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_email_slug ON public.inbound_email_
 -- RLS
 ALTER TABLE public.inbound_email_triggers ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can manage email triggers in their tenant" ON public.inbound_email_triggers;
 CREATE POLICY "Users can manage email triggers in their tenant" ON public.inbound_email_triggers
     FOR ALL
     USING (tenant_id IN (

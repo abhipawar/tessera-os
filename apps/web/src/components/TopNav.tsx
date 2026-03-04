@@ -3,7 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { createBrowserClient } from '@supabase/ssr';
-import { UserCircle, Bell } from 'lucide-react';
+import { UserCircle, Bell, Compass } from 'lucide-react';
+import Link from 'next/link';
 
 export default function TopNav() {
   const pathname = usePathname();
@@ -80,7 +81,7 @@ export default function TopNav() {
   }, [supabase]);
 
   // Hide the TopNav on auth/onboarding routes
-  const hideOnRoutes = ['/', '/login', '/onboarding'];
+  const hideOnRoutes = ['/', '/login', '/onboarding', '/tour'];
   if (hideOnRoutes.includes(pathname)) return null;
 
   // Dynamically set the page title based on the URL
@@ -97,6 +98,10 @@ export default function TopNav() {
       <h1 className="text-lg font-semibold text-zinc-100">{getPageTitle()}</h1>
 
       <div className="flex items-center gap-4">
+        <Link href="/tour" className="flex items-center gap-2 text-sm text-zinc-400 hover:text-white bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 transition-colors px-3 py-1.5 rounded-full">
+          <Compass size={16} />
+          <span>Product Tour</span>
+        </Link>
         <button className="text-zinc-400 hover:text-white transition-colors">
           <Bell size={18} />
         </button>
