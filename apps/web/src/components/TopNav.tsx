@@ -80,10 +80,7 @@ export default function TopNav() {
     };
   }, [supabase]);
 
-  // Hide the TopNav on auth/onboarding routes
-  const hideOnRoutes = ['/', '/login', '/onboarding', '/tour'];
-  if (hideOnRoutes.includes(pathname)) return null;
-
+  // Removed conditional hide to make header global on all pages
   // Dynamically set the page title based on the URL
   const getPageTitle = () => {
     if (pathname.startsWith('/dashboard')) return 'Dashboard';

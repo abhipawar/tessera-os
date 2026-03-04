@@ -8,10 +8,7 @@ import { Network } from 'lucide-react';
 export default function Footer() {
     const pathname = usePathname();
 
-    // The footer should only be visible on public pages (Landing, Login, Onboarding, Join)
-    const showOnRoutes = ['/', '/login', '/onboarding', '/join'];
-    if (!showOnRoutes.includes(pathname)) return null;
-
+    // Removed conditional hide to make footer global on all pages
     return (
         <footer className="bg-[#09090b] border-t border-zinc-800/50 pt-20 pb-10 font-sans text-sm selection:bg-blue-500/30 w-full mt-auto">
             <div className="max-w-7xl mx-auto px-6">

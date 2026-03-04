@@ -67,9 +67,7 @@ export default function GlobalNav() {
     window.location.replace('/');
   };
 
-  const hideOnRoutes = ['/', '/login', '/onboarding', '/join', '/tour'];
-  if (hideOnRoutes.includes(pathname)) return null;
-
+  // Removed conditional hide to make sidebar global on all pages
   // Base navigation links for everyone
   const navLinks = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
