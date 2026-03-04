@@ -35,8 +35,9 @@ const contentMap: Record<string, any> = {
     }
 };
 
-export default function ProductPage({ params }: { params: { slug: string } }) {
-    const data = contentMap[params.slug] || {
+export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
+    const resolvedParams = await params;
+    const data = contentMap[resolvedParams.slug] || {
         title: "Platform Feature",
         tagline: "Coming in V2",
         desc: "We are actively building the next generation of autonomous enterprise tools.",

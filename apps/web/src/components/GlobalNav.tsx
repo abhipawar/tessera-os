@@ -10,6 +10,7 @@ export default function GlobalNav() {
   const pathname = usePathname();
   const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const [supabase] = useState(() => createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,9 +23,14 @@ export default function GlobalNav() {
 
     const checkAdminStatus = async (user: any) => {
       if (!user) {
-        if (mounted) setIsAdmin(false);
+        if (mounted) {
+          setIsAdmin(false);
+          setIsLoggedIn(false);
+        }
         return;
       }
+
+      if (mounted) setIsLoggedIn(true);
 
       const { data: profile } = await supabase
         .from('profiles')
@@ -85,7 +91,7 @@ export default function GlobalNav() {
 
   return (
     <nav className="w-16 h-screen bg-zinc-950/80 backdrop-blur-xl border-r border-zinc-900 flex flex-col items-center py-6 shrink-0 z-50 transition-all font-sans">
-      <Link href="/dashboard" className="w-10 h-10 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(37,99,235,0.4)] mb-8 hover:scale-110 transition-transform">
+      <Link href="/" className="w-10 h-10 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(37,99,235,0.4)] mb-8 hover:scale-110 transition-transform">
         <Activity size={20} className="text-white" />
       </Link>
 
@@ -115,15 +121,17 @@ export default function GlobalNav() {
         })}
       </div>
 
-      <div className="mt-auto w-full px-2 flex flex-col gap-2">
-        <button title="Settings" className="w-12 h-12 mx-auto rounded-xl flex items-center justify-center text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300 transition-all border border-transparent">
-          <Settings size={20} />
-        </button>
+      {isLoggedIn && (
+        <div className="mt-auto w-full px-2 flex flex-col gap-2">
+          <button title="Settings" className="w-12 h-12 mx-auto rounded-xl flex items-center justify-center text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300 transition-all border border-transparent">
+            <Settings size={20} />
+          </button>
 
-        <button title="Log Out" onClick={handleLogout} className="w-12 h-12 mx-auto rounded-xl flex items-center justify-center text-zinc-500 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30 transition-all border border-transparent">
-          <LogOut size={20} />
-        </button>
-      </div>
+          <button title="Log Out" onClick={handleLogout} className="w-12 h-12 mx-auto rounded-xl flex items-center justify-center text-zinc-500 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30 transition-all border border-transparent">
+            <LogOut size={20} />
+          </button>
+        </div>
+      )}
     </nav>
   );
 }

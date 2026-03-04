@@ -2,8 +2,9 @@ import React from 'react';
 import Link from 'next/link';
 import { BookOpen, Terminal, Code, Shield } from 'lucide-react';
 
-export default function DocsPage({ params }: { params: { slug: string[] } }) {
-    const section = params.slug?.[0] || 'overview';
+export default async function DocsPage({ params }: { params: Promise<{ slug: string[] }> }) {
+    const resolvedParams = await params;
+    const section = resolvedParams.slug?.[0] || 'overview';
 
     return (
         <div className="min-h-screen bg-[#09090b] text-white pt-32 pb-20 border-t border-zinc-900">

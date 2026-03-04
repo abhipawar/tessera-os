@@ -1,8 +1,9 @@
 import React from 'react';
 import { Scale } from 'lucide-react';
 
-export default function LegalPage({ params }: { params: { slug: string } }) {
-    const isPrivacy = params.slug === 'privacy';
+export default async function LegalPage({ params }: { params: Promise<{ slug: string }> }) {
+    const resolvedParams = await params;
+    const isPrivacy = resolvedParams.slug === 'privacy';
 
     return (
         <div className="min-h-screen bg-[#09090b] text-white pt-32 pb-20 border-t border-zinc-900">
