@@ -36,6 +36,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
             description: body.description,
             target_audience: body.target_audience,
             icon: body.icon,
+            prerequisite_tools: body.prerequisite_tools,
+            graph_json: body.graph_json,
             is_active: body.is_active
         };
 

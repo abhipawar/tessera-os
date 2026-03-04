@@ -68,14 +68,14 @@ export default function TopNav() {
     // 1. Check immediately on mount
     checkState();
 
-    // 2. Poll the state to escape Next.js hydration races
-    const interval = setInterval(() => {
+    // 2. Listen for auth state changes instead of polling
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (mounted) checkState();
-    }, 1000);
+    });
 
     return () => {
       mounted = false;
-      clearInterval(interval);
+      authListener.subscription.unsubscribe();
     };
   }, [supabase]);
 
