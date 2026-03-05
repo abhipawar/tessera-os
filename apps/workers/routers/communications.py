@@ -53,3 +53,56 @@ def get_tenant_communications(req: Request):
     except Exception as e:
         print(f"--- [Communications Fetch Error] {str(e)} ---")
         return {"success": False, "error": str(e)}
+
+from pydantic import BaseModel
+
+class EmailRoutePayload(BaseModel):
+    prefix: str
+
+@router.get("/workspaces/{workspace_id}/email-route")
+def get_email_route(workspace_id: str, req: Request):
+    auth_header = req.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "): return {"success": False, "error": "Access Denied"}
+    
+    try:
+        resp = supabase_client.table("inbound_email_routes").select("semantic_email_prefix").eq("workspace_id", workspace_id).execute()
+        if not resp.data:
+            return {"success": True, "prefix": None}
+        return {"success": True, "prefix": resp.data[0]["semantic_email_prefix"]}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@router.post("/workspaces/{workspace_id}/email-route")
+def update_email_route(workspace_id: str, payload: EmailRoutePayload, req: Request):
+    auth_header = req.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "): return {"success": False, "error": "Access Denied"}
+    
+    try:
+        resp = supabase_client.table("inbound_email_routes").select("id").eq("workspace_id", workspace_id).execute()
+        safe_prefix = payload.prefix.strip().lower().replace(" ", "-").replace("@", "")
+        
+        if not resp.data:
+            ws_resp = supabase_client.table("workspaces").select("nodes").eq("id", workspace_id).execute()
+            nodes = ws_resp.data[0].get("nodes", []) if ws_resp.data else []
+            import json
+            if isinstance(nodes, str): nodes = json.loads(nodes)
+            
+            node_id = 'supervisor'
+            if len(nodes) > 0:
+                node_id = nodes[0].get('id', 'supervisor')
+                
+            supabase_client.table("inbound_email_routes").insert({
+                "workspace_id": workspace_id,
+                "node_id": node_id,
+                "semantic_email_prefix": safe_prefix
+            }).execute()
+        else:
+            supabase_client.table("inbound_email_routes").update({
+                "semantic_email_prefix": safe_prefix
+            }).eq("workspace_id", workspace_id).execute()
+        
+        return {"success": True, "prefix": safe_prefix}
+    except Exception as e:
+        if "unique" in str(e).lower() or "duplicate" in str(e).lower():
+            return {"success": False, "error": "This email prefix is already taken by another workspace."}
+        return {"success": False, "error": str(e)}

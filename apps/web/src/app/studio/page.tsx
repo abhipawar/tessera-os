@@ -2,12 +2,13 @@
 
 import React, { useEffect } from 'react';
 import { ReactFlowProvider } from 'reactflow';
-import { Loader2, Plus, Save, Users, Trash2, Globe, X } from 'lucide-react';
+import { Loader2, Plus, Save, Users, Trash2, Globe, X, Settings } from 'lucide-react';
 
 import StudioCanvas from '@/components/studio/StudioCanvas';
 import MarketplaceSidebar from '@/components/studio/MarketplaceSidebar';
 import ConfigurationPanel from '@/components/studio/ConfigurationPanel';
 import TeamManagementModal from '@/components/studio/TeamManagementModal';
+import WorkspaceSettingsModal from '@/components/studio/WorkspaceSettingsModal';
 
 import { useStudioStore } from '@/store/studioStore';
 import { useNotificationStore } from '@/store/notificationStore';
@@ -37,6 +38,7 @@ export default function OrgChartCanvas() {
   } = useStudioStore();
 
   const [isPublishModalOpen, setIsPublishModalOpen] = React.useState(false);
+  const [isWorkspaceSettingsOpen, setIsWorkspaceSettingsOpen] = React.useState(false);
   const [publishForm, setPublishForm] = React.useState({
     name: chartName,
     description: '',
@@ -148,6 +150,16 @@ export default function OrgChartCanvas() {
         </div>
 
         <div className="flex items-center gap-3">
+          {currentChartId && (
+            <button
+              onClick={() => setIsWorkspaceSettingsOpen(!isWorkspaceSettingsOpen)}
+              className="flex items-center justify-center bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-400 hover:text-white py-2 px-3 rounded-lg transition-all"
+              title="Workspace Settings"
+            >
+              <Settings size={16} />
+            </button>
+          )}
+
           <button
             onClick={() => {
               setIsTeamPanelOpen(!isTeamPanelOpen);
@@ -212,6 +224,12 @@ export default function OrgChartCanvas() {
         </ReactFlowProvider>
 
         <TeamManagementModal />
+
+        <WorkspaceSettingsModal
+          isOpen={isWorkspaceSettingsOpen}
+          onClose={() => setIsWorkspaceSettingsOpen(false)}
+          workspaceId={currentChartId}
+        />
       </div>
 
       {/* PUBLISH MODAL */}

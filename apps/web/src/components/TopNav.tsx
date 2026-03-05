@@ -24,6 +24,8 @@ export default function TopNav({
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   ));
 
+  const [hasNewAlert, setHasNewAlert] = useState(false);
+
   useEffect(() => {
     let mounted = true;
 
@@ -82,9 +84,31 @@ export default function TopNav({
       if (mounted) checkState();
     });
 
+    // 3. Realtime notifications for autonomous emails
+    const channel = supabase
+      .channel('email_alerts')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'agent_communications' },
+        (payload: any) => {
+          if (payload.new.direction === 'inbound' && mounted) {
+            setHasNewAlert(true);
+            import('@/store/notificationStore').then(({ useNotificationStore }) => {
+              useNotificationStore.getState().showNotification({
+                title: "New Autonomous Email",
+                message: `From: ${payload.new.from_email}\nSubject: ${payload.new.subject || 'No Subject'}`,
+                type: "info"
+              });
+            });
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       mounted = false;
       authListener.subscription.unsubscribe();
+      supabase.removeChannel(channel);
     };
   }, [supabase]);
 
@@ -107,8 +131,14 @@ export default function TopNav({
           <Compass size={16} />
           <span>Product Tour</span>
         </Link>
-        <button className="text-zinc-400 hover:text-white transition-colors">
+        <button
+          onClick={() => setHasNewAlert(false)}
+          className="relative text-zinc-400 hover:text-white transition-colors p-1"
+        >
           <Bell size={18} />
+          {hasNewAlert && (
+            <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.8)] border-2 border-zinc-950 animate-pulse"></span>
+          )}
         </button>
         <div className="flex items-center gap-3 pl-4 border-l border-zinc-800">
           <div className="flex flex-col items-end">
