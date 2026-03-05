@@ -1,7 +1,7 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import admin, auth, chat, integrations, async_tasks, telemetry, webhooks
+from routers import admin, auth, chat, integrations, async_tasks, telemetry, webhooks, communications
 import logging
 
 class EndpointFilter(logging.Filter):
@@ -27,6 +27,7 @@ app.include_router(integrations.router)
 app.include_router(async_tasks.router)
 app.include_router(telemetry.router)
 app.include_router(webhooks.router)
+app.include_router(communications.router)
 import psycopg
 
 @app.on_event("startup")
