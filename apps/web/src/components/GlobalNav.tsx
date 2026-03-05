@@ -6,11 +6,19 @@ import { usePathname, useRouter } from 'next/navigation';
 import { LayoutDashboard, Network, MessageSquare, Activity, Settings, LogOut, ShieldAlert, Plug, LayoutTemplate, Inbox } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
 
-export default function GlobalNav() {
+export default function GlobalNav({
+  initialUser,
+  isSuperAdmin
+}: {
+  initialUser: { email?: string } | null,
+  isSuperAdmin: boolean
+}) {
   const pathname = usePathname();
   const router = useRouter();
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Hydrate immediately from server props!
+  const [isAdmin, setIsAdmin] = useState(isSuperAdmin);
+  const [isLoggedIn, setIsLoggedIn] = useState(!!initialUser);
 
   const [supabase] = useState(() => createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

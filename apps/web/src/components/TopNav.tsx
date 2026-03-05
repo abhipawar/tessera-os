@@ -6,10 +6,18 @@ import { createBrowserClient } from '@supabase/ssr';
 import { UserCircle, Bell, Compass } from 'lucide-react';
 import Link from 'next/link';
 
-export default function TopNav() {
+export default function TopNav({
+  initialUser,
+  rootRole
+}: {
+  initialUser: { email?: string } | null,
+  rootRole: string | null
+}) {
   const pathname = usePathname();
-  const [role, setRole] = useState("Loading...");
-  const [email, setEmail] = useState("");
+
+  // Hydrate immediately from server props!
+  const [role, setRole] = useState(rootRole || "Not Logged In");
+  const [email, setEmail] = useState(initialUser?.email || "");
 
   const [supabase] = useState(() => createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
