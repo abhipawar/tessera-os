@@ -1,8 +1,36 @@
-import { Network, Fingerprint, Lock, Mail, ArrowRight, UserPlus } from "lucide-react"
+'use client'
+
+import { useState } from "react"
+import { Network, Fingerprint, Lock, Mail, ArrowRight, UserPlus, Loader2 } from "lucide-react"
 import { login } from "./actions"
 import Link from "next/link"
 
 export default function LoginPage() {
+    const [isLoading, setIsLoading] = useState(false);
+    const [errorMsg, setErrorMsg] = useState("");
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setIsLoading(true);
+        setErrorMsg("");
+
+        const formData = new FormData(e.currentTarget);
+        try {
+            const result = await login(formData);
+            if (result?.error) {
+                setErrorMsg(result.error);
+                setIsLoading(false);
+            } else if (result?.success && result.url) {
+                // Hard browser redirect to obliterate Next.js layout cache
+                // This guarantees the server layout forces a new authentication check!
+                window.location.replace(result.url);
+            }
+        } catch (err: any) {
+            setErrorMsg("An unexpected error occurred.");
+            setIsLoading(false);
+        }
+    };
+
     return (
         <div className="flex min-h-screen items-center justify-center bg-zinc-950 p-4 relative overflow-hidden font-sans">
             {/* Ambient Background Glows */}
@@ -21,7 +49,14 @@ export default function LoginPage() {
                 </div>
 
                 <div className="bg-zinc-900/50 backdrop-blur-xl border border-zinc-800/50 rounded-3xl p-8 shadow-2xl">
-                    <form action={login} className="space-y-6">
+
+                    {errorMsg && (
+                        <div className="mb-6 p-3 bg-red-500/10 border border-red-500/50 rounded-xl text-red-400 text-sm text-center">
+                            {errorMsg}
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="space-y-4">
 
                             {/* Email Input */}
@@ -37,7 +72,8 @@ export default function LoginPage() {
                                         type="email"
                                         placeholder="founder@company.com"
                                         required
-                                        className="w-full pl-11 pr-4 py-3 bg-zinc-950/50 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none text-zinc-100 transition-all font-mono text-sm"
+                                        disabled={isLoading}
+                                        className="w-full pl-11 pr-4 py-3 bg-zinc-950/50 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none text-zinc-100 transition-all font-mono text-sm disabled:opacity-50"
                                     />
                                 </div>
                             </div>
@@ -55,7 +91,8 @@ export default function LoginPage() {
                                         type="password"
                                         placeholder="••••••••"
                                         required
-                                        className="w-full pl-11 pr-4 py-3 bg-zinc-950/50 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none text-zinc-100 transition-all font-mono text-sm tracking-widest"
+                                        disabled={isLoading}
+                                        className="w-full pl-11 pr-4 py-3 bg-zinc-950/50 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none text-zinc-100 transition-all font-mono text-sm tracking-widest disabled:opacity-50"
                                     />
                                 </div>
                             </div>
@@ -64,10 +101,15 @@ export default function LoginPage() {
                         <div className="flex flex-col gap-3 pt-6">
                             <button
                                 type="submit"
-                                className="group w-full flex justify-center items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3.5 px-4 rounded-xl transition-all shadow-[0_0_15px_rgba(37,99,235,0.3)] hover:shadow-[0_0_25px_rgba(37,99,235,0.5)]"
+                                disabled={isLoading}
+                                className="group w-full flex justify-center items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3.5 px-4 rounded-xl transition-all shadow-[0_0_15px_rgba(37,99,235,0.3)] hover:shadow-[0_0_25px_rgba(37,99,235,0.5)] disabled:opacity-70 disabled:hover:shadow-none"
                             >
-                                <Fingerprint size={18} className="group-hover:scale-110 transition-transform" />
-                                Authenticate
+                                {isLoading ? (
+                                    <Loader2 size={18} className="animate-spin" />
+                                ) : (
+                                    <Fingerprint size={18} className="group-hover:scale-110 transition-transform" />
+                                )}
+                                {isLoading ? "Authenticating..." : "Authenticate"}
                             </button>
 
                             <Link

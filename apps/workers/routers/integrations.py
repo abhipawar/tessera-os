@@ -143,6 +143,16 @@ def test_connection(payload: ConnectionTestRequest, req: Request):
         elif payload.db_type and payload.db_type.lower() == "snowflake":
             return {"success": True, "message": "Snowflake credentials validated!"}
             
+        elif payload.tool_type == "api" and payload.provider == "resend":
+            if not payload.api_key:
+                return {"success": False, "error": "Missing Resend API Key."}
+                
+            res = requests.get("https://api.resend.com/domains", headers={"Authorization": f"Bearer {payload.api_key}"}, timeout=5)
+            if res.status_code == 200:
+                return {"success": True, "message": "Successfully authenticated with Resend API!"}
+            else:
+                return {"success": False, "error": "Invalid Resend API Key. Authentication failed."}
+            
         else:
             return {"success": False, "error": "Unsupported connection type."}
             

@@ -1,7 +1,5 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import { rateLimit } from '@/utils/rateLimit'
 
@@ -11,7 +9,7 @@ export async function login(formData: FormData) {
     // Anti-Bruteforce Bot Protection: Max 5 login attempts per minute per Email Address
     const { success: allowed } = rateLimit(`login_${email}`, 5, 60000)
     if (!allowed) {
-        redirect('/login?error=Too many attempts. Please try again later.')
+        return { success: false, error: 'Too many attempts. Please try again later.' }
     }
 
     const supabase = await createClient()
@@ -24,7 +22,7 @@ export async function login(formData: FormData) {
     })
 
     if (error || !data.user) {
-        redirect('/login?error=Could not authenticate user')
+        return { success: false, error: 'Could not authenticate user. Please check your credentials.' }
     }
 
     // 2. Fetch their secure admin flag from the database
@@ -40,15 +38,13 @@ export async function login(formData: FormData) {
         .select('tenant_id')
         .eq('user_id', data.user.id)
 
-    revalidatePath('/', 'layout')
-
     // 4. Route them dynamically based on their roles
     if (profile?.is_tessera_admin) {
-        redirect('/admin')
+        return { success: true, url: '/admin' }
     } else if (!tenantData || tenantData.length === 0) {
-        redirect('/join')
+        return { success: true, url: '/join' }
     } else {
-        redirect('/dashboard')
+        return { success: true, url: '/dashboard' }
     }
 }
 

@@ -98,6 +98,8 @@ export default function IntegrationsPage() {
     } else if (tool.name.includes('LLM') || tool.name.includes('AI Compute')) {
       setFormData(prev => ({ ...prev, tool_type: 'llm', provider: prev.provider || 'google gemini' }));
       setConnectionMode('url');
+    } else {
+      setFormData(prev => ({ ...prev, tool_type: 'api', provider: tool.name.toLowerCase().replace(' ', '-') }));
     }
   };
 
@@ -514,6 +516,19 @@ export default function IntegrationsPage() {
                       </div>
                     )}
                   </>
+                )}
+
+                {!(selectedTool.name.includes('Database') || selectedTool.name.includes('LLM') || selectedTool.name.includes('AI Compute')) && (
+                  <div className="animate-in fade-in duration-200">
+                    <label className="block text-xs font-bold text-zinc-400 mb-1 uppercase tracking-wider">{selectedTool.name} API Key</label>
+                    <input
+                      type="password"
+                      placeholder={`Enter your ${selectedTool.name} API Key...`}
+                      value={formData.api_key || ''}
+                      onChange={(e) => setFormData({ ...formData, api_key: e.target.value })}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-sm text-zinc-100 outline-none focus:border-blue-500"
+                    />
+                  </div>
                 )}
               </div>
 

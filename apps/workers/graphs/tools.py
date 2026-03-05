@@ -151,7 +151,7 @@ def build_tenant_tools(workspace_id: str, requested_tool_ids: List[str]) -> List
                     print(f"      -> [Real Tool Execution] Sending Email via Resend to: {to_email}")
                     try:
                         import requests
-                        resend_key = t_creds.get("resend_api_key", os.environ.get("RESEND_API_KEY"))
+                        resend_key = t_creds.get("api_key", os.environ.get("RESEND_API_KEY"))
                         if not resend_key:
                             return "Error: Missing Resend API Key in tenant credentials or environment."
 
