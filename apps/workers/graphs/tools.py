@@ -170,6 +170,18 @@ def build_tenant_tools(workspace_id: str, requested_tool_ids: List[str]) -> List
                         response = requests.post("https://api.resend.com/emails", json=payload, headers=headers)
                         
                         if response.status_code in [200, 201]:
+                            try:
+                                supabase_client.table("agent_communications").insert({
+                                    "workspace_id": workspace_id,
+                                    "direction": "outbound",
+                                    "from_email": "agents@tesseraos.ai",
+                                    "to_email": to_email,
+                                    "subject": subject,
+                                    "body": html_body
+                                }).execute()
+                            except Exception as log_e:
+                                print(f"      -> [Warning] Failed to securely log outbound email: {str(log_e)}")
+                                
                             return f"Successfully sent email to {to_email}."
                         else:
                             return f"Failed to send email. Status: {response.status_code}, Response: {response.text}"

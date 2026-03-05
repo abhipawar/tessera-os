@@ -116,6 +116,19 @@ async def handle_inbound_email(payload: InboundEmailPayload, req: Request):
                 "context_variables": {"user": {"query": formatted_prompt}}
             }
             
+            # Write to Communication Logs Table
+            try:
+                supabase_client.table("agent_communications").insert({
+                    "workspace_id": workspace_id,
+                    "direction": "inbound",
+                    "from_email": payload.from_email,
+                    "to_email": payload.to,
+                    "subject": subject,
+                    "body": body_text
+                }).execute()
+            except Exception as log_e:
+                logging.warning(f"Failed to securely log inbound email: {str(log_e)}")
+
             logging.info(f"🚀 Waking up Agent Node '{target_node_id}' in Workspace '{workspace_id}' to process email...")
             final_state = compiled_graph.invoke(initial_state, config=config)
             
