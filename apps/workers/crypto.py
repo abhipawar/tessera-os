@@ -33,11 +33,13 @@ def decrypt_credentials(creds_data) -> dict:
         decrypted_str = f.decrypt(str(creds_data).encode()).decode()
         return json.loads(decrypted_str)
     except Exception as e:
+        print(f"--- [CRYPTO ERROR] Fernet Decryption Failed: {e} ---")
         # Fallback in case the DB has plain text strings saved
         try:
             val = json.loads(creds_data)
             if isinstance(val, dict):
                 return val
-        except Exception:
+        except Exception as e2:
+            print(f"--- [CRYPTO ERROR] JSON Fallback Failed: {e2} ---")
             pass
         return {} # Safe fallback
