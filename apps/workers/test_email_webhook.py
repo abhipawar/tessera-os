@@ -5,9 +5,9 @@ url = "http://localhost:8000/api/webhooks/inbound-email"
 
 payload = {
     "from": "customer@example.com",
-    "to": "supervisor@agents.tesseraos.ai",
+    "to": "agent_supervisor@tesseraos.ai",
     "raw_mime": """From: customer@example.com
-To: supervisor@agents.tesseraos.ai
+To: agent_supervisor@tesseraos.ai
 Subject: Urgent: Need help with my account
 Content-Type: text/plain; charset="utf-8"
 

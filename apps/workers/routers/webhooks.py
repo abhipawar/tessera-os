@@ -52,9 +52,13 @@ async def handle_inbound_email(payload: InboundEmailPayload, req: Request):
         body_text = "[No plain text body found in email]"
 
     # 3. Determine Routing (Extract Agent ID / Workspace ID)
-    # E.g., agent-123e4567-e89b-12d3-a456-426614174000@agents.tesseraos.ai
+    # E.g., agent_sales@tesseraos.ai -> 'sales'
     to_address = payload.to.strip().lower()
     local_part = to_address.split("@")[0]
+    
+    # Strip exactly 'agent_' from the start if it exists to retrieve the raw semantic prefix
+    if local_part.startswith("agent_"):
+        local_part = local_part[6:]
     
     logging.info(f"📧 INBOUND EMAIL ROUTER:")
     logging.info(f"From: {payload.from_email}")

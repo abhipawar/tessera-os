@@ -119,15 +119,18 @@ export default function WorkspaceSettingsModal({
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Semantic Email Alias</label>
                                 <div className="flex items-center">
+                                    <div className="p-2.5 bg-zinc-800/80 border border-r-0 border-zinc-700/80 rounded-l-lg text-sm text-zinc-400 select-none font-mono">
+                                        agent_
+                                    </div>
                                     <input
                                         type="text"
                                         value={prefix}
                                         onChange={(e) => setPrefix(e.target.value)}
-                                        className="w-1/2 p-2.5 bg-black border border-zinc-800 rounded-l-lg text-sm text-zinc-200 outline-none focus:border-blue-500 text-right"
-                                        placeholder="e.g. sales-team"
+                                        className="w-1/2 p-2.5 bg-black border border-zinc-700 text-sm text-zinc-200 outline-none focus:border-blue-500 font-mono text-center flex-1"
+                                        placeholder="sales-team"
                                     />
-                                    <div className="w-1/2 p-2.5 bg-zinc-800/50 border border-l-0 border-zinc-800 rounded-r-lg text-sm text-zinc-400 select-none">
-                                        @agents.tesseraos.ai
+                                    <div className="p-2.5 bg-zinc-800/80 border border-l-0 border-zinc-700/80 rounded-r-lg text-sm text-zinc-400 select-none font-mono">
+                                        @tesseraos.ai
                                     </div>
                                 </div>
                                 <p className="text-xs text-zinc-500 px-1 mt-1">
