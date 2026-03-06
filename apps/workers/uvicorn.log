@@ -1,0 +1,35 @@
+Successfully bootstrapped 'chats' schema and RLS policies on startup.
+
+--- [Compiler] Assembling Digital Twin for Node Seat: 'agent_1772479065040' in Workspace: 'a0d3eb89-9360-4e9a-a0aa-1d1a21aad4de' ---
+--- [Compiler] Inspecting node Async Trigger (agent_1772479065040) for LLM Binding ---
+      -> Inheriting global LLM config presence: False
+--- [Compiler] Inspecting node Data Analyst (agent_1772479075858) for LLM Binding ---
+      -> Inheriting global LLM config presence: False
+--- [Compiler] Inspecting node Approval Checkpoint (agent_1772479097168) for LLM Binding ---
+      -> Inheriting global LLM config presence: False
+--- [Compiler] Inspecting node Content Marketing Manager (agent_1772479120622) for LLM Binding ---
+      -> Inheriting global LLM config presence: False
+--- [Compiler] Inspecting node End Terminal (endNode_1772542009566_97) for LLM Binding ---
+      -> Inheriting global LLM config presence: False
+--- [Compiler] Compilation Complete! ---
+
+
+--- [Execution Engine] Entry Point reached: 'Async Trigger' ---
+INFO:     127.0.0.1:64862 - "POST /api/webhooks/inbound-email HTTP/1.1" 200 OK
+
+--- [Compiler] Assembling Digital Twin for Node Seat: 'agent_1772479065040' in Workspace: 'a0d3eb89-9360-4e9a-a0aa-1d1a21aad4de' ---
+--- [Compiler] Inspecting node Async Trigger (agent_1772479065040) for LLM Binding ---
+      -> Inheriting global LLM config presence: False
+--- [Compiler] Inspecting node Data Analyst (agent_1772479075858) for LLM Binding ---
+      -> Inheriting global LLM config presence: False
+--- [Compiler] Inspecting node Approval Checkpoint (agent_1772479097168) for LLM Binding ---
+      -> Inheriting global LLM config presence: False
+--- [Compiler] Inspecting node Content Marketing Manager (agent_1772479120622) for LLM Binding ---
+      -> Inheriting global LLM config presence: False
+--- [Compiler] Inspecting node End Terminal (endNode_1772542009566_97) for LLM Binding ---
+      -> Inheriting global LLM config presence: False
+--- [Compiler] Compilation Complete! ---
+
+
+--- [Execution Engine] Entry Point reached: 'Async Trigger' ---
+INFO:     127.0.0.1:50844 - "POST /api/webhooks/inbound-email HTTP/1.1" 200 OK

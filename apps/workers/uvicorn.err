@@ -1,0 +1,6 @@
+INFO:     Started server process [17324]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+ERROR:root:Error executing LangGraph pipeline for incoming email: No LLM configuration provided. Please connect an LLM integration (like OpenAI or Anthropic) in your Tenant Tools.
+ERROR:root:Error executing LangGraph pipeline for incoming email: No LLM configuration provided. Please connect an LLM integration (like OpenAI or Anthropic) in your Tenant Tools.

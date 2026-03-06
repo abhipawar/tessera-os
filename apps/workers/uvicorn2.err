@@ -1,0 +1,58 @@
+INFO:     Will watch for changes in these directories: ['C:\\Users\\abhip\\.gemini\\antigravity\\scratch\\tessera\\tessera-os\\apps\\workers']
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [21048] using WatchFiles
+INFO:     Started server process [22180]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:root:Error executing LangGraph pipeline for incoming email: No LLM configuration provided. Please connect an LLM integration (like OpenAI or Anthropic) in your Tenant Tools.
+WARNING:  WatchFiles detected changes in 'graphs\builder.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [22180]
+INFO:     Started server process [21768]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'routers\webhooks.py'. Reloading...
+ERROR:root:Error executing LangGraph pipeline for incoming email: No LLM configuration provided. Please connect an LLM integration (like OpenAI or Anthropic) in your Tenant Tools.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [21768]
+INFO:     Started server process [20872]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'crypto.py'. Reloading...
+ERROR:root:Error executing LangGraph pipeline for incoming email: No LLM configuration provided. Please connect an LLM integration (like OpenAI or Anthropic) in your Tenant Tools.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [20872]
+INFO:     Started server process [9840]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'test_keys.py'. Reloading...
+ERROR:root:Error executing LangGraph pipeline for incoming email: No LLM configuration provided. Please connect an LLM integration (like OpenAI or Anthropic) in your Tenant Tools.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [9840]
+WARNING:  WatchFiles detected changes in 'graphs\builder.py', 'routers\webhooks.py'. Reloading...
+INFO:     Started server process [16196]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [16196]
+INFO:     Started server process [21616]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'routers\webhooks.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [21616]
+INFO:     Started server process [9108]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.

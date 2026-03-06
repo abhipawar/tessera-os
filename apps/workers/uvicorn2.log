@@ -1,0 +1,67 @@
+Successfully bootstrapped 'chats' schema and RLS policies on startup.
+
+--- [Compiler] Assembling Digital Twin for Node Seat: 'agent_1772479065040' in Workspace: 'a0d3eb89-9360-4e9a-a0aa-1d1a21aad4de' ---
+--- [Compiler] Checking Tenant Tool: 'llm' mapped from d4d91ed5-54fe-4bb5-95a8-9c54b06bd299 ---
+      -> MATCHED AI COMPUTE! Attempting decryption...
+      -> Decrypted Payload: <class 'dict'> - False
+--- [Compiler] CRITICAL: Completed tool scan but global_llm_config is still empty! ---
+--- [Compiler] Inspecting node Async Trigger (agent_1772479065040) for LLM Binding ---
+      -> Inheriting global LLM config presence: False
+--- [Compiler] Inspecting node Data Analyst (agent_1772479075858) for LLM Binding ---
+      -> Inheriting global LLM config presence: False
+--- [Compiler] Inspecting node Approval Checkpoint (agent_1772479097168) for LLM Binding ---
+      -> Inheriting global LLM config presence: False
+--- [Compiler] Inspecting node Content Marketing Manager (agent_1772479120622) for LLM Binding ---
+      -> Inheriting global LLM config presence: False
+--- [Compiler] Inspecting node End Terminal (endNode_1772542009566_97) for LLM Binding ---
+      -> Inheriting global LLM config presence: False
+--- [Compiler] Compilation Complete! ---
+
+
+--- [Execution Engine] Entry Point reached: 'Async Trigger' ---
+INFO:     127.0.0.1:49916 - "POST /api/webhooks/inbound-email HTTP/1.1" 200 OK
+  Successfully bootstrapped 'chats' schema and RLS policies on startup.
+
+--- [Compiler] Assembling Digital Twin for Node Seat: 'agent_1772479065040' in Workspace: 'a0d3eb89-9360-4e9a-a0aa-1d1a21aad4de' ---
+--- [Compiler] Compilation Complete! ---
+
+
+--- [Execution Engine] Entry Point reached: 'Async Trigger' ---
+INFO:     127.0.0.1:64624 - "POST /api/webhooks/inbound-email HTTP/1.1" 200 OK
+ Successfully bootstrapped 'chats' schema and RLS policies on startup.
+
+--- [Compiler] Assembling Digital Twin for Node Seat: 'agent_1772479065040' in Workspace: 'a0d3eb89-9360-4e9a-a0aa-1d1a21aad4de' ---
+--- [Compiler] Compilation Complete! ---
+
+
+--- [Execution Engine] Entry Point reached: 'Async Trigger' ---
+INFO:     127.0.0.1:57936 - "POST /api/webhooks/inbound-email HTTP/1.1" 200 OK
+ Successfully bootstrapped 'chats' schema and RLS policies on startup.
+
+--- [Compiler] Assembling Digital Twin for Node Seat: 'agent_1772479065040' in Workspace: 'a0d3eb89-9360-4e9a-a0aa-1d1a21aad4de' ---
+--- [Compiler] Compilation Complete! ---
+
+
+--- [Execution Engine] Entry Point reached: 'Async Trigger' ---
+INFO:     127.0.0.1:59111 - "POST /api/webhooks/inbound-email HTTP/1.1" 200 OK
+ Successfully bootstrapped 'chats' schema and RLS policies on startup.
+ Successfully bootstrapped 'chats' schema and RLS policies on startup.
+
+--- [Compiler] Assembling Digital Twin for Node Seat: 'agent_1772479065040' in Workspace: 'a0d3eb89-9360-4e9a-a0aa-1d1a21aad4de' ---
+--- [Compiler] Compilation Complete! ---
+
+
+--- [Execution Engine] Entry Point reached: 'Async Trigger' ---
+
+--- [Execution Engine] Supervisor 'Data Analyst' is thinking... ---
+      -> Thought: The user is asking for help with an account login and password reset. As the Data Analyst, my only available downstream worker is 'Approval Checkpoint'. I do not have access to customer support or IT account systems. I must politely inform the user of my lack of authorization/access to the required department and terminate the interaction.
+      -> Decided to route to: FINISH
+
+--- [Execution Engine] Entry Point reached: 'Async Trigger' ---
+
+--- [Execution Engine] Supervisor 'Data Analyst' is thinking... ---
+      -> Thought: The user is requesting assistance with a password reset. As a Data Analyst, I do not have access to account management systems or customer support tools. Per my strict sequential pipeline instructions, I must route the task to 'Approval Checkpoint' before finishing.
+      -> Decided to route to: Approval Checkpoint
+
+--- [Execution Engine] Pausing at Approval Checkpoint: 'Approval Checkpoint' ---
+INFO:     127.0.0.1:53825 - "POST /api/webhooks/inbound-email HTTP/1.1" 200 OK
