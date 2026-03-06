@@ -134,9 +134,35 @@ async def handle_inbound_email(payload: InboundEmailPayload, req: Request):
                 logging.warning(f"Failed to securely log inbound email: {str(log_e)}")
 
             logging.info(f"🚀 Waking up Agent Node '{target_node_id}' in Workspace '{workspace_id}' to process email...")
-            final_state = compiled_graph.invoke(initial_state, config=config)
+            events = compiled_graph.stream(initial_state, config=config)
             
-            logging.info(f"✅ Agent '{target_node_id}' successfully executed email logic.")
+            interrupted = False
+            for event in events:
+                if "__interrupt__" in event:
+                    interrupted = True
+                    interrupt_data = event["__interrupt__"][0].value
+                    
+                    supabase_client.table("agent_tasks").insert({
+                        "workspace_id": workspace_id,
+                        "thread_id": thread_id,
+                        "agent_id": interrupt_data.get("node", "Unknown Approval Node"),
+                        "payload": {
+                            "context": interrupt_data.get("messages", []),
+                            "event_source": "inbound-email",
+                            "original_payload": {
+                                "from_email": payload.from_email,
+                                "subject": subject,
+                                "body": body_text
+                            }
+                        },
+                        "status": "pending_approval"
+                    }).execute()
+                    
+                    logging.info(f"--- [Webhook Engine] Graph paused for Human-in-the-Loop on thread {thread_id} ---")
+                    break
+            
+            if not interrupted:
+                logging.info(f"✅ Agent '{target_node_id}' successfully executed email logic.")
             
     except Exception as e:
         logging.error(f"Error executing LangGraph pipeline for incoming email: {e}")
