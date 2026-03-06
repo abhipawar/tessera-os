@@ -49,8 +49,8 @@ def build_dynamic_graph(nodes: list, edges: list, user_node_id: str, memory=None
                     gt_map = {row["id"]: row["name"] for row in gt_res.data}
                     
                     for row in tt_res.data:
-                        g_name = gt_map.get(row["tool_id"], "")
-                        if "LLM" in g_name or "AI Compute" in g_name:
+                        g_name = gt_map.get(row["tool_id"], "").lower()
+                        if "llm" in g_name or "ai compute" in g_name:
                             global_llm_config = decrypt_credentials(row["credentials"])
                             break
         except Exception as e:
