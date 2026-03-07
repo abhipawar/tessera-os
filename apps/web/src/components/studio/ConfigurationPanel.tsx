@@ -87,16 +87,17 @@ export default function ConfigurationPanel() {
                                 placeholder="Define how this agent should behave (Supports dynamic {{variables}})..."
                                 className="w-full text-sm p-2.5 bg-zinc-950/50 border border-zinc-800/50 rounded-lg h-32 resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-zinc-100"
                             />
-                            <div className="mt-2 text-[10px] text-zinc-500 bg-blue-500/5 rounded p-2 border border-blue-500/10 flex items-start gap-1.5">
-                                <Info size={12} className="text-blue-400 mt-0.5 shrink-0" />
-                                <div>
-                                    <span className="font-semibold text-blue-400 block mb-1">Data Mapping Guide:</span>
-                                    Inject dynamic data at runtime using double brackets. <br />
-                                    <span className="text-zinc-400">Webhook Trigger payload:</span> <code className="text-zinc-300 font-mono">{'{{trigger.payload.key}}'}</code><br />
-                                    <span className="text-zinc-400">Agent Output:</span> <code className="text-zinc-300 font-mono">{'{{Agent Name.output}}'}</code><br />
-                                    <span className="text-zinc-400">User Query:</span> <code className="text-zinc-300 font-mono">{'{{user.query}}'}</code>
+                            <details className="mt-2 group">
+                                <summary className="text-[10px] text-zinc-500 hover:text-zinc-400 cursor-pointer flex items-center gap-1 list-none font-medium transition-colors">
+                                    <Info size={12} /> View dynamic variables guide
+                                </summary>
+                                <div className="mt-2 text-[10px] text-zinc-500 bg-zinc-950/50 rounded p-2 border border-zinc-800/50 leading-relaxed">
+                                    Inject dynamic data at runtime using double brackets: <br />
+                                    • <span className="text-zinc-400">Webhook Trigger payload:</span> <code className="text-zinc-300 font-mono">{'{{trigger.payload.key}}'}</code><br />
+                                    • <span className="text-zinc-400">Agent Output:</span> <code className="text-zinc-300 font-mono">{'{{Agent Name.output}}'}</code><br />
+                                    • <span className="text-zinc-400">User Query:</span> <code className="text-zinc-300 font-mono">{'{{user.query}}'}</code>
                                 </div>
-                            </div>
+                            </details>
                         </div>
 
                         <div className="mt-4">
