@@ -21,3 +21,10 @@ INFO:     Started server process [21768]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 WARNING:  WatchFiles detected changes in 'routers\webhooks.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [21768]
+INFO:     Started server process [26704]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
