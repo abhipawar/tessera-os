@@ -100,20 +100,40 @@ export default function ConfigurationPanel() {
                         </div>
 
                         <div className="mt-4">
+                            <div className="mb-6 p-4 rounded-xl bg-gradient-to-br from-blue-900/20 to-blue-900/5 border border-blue-500/20 relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 blur-[30px] rounded-full group-hover:bg-blue-500/20 transition-all pointer-events-none"></div>
+                                <div className="flex items-start gap-3 relative z-10">
+                                    <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
+                                        <Cpu size={16} />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-sm font-bold text-blue-400 mb-1 flex items-center gap-2">
+                                            Tenant Intelligence Active
+                                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-500/10 border border-blue-500/20 text-blue-300 tracking-wider">GLOBAL</span>
+                                        </h4>
+                                        <p className="text-xs text-zinc-400 leading-relaxed">
+                                            This Agent is automatically powered by the global language model configured in your Tenant Integrations Hub.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
                             <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-4 block border-b border-zinc-800 pb-2">
-                                Assigned Intergrations & Tools
+                                Node Capabilities & Actions
                             </label>
                             <div className="space-y-6">
-                                {configuredTools.length === 0 ? (
-                                    <p className="text-sm text-zinc-500 italic p-3 bg-zinc-950/50 rounded-lg border border-zinc-800/50">No tools configured in Integrations Hub yet.</p>
+                                {configuredTools.filter((t: any) => !t.name.toLowerCase().includes('llm') && !t.name.toLowerCase().includes('ai compute')).length === 0 ? (
+                                    <p className="text-sm text-zinc-500 italic p-3 bg-zinc-950/50 rounded-lg border border-zinc-800/50">No action capabilities configured in Integrations Hub yet.</p>
                                 ) : (
                                     (Object.entries(
-                                        configuredTools.reduce((acc, tool) => {
-                                            const category = tool.name; // The global template name acts as category
-                                            if (!acc[category]) acc[category] = [];
-                                            acc[category].push(tool);
-                                            return acc;
-                                        }, {} as Record<string, any[]>)
+                                        configuredTools
+                                            .filter((t: any) => !t.name.toLowerCase().includes('llm') && !t.name.toLowerCase().includes('ai compute'))
+                                            .reduce((acc, tool) => {
+                                                const category = tool.name; // The global template name acts as category
+                                                if (!acc[category]) acc[category] = [];
+                                                acc[category].push(tool);
+                                                return acc;
+                                            }, {} as Record<string, any[]>)
                                     ) as [string, any[]][]).map(([category, tools]) => (
                                         <div key={category} className="space-y-2">
                                             <h4 className="text-xs font-bold text-zinc-400 capitalize flex items-center gap-2">
