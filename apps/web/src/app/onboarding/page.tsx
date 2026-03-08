@@ -97,7 +97,7 @@ export default function OnboardingPage() {
                       required
                       placeholder="John Doe"
                       className="w-full pl-9 pr-3 py-2.5 bg-zinc-950/50 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none text-zinc-100 transition-all font-mono text-sm"
-                      disabled={step === 2 || isSendingCode}
+                      readOnly={step === 2 || isSendingCode}
                     />
                   </div>
                 </div>
@@ -113,7 +113,7 @@ export default function OnboardingPage() {
                       required
                       placeholder="Acme Corp"
                       className="w-full pl-9 pr-3 py-2.5 bg-zinc-950/50 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none text-zinc-100 transition-all font-mono text-sm"
-                      disabled={step === 2 || isSendingCode}
+                      readOnly={step === 2 || isSendingCode}
                     />
                   </div>
                 </div>
@@ -131,7 +131,7 @@ export default function OnboardingPage() {
                     required
                     placeholder="name@company.com"
                     className="w-full pl-9 pr-3 py-2.5 bg-zinc-950/50 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none text-zinc-100 transition-all font-mono text-sm"
-                    disabled={step === 2 || isSendingCode}
+                    readOnly={step === 2 || isSendingCode}
                   />
                 </div>
               </div>
@@ -149,7 +149,7 @@ export default function OnboardingPage() {
                     minLength={6}
                     placeholder="••••••••"
                     className="w-full pl-9 pr-3 py-2.5 bg-zinc-950/50 border border-zinc-800 rounded-xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none text-zinc-100 transition-all font-mono text-sm tracking-widest"
-                    disabled={step === 2 || isSendingCode}
+                    readOnly={step === 2 || isSendingCode}
                   />
                 </div>
               </div>
