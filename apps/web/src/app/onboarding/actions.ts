@@ -35,6 +35,11 @@ export async function onboardTenant(payload: Record<string, string>) {
             })
         });
 
+        if (!res.ok) {
+            const errBody = await res.text();
+            throw new Error(`API ${res.status}: ${errBody}`);
+        }
+
         const data = await res.json();
         if (data.error) throw new Error(data.error);
 
@@ -58,7 +63,8 @@ export async function onboardTenant(payload: Record<string, string>) {
 
     } catch (e: any) {
         console.error("Backend onboarding failed", e);
-        redirect(`/onboarding?error=${encodeURIComponent('Failed to provision environment')}`);
+        const errMsg = e.message && e.message.includes('API 422') ? e.message : 'Failed to provision environment';
+        redirect(`/onboarding?error=${encodeURIComponent(errMsg)}`);
     }
 
     // 3. Log the user into the Next.js frontend using the credentials they just provided
