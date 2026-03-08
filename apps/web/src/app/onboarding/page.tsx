@@ -80,7 +80,10 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          <form action={(formData) => startTransition(() => onboardTenant(formData))} className="space-y-5">
+          <form action={(formData) => {
+            const payload = Object.fromEntries(formData.entries());
+            startTransition(() => onboardTenant(payload as Record<string, string>));
+          }} className="space-y-5">
 
             {/* STEP 1: Details */}
             <div className={`space-y-5 transition-all duration-300 ${step === 2 ? 'opacity-30 pointer-events-none blur-[1px]' : ''}`}>

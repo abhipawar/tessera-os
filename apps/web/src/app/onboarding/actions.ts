@@ -7,13 +7,13 @@ import { API_URL } from '@/config'
 import { rateLimit } from '@/utils/rateLimit'
 import { welcomeTemplate } from '@/emails/welcomeTemplate'
 
-export async function onboardTenant(formData: FormData) {
+export async function onboardTenant(payload: Record<string, string>) {
     const supabase = await createClient()
-    const name = formData.get('name') as string
-    const companyName = formData.get('companyName') as string
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
-    const otpCode = formData.get('otpCode') as string
+    const name = payload.name
+    const companyName = payload.companyName
+    const email = payload.email
+    const password = payload.password
+    const otpCode = payload.otpCode
 
     // Anti-Bot Spam Protection: Max 5 tenant creations per minute per Email
     const { success: allowed } = rateLimit(`onboard_${email}`, 5, 60000)
