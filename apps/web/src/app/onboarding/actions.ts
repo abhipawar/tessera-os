@@ -18,7 +18,7 @@ export async function onboardTenant(payload: Record<string, string>) {
     // Anti-Bot Spam Protection: Max 5 tenant creations per minute per Email
     const { success: allowed } = rateLimit(`onboard_${email}`, 5, 60000)
     if (!allowed) {
-        redirect(`/onboarding?error=${encodeURIComponent('Too many requests. Please slow down.')}`)
+        return { error: 'Too many requests. Please slow down.' };
     }
 
     // 1. Tell Python to securely create the User, Tenant, and Workspace
@@ -63,8 +63,8 @@ export async function onboardTenant(payload: Record<string, string>) {
 
     } catch (e: any) {
         console.error("Backend onboarding failed", e);
-        const errMsg = e.message && e.message.includes('API 422') ? e.message : 'Failed to provision environment';
-        redirect(`/onboarding?error=${encodeURIComponent(errMsg)}`);
+        const errMsg = e.message && e.message.includes('API 422') ? e.message : (e.message || 'Failed to provision environment');
+        return { error: errMsg };
     }
 
     // 3. Log the user into the Next.js frontend using the credentials they just provided
@@ -74,7 +74,7 @@ export async function onboardTenant(payload: Record<string, string>) {
     })
 
     if (signInError) {
-        redirect(`/onboarding?error=${encodeURIComponent('Created environment, but failed to log in automatically.')}`);
+        return { error: 'Created environment, but failed to log in automatically.' };
     }
 
     // 4. Clear the cache and send them to the Tour

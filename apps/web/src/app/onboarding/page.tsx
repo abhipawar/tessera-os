@@ -81,8 +81,17 @@ export default function OnboardingPage() {
           )}
 
           <form action={(formData) => {
+            setErrorMsg("");
             const payload = Object.fromEntries(formData.entries());
-            startTransition(() => onboardTenant(payload as Record<string, string>));
+            startTransition(() => {
+              onboardTenant(payload as Record<string, string>).then((res) => {
+                if (res?.error) {
+                  setErrorMsg(res.error);
+                }
+              }).catch(err => {
+                setErrorMsg(err.message || "An unexpected error occurred.");
+              });
+            });
           }} className="space-y-5">
 
             {/* STEP 1: Details */}
