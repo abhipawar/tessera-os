@@ -1,5 +1,6 @@
 import { API_URL } from "@/config";
-
+import { NextRequest, NextResponse } from "next/server";
+import { rateLimit } from "@/utils/rateLimit";
 export async function POST(req: NextRequest) {
     try {
         const { email } = await req.json();
