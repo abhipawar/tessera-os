@@ -56,3 +56,20 @@ INFO:     Finished server process [21616]
 INFO:     Started server process [9108]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'routers\chat.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [9108]
+WARNING:  WatchFiles detected changes in 'routers\chat.py'. Reloading...
+INFO:     Started server process [22676]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [22676]
+INFO:     Started server process [20112]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'routers\chat.py'. Reloading...

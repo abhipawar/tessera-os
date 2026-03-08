@@ -75,9 +75,9 @@ export default function LandingPage() {
                   <XCircleIcon /> The Old Way
                 </div>
                 <ul className="space-y-4 text-zinc-400">
-                  <RibbonItem title="Linear Headcount Scaling" desc="Revenue growth requires proportional hiring." />
-                  <RibbonItem title="Brittle RPA" desc="Workflows break when UI elements or APIs change." />
-                  <RibbonItem title="Siloed Chatbots" desc="Simple Q&A bots that cannot execute complex multi-step actions." />
+                  <RibbonItem title="Rigid IF/ELSE Logic" desc="Workflows fail silently when complex data deviates from hardcoded formatting." />
+                  <RibbonItem title="Machine-Only Processes" desc="Pausing automated pipelines for human oversight requires highly complex engineering." />
+                  <RibbonItem title="Stateless Execution" desc="Linear scripts trigger, run once, and die with zero contextual memory." />
                 </ul>
               </div>
 
@@ -88,9 +88,9 @@ export default function LandingPage() {
                   <CheckCircleIcon /> The Tessera Way
                 </div>
                 <ul className="space-y-4 text-zinc-300 relative z-10">
-                  <RibbonItem title="Multi-Agent Orchestration" desc="Hierarchical graphs of supervisors and specialized workers." />
-                  <RibbonItem title="Self-Coding Integrations" desc="Agents write custom code to navigate legacy systems." />
-                  <RibbonItem title="Asymptotic Scaling" desc="Decouple organizational output from human headcount." />
+                  <RibbonItem title="Cognitive Orchestration" desc="Supervisors understand nuance and route tasks dynamically without brittle regex." />
+                  <RibbonItem title="Controlled Autonomy" desc="Run fully autonomous workflows, or natively inject approval checkpoints for human sign-off." />
+                  <RibbonItem title="Persistent AI Memory" desc="Graph-backed agents retain deep context. Collaborate across multiple conversational turns." />
                 </ul>
               </div>
 
@@ -107,9 +107,9 @@ export default function LandingPage() {
               <div className="w-14 h-14 bg-zinc-800 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <Users className="text-zinc-300" size={28} />
               </div>
-              <h3 className="text-2xl font-bold mb-3">Human-Machine Synergy</h3>
+              <h3 className="text-2xl font-bold mb-3">Controlled Autonomy</h3>
               <p className="text-zinc-400 leading-relaxed mb-6">
-                Autonomy with oversight. Deploy a digital workforce that executes 99% of the grunt work, but deterministically pauses to request human supervisor approval before triggering critical actions.
+                Full autonomy with optional oversight. Deploy a digital workforce that runs entirely on its own, or seamlessly inject approval checkpoints where agents deterministically pause to request human authorization before critical actions.
               </p>
             </div>
 
@@ -155,8 +155,8 @@ export default function LandingPage() {
               />
               <FeatureCard
                 icon={<GitBranch />}
-                title="Supervisor Routing"
-                desc="Top-level agents autonomously decompose complex language requests and route them to their specialized direct reports."
+                title="Cognitive Routing"
+                desc="Top-level Supervisors autonomously decompose complex language requests and route them to their specialized direct reports without writing IF/ELSE statements."
               />
               <FeatureCard
                 icon={<Database />}

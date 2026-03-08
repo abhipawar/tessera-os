@@ -66,6 +66,7 @@ interface StudioState {
     chartName: string;
     isSaving: boolean;
     isAdmin: boolean;
+    isCanvasMaximized: boolean;
     setChartList: (list: ChartItem[]) => void;
     setGlobalTemplates: (templates: Template[]) => void;
     setCurrentChartId: (id: string | null) => void;
@@ -77,11 +78,19 @@ interface StudioState {
     isTeamPanelOpen: boolean;
     nodeAssignments: Record<string, string>;
     inviteEmail: string;
-    inviteRole: string;
+    inviteRole: 'member' | 'tenant_admin';
     setIsTeamPanelOpen: (open: boolean) => void;
+
+    // Execution History & Visual Feedback
+    executionHistory: any[];
+    isFetchingHistory: boolean;
+    runningNodes: string[];
+    setIsCanvasMaximized: (maximized: boolean) => void;
+    fetchWorkspaceExecutionHistory: () => Promise<void>;
+    testRunWorkspace: () => Promise<void>;
     setNodeAssignments: (assignments: Record<string, string>) => void;
     setInviteEmail: (email: string) => void;
-    setInviteRole: (role: string) => void;
+    setInviteRole: (role: 'member' | 'tenant_admin') => void;
 
     // Actions
     checkAdminStatus: () => Promise<void>;
@@ -129,9 +138,15 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     chartName: 'New Workspace',
     isSaving: false,
     isAdmin: false,
+    isCanvasMaximized: false,
 
     isTeamPanelOpen: false,
     nodeAssignments: {},
+
+    // Execution Inspector Default State
+    executionHistory: [],
+    isFetchingHistory: false,
+    runningNodes: [],
     inviteEmail: '',
     inviteRole: 'member',
 
@@ -156,6 +171,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     setChartName: (name) => set({ chartName: name }),
     setIsSaving: (saving) => set({ isSaving: saving }),
     setIsAdmin: (isAdmin) => set({ isAdmin }),
+    setIsCanvasMaximized: (maximized) => set({ isCanvasMaximized: maximized }),
 
     setIsTeamPanelOpen: (open) => set({ isTeamPanelOpen: open }),
     setNodeAssignments: (assignments) => set({ nodeAssignments: assignments }),
@@ -357,11 +373,20 @@ export const useStudioStore = create<StudioState>((set, get) => ({
             }
 
             await state.fetchChartList();
-            useNotificationStore.getState().showNotification({
-                title: "Blueprint Compiled",
-                message: "Graph Engine successfully synchronized and saved.",
-                type: "success"
-            });
+
+            if (result.warning) {
+                useNotificationStore.getState().showNotification({
+                    title: "Architecture Warning",
+                    message: result.warning,
+                    type: "warning"
+                });
+            } else {
+                useNotificationStore.getState().showNotification({
+                    title: "Blueprint Compiled",
+                    message: "Graph Engine successfully synchronized and saved.",
+                    type: "success"
+                });
+            }
         } catch (err: any) {
             console.error(err);
             useNotificationStore.getState().showNotification({
@@ -436,42 +461,179 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     },
 
     deleteWorkspace: async () => {
-        const state = get();
-        if (!state.currentChartId) return;
-
-        const isConfirmed = window.confirm("Are you sure you want to permanently delete this workspace and all its data? This action cannot be undone.");
-        if (!isConfirmed) return;
-
-        set({ isSaving: true });
+        const { currentChartId } = get();
+        if (!currentChartId) return;
 
         try {
-            const result = await deleteWorkspaceAction(state.currentChartId);
+            set({ isSaving: true });
+            const sessionData = await supabase.auth.getSession();
+            const session = sessionData.data.session;
+            if (!session) return;
 
-            if (result.error) {
-                useNotificationStore.getState().showNotification({
-                    title: "Deletion Failed",
-                    message: result.error,
-                    type: "error"
-                });
-                return;
-            }
+            await fetch(`/api/workspace?id=${currentChartId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${session.access_token}` },
+            });
 
-            state.createNewChart();
-            await state.fetchChartList();
+            // Clear state and reload list
+            set({ currentChartId: null, chartName: 'New Workspace', nodes: [], edges: [] });
             useNotificationStore.getState().showNotification({
                 title: "Workspace Deleted",
-                message: "The workspace was successfully removed from the database.",
+                message: "The workspace has been completely removed.",
                 type: "success"
             });
-        } catch (err: any) {
-            console.error(err);
+            await get().fetchChartList();
+        } catch (error) {
+            console.error("Failed to delete workspace:", error);
             useNotificationStore.getState().showNotification({
-                title: "Server Error",
-                message: `Failed to delete workspace: ${err.message}`,
+                title: "Deletion Failed",
+                message: "A critical error occurred while deleting.",
                 type: "error"
             });
         } finally {
             set({ isSaving: false });
         }
+    },
+
+    fetchWorkspaceExecutionHistory: async () => {
+        const { currentChartId } = get();
+        if (!currentChartId) return;
+
+        set({ isFetchingHistory: true });
+        try {
+            const sessionData = await supabase.auth.getSession();
+            const session = sessionData.data.session;
+            if (!session) return;
+
+            // 1. Fetch latest thread for workspace
+            const resChats = await fetch(`http://localhost:8000/api/tenant-agent/chats/${currentChartId}`, {
+                headers: { 'Authorization': `Bearer ${session.access_token}` }
+            });
+            const chatData = await resChats.json();
+            if (!chatData.chats || chatData.chats.length === 0) {
+                set({ executionHistory: [], isFetchingHistory: false });
+                return;
+            }
+            const latestThreadId = chatData.chats[0].id;
+
+            // 2. Fetch state history for that thread
+            const resHist = await fetch(`http://localhost:8000/api/tenant-agent/chat/${currentChartId}/thread/${latestThreadId}/state-history`, {
+                headers: { 'Authorization': `Bearer ${session.access_token}` }
+            });
+            const histData = await resHist.json();
+
+            if (histData.history) {
+                set({ executionHistory: histData.history });
+            } else {
+                set({ executionHistory: [] });
+            }
+        } catch (e) {
+            console.error("Failed to fetch execution history:", e);
+            set({ executionHistory: [] });
+        } finally {
+            set({ isFetchingHistory: false });
+        }
+    },
+
+    testRunWorkspace: async () => {
+        const { currentChartId, nodes } = get();
+        if (!currentChartId) return;
+
+        // Find supervisor or first node to give it a test prompt
+        const prompt = "Please execute a test run of this workspace and say hello.";
+
+        try {
+            set({ runningNodes: [] });
+            const sessionData = await supabase.auth.getSession();
+            const session = sessionData.data.session;
+            if (!session) return;
+
+            // Re-fetch chat ID to run in latest thread or just let the backend create one?
+            // Actually, backend needs a chat ID.
+            const resChats = await fetch(`${API_URL}/api/tenant-agent/chats/${currentChartId}`, {
+                headers: { 'Authorization': `Bearer ${session.access_token}` }
+            });
+            const chatData = await resChats.json();
+            let chatId = '';
+            if (chatData.chats && chatData.chats.length > 0) {
+                chatId = chatData.chats[0].id;
+            } else {
+                // If no chat exists, we can't test stream easily without creating one. 
+                // Let's create a temporary chat thread
+                const createRes = await fetch(`${API_URL}/api/tenant-agent/chats`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title: 'Studio Test Run', workspace_id: currentChartId })
+                });
+                const createData = await createRes.json();
+                chatId = createData.id;
+            }
+
+            useNotificationStore.getState().showNotification({
+                title: "Test Run Started",
+                message: "Executing the graph from the beginning...",
+                type: "success"
+            });
+
+            // Listen to SSE
+            const res = await fetch(`${API_URL}/api/tenant-agent/stream`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'text/event-stream'
+                },
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    query: prompt
+                })
+            });
+
+            if (!res.body) return;
+
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder();
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value);
+                const lines = chunk.split('\\n');
+
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        try {
+                            const data = JSON.parse(line.slice(6));
+                            if (data.event === 'node_stream') {
+                                // Light up the node! Find nodes by fuzzy name match since LangGraph replaces spaces
+                                set((state) => {
+                                    const uiNode = state.nodes.find(n => n.data.label.replace(/[^a-zA-Z0-9_-]/g, '_') === data.node);
+                                    if (uiNode && !state.runningNodes.includes(uiNode.id)) {
+                                        return { runningNodes: [...state.runningNodes, uiNode.id] };
+                                    }
+                                    return state;
+                                });
+                            } else if (data.event === 'node_update') {
+                                // Node finished its step, we can briefly leave it glowing or turn it off soon
+                                // we will just keep all hit nodes glowing for this demo until finish
+                            } else if (data.event === 'finish') {
+                                setTimeout(() => set({ runningNodes: [] }), 2000); // clear after 2 seconds
+                            } else if (data.event === 'error') {
+                                console.error('Stream error:', data.message);
+                                set({ runningNodes: [] });
+                            }
+                        } catch (e) {
+                            // parse error, ignore partial chunk
+                        }
+                    }
+                }
+            }
+
+        } catch (e) {
+            console.error("Failed to run test stream:", e);
+            set({ runningNodes: [] });
+        }
+
     }
 }));

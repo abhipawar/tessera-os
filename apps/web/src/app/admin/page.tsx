@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { createBrowserClient } from '@supabase/ssr'
-import { Trash2, AlertTriangle, Users, Database, Network, RefreshCw, Wrench, CheckCircle2, XCircle, Bot, Settings } from 'lucide-react'
+import { Trash2, AlertTriangle, Users, Database, Network, RefreshCw, Wrench, CheckCircle2, XCircle, Bot, Settings, Sparkles, Loader2 } from 'lucide-react'
 import { API_URL } from '@/config'
 import { useNotificationStore } from '@/store/notificationStore'
 
@@ -44,6 +44,7 @@ export default function AdminDashboard() {
   const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
   const [editingAgent, setEditingAgent] = useState<GlobalAgent | null>(null);
   const [agentForm, setAgentForm] = useState({ name: '', description: '', system_prompt: '', category_id: '', logo_icon: '', is_active: true });
+  const [isEnhancingPrompt, setIsEnhancingPrompt] = useState(false);
 
   // Template Modal State
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
@@ -161,6 +162,49 @@ export default function AdminDashboard() {
     const { data: { session } } = await supabase.auth.getSession();
     await fetch(`${API_URL}/api/admin/agents/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${session?.access_token}` } });
     fetchDashboardData();
+  };
+
+  const handleEnhancePrompt = async () => {
+    if (!agentForm.system_prompt || agentForm.system_prompt.trim().length < 5) {
+      useNotificationStore.getState().showNotification({
+        title: "Prompt Error",
+        message: "Please write at least a basic sentence describing the agent's goal before enhancing.",
+        type: "warning"
+      });
+      return;
+    }
+
+    setIsEnhancingPrompt(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(`${API_URL}/api/tenant/enhance-prompt`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ rough_prompt: agentForm.system_prompt })
+      });
+      const data = await res.json();
+      if (data.success && data.enhanced_prompt) {
+        setAgentForm(prev => ({ ...prev, system_prompt: data.enhanced_prompt }));
+        useNotificationStore.getState().showNotification({
+          title: "Prompt Enhanced",
+          message: "AI has successfully rewritten your agent's system instructions.",
+          type: "success"
+        });
+      } else {
+        throw new Error(data.error || "Failed to enhance prompt");
+      }
+    } catch (err: any) {
+      useNotificationStore.getState().showNotification({
+        title: "Enhancement Failed",
+        message: err.message,
+        type: "error"
+      });
+    } finally {
+      setIsEnhancingPrompt(false);
+    }
   };
 
   // --- TEMPLATE CRUD ---
@@ -432,7 +476,20 @@ export default function AdminDashboard() {
             <select value={agentForm.category_id || ''} onChange={e => setAgentForm({ ...agentForm, category_id: e.target.value })} className="bg-zinc-950 border border-zinc-800 rounded-md p-2 w-full text-sm text-zinc-300">
               {categories.map(c => <option key={c.id} value={c.id}>{c.display_name}</option>)}
             </select>
-            <textarea placeholder='System Prompt (Instructions)' value={agentForm.system_prompt || ''} onChange={e => setAgentForm({ ...agentForm, system_prompt: e.target.value })} className="w-full bg-zinc-950 border border-zinc-800 rounded-md p-2 h-32 text-sm font-mono text-emerald-400" />
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">System Prompt (Instructions)</label>
+                <button
+                  onClick={handleEnhancePrompt}
+                  disabled={isEnhancingPrompt}
+                  className="flex items-center gap-1.5 px-2 py-1 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 text-[10px] font-bold uppercase tracking-wider rounded border border-indigo-500/20 transition-colors disabled:opacity-50"
+                >
+                  {isEnhancingPrompt ? <Loader2 size={10} className="animate-spin" /> : <Sparkles size={10} />}
+                  {isEnhancingPrompt ? 'Enhancing...' : 'Enhance'}
+                </button>
+              </div>
+              <textarea placeholder='e.g. You are a helpful AI assistant...' value={agentForm.system_prompt || ''} onChange={e => setAgentForm({ ...agentForm, system_prompt: e.target.value })} className="w-full bg-zinc-950 border border-zinc-800 rounded-md p-2 h-32 text-sm font-mono text-emerald-400" />
+            </div>
             <div className="flex justify-end gap-2 mt-6">
               <Button onClick={() => setIsAgentModalOpen(false)} variant="outline" className="bg-transparent text-zinc-300 border-zinc-700 hover:bg-zinc-800 hover:text-white">Cancel</Button>
               <Button onClick={saveAgent} className="bg-emerald-600 text-white hover:bg-emerald-500">Save Agent</Button>

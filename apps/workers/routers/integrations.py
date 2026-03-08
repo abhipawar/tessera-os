@@ -8,6 +8,11 @@ from supabase import create_client, Client
 from dotenv import load_dotenv
 from crypto import encrypt_credentials, decrypt_credentials
 import requests
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from graphs.nodes import get_llm
+from langchain_core.messages import SystemMessage, HumanMessage
 
 load_dotenv()
 supabase_url = os.environ.get("SUPABASE_URL")
@@ -294,4 +299,54 @@ def get_llm_models(tenant_tool_id: str, req: Request):
 
     except Exception as e:
         print(f"--- [Fetch Models Error] {str(e)} ---")
+        return {"error": str(e)}
+
+class EnhancePromptRequest(BaseModel):
+    rough_prompt: str
+
+@router.post("/enhance-prompt")
+def enhance_prompt(payload: EnhancePromptRequest, req: Request):
+    auth_header = req.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "): return {"error": "Access Denied"}
+    token = auth_header.split(" ")[1]
+
+    try:
+        decoded_token = jwt.decode(token, options={"verify_signature": False})
+        user_uuid = str(decoded_token.get("sub"))
+        
+        member_resp = supabase_client.table("tenant_members").select("tenant_id").eq("user_id", user_uuid).execute()
+        if not member_resp.data: return {"error": "Access Denied"}
+        tenant_id = member_resp.data[0]["tenant_id"]
+
+        llm_type_resp = supabase_client.table("tool_types").select("id").eq("slug", "llm").execute()
+        if not llm_type_resp.data: return {"error": "Internal logic error missing LLM type."}
+        llm_type_id = llm_type_resp.data[0]["id"]
+
+        global_tools_resp = supabase_client.table("global_tools").select("id").eq("type_id", llm_type_id).execute()
+        llm_global_tool_ids = [t["id"] for t in global_tools_resp.data]
+
+        t_tools_resp = supabase_client.table("tenant_tools").select("credentials").eq("tenant_id", tenant_id).eq("status", "active").in_("tool_id", llm_global_tool_ids).execute()
+        
+        if not t_tools_resp.data:
+            return {"error": "No LLM configuration found. Please configure an LLM in the Integrations Hub first."}
+            
+        llm_creds = decrypt_credentials(t_tools_resp.data[0]["credentials"])
+        llm = get_llm(llm_creds)
+        
+        sys_msg = SystemMessage(content="""You are an elite, world-class AI prompt engineer. 
+Your singular job is to take the user's rough prompt draft and rewrite it into an incredibly sophisticated, robust, 
+and highly effective system prompt. 
+- Expand on their concepts logically.
+- Add structured formatting (markdown, bullet points).
+- Ensure edge cases or tone are addressed.
+- **Output ONLY the rewritten prompt text itself.** Do not include conversational filler like "Here is the rewritten prompt:".""")
+        
+        user_msg = HumanMessage(content=f"Please enhance this rough prompt draft:\n\n{payload.rough_prompt}")
+        
+        response = llm.invoke([sys_msg, user_msg])
+        
+        return {"success": True, "enhanced_prompt": response.content}
+
+    except Exception as e:
+        print(f"--- [Enhance Prompt Error] {str(e)} ---")
         return {"error": str(e)}

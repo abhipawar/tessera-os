@@ -103,7 +103,7 @@ export default function TeamManagementModal() {
                                 <select
                                     className="w-full bg-zinc-900 border border-zinc-800 text-zinc-300 text-xs rounded px-2 py-1.5 focus:outline-none focus:border-blue-500"
                                     value={inviteRole}
-                                    onChange={(e) => setInviteRole(e.target.value)}
+                                    onChange={(e) => setInviteRole(e.target.value as 'member' | 'tenant_admin')}
                                 >
                                     <option value="member">Network Member (View Only)</option>
                                     <option value="tenant_admin">Tenant Admin (Full Access)</option>

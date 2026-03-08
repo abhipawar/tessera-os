@@ -2,12 +2,18 @@ import React, { memo } from 'react';
 import { Handle, Position } from 'reactflow';
 import { GitBranch } from 'lucide-react';
 
-function ConditionalNode({ data, selected }: { data: any, selected: boolean }) {
+import { useStudioStore } from '@/store/studioStore';
+
+function ConditionalNode({ id, data, selected }: { id: string, data: any, selected: boolean }) {
+    const { runningNodes } = useStudioStore();
+    const isRunning = runningNodes.includes(id);
+
     return (
         <div
             className={`
-        relative min-w-[220px] max-w-[280px] bg-zinc-900 backdrop-blur-xl border border-zinc-700/80 rounded-xl p-3 transition-all duration-300
-        ${selected ? 'border-amber-400 shadow-[0_0_25px_rgba(251,191,36,0.2)] scale-[1.02]' : 'shadow-[0_0_15px_rgba(0,0,0,0.5)] hover:border-amber-500/50'}
+        relative min-w-[220px] max-w-[280px] bg-zinc-900 backdrop-blur-xl border rounded-xl p-3 transition-all duration-300
+        ${isRunning ? 'border-amber-400 shadow-[0_0_30px_rgba(251,191,36,0.5)] animate-pulse scale-[1.03]' :
+                    selected ? 'border-amber-400 shadow-[0_0_25px_rgba(251,191,36,0.2)] scale-[1.02]' : 'border-zinc-700/80 shadow-[0_0_15px_rgba(0,0,0,0.5)] hover:border-amber-500/50'}
       `}
         >
             <Handle
@@ -20,7 +26,8 @@ function ConditionalNode({ data, selected }: { data: any, selected: boolean }) {
                 <div
                     className={`
             w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 shadow-inner
-            ${selected ? 'bg-gradient-to-br from-amber-500/30 to-amber-500/10 border border-amber-500/50 text-amber-300 shadow-[0_0_15px_rgba(251,191,36,0.2)]' : 'bg-zinc-800/80 border border-zinc-700 text-amber-400'}
+            ${isRunning ? 'bg-gradient-to-br from-amber-500/30 to-amber-500/10 border border-amber-500/50 text-amber-300 shadow-[0_0_20px_rgba(251,191,36,0.4)]' :
+                            selected ? 'bg-gradient-to-br from-amber-500/30 to-amber-500/10 border border-amber-500/50 text-amber-300 shadow-[0_0_15px_rgba(251,191,36,0.2)]' : 'bg-zinc-800/80 border border-zinc-700 text-amber-400'}
           `}
                 >
                     <GitBranch size={20} />

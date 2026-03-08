@@ -65,3 +65,47 @@ INFO:     127.0.0.1:59111 - "POST /api/webhooks/inbound-email HTTP/1.1" 200 OK
 
 --- [Execution Engine] Pausing at Approval Checkpoint: 'Approval Checkpoint' ---
 INFO:     127.0.0.1:53825 - "POST /api/webhooks/inbound-email HTTP/1.1" 200 OK
+ Successfully bootstrapped 'chats' schema and RLS policies on startup.
+ Successfully bootstrapped 'chats' schema and RLS policies on startup.
+ Successfully bootstrapped 'chats' schema and RLS policies on startup.
+INFO:     127.0.0.1:54477 - "GET /api/admin/tools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61076 - "GET /api/admin/agents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63336 - "GET /api/admin/system-settings HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54066 - "GET /api/admin/master-data HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64773 - "GET /api/admin/tenants HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53249 - "GET /api/tenant/agents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51576 - "GET /api/tenant/agents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51263 - "GET /api/tenant/configured-tools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57372 - "GET /api/chat/a0d3eb89-9360-4e9a-a0aa-1d1a21aad4de/layout HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57372 - "GET /api/chat/a0d3eb89-9360-4e9a-a0aa-1d1a21aad4de/layout HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51263 - "GET /api/tenant/configured-tools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50061 - "GET /api/tenant-agent/chats/a0d3eb89-9360-4e9a-a0aa-1d1a21aad4de HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50061 - "GET /api/tenant-agent/chats/a0d3eb89-9360-4e9a-a0aa-1d1a21aad4de HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51985 - "GET /api/tenant-agent/chats/a0d3eb89-9360-4e9a-a0aa-1d1a21aad4de HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51985 - "GET /api/tenant-agent/chats/a0d3eb89-9360-4e9a-a0aa-1d1a21aad4de HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55677 - "POST /api/tenant/tools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55677 - "GET /api/tenant/agents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64090 - "GET /api/tenant/configured-tools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58262 - "GET /api/tenant/agents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49916 - "GET /api/tenant/configured-tools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58262 - "GET /api/chat/a0d3eb89-9360-4e9a-a0aa-1d1a21aad4de/layout HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58262 - "GET /api/tenant-agent/chats/a0d3eb89-9360-4e9a-a0aa-1d1a21aad4de HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58262 - "GET /api/tenant-agent/chats/a0d3eb89-9360-4e9a-a0aa-1d1a21aad4de HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50389 - "GET /api/tenant/workspaces/a0d3eb89-9360-4e9a-a0aa-1d1a21aad4de/email-route HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51920 - "GET /api/tenant-agent/chats/a0d3eb89-9360-4e9a-a0aa-1d1a21aad4de HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51920 - "POST /api/tenant-agent/chats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51920 - "POST /api/tenant-agent/stream HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:53242 - "GET /api/tenant-agent/chats/a0d3eb89-9360-4e9a-a0aa-1d1a21aad4de HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53242 - "POST /api/tenant-agent/stream HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:49669 - "GET /api/tenant-agent/chats/a0d3eb89-9360-4e9a-a0aa-1d1a21aad4de HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49669 - "GET /api/tenant-agent/chats/a0d3eb89-9360-4e9a-a0aa-1d1a21aad4de HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49669 - "GET /api/tenant-agent/chat/a0d3eb89-9360-4e9a-a0aa-1d1a21aad4de/thread/7944aa10-0d13-4f7f-8278-6489b0f58ac1/state-history HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:49669 - "GET /api/tenant-agent/chat/a0d3eb89-9360-4e9a-a0aa-1d1a21aad4de/thread/7944aa10-0d13-4f7f-8278-6489b0f58ac1/state-history HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:53049 - "GET /api/tenant-agent/chats/a0d3eb89-9360-4e9a-a0aa-1d1a21aad4de HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53049 - "GET /api/tenant-agent/chats/a0d3eb89-9360-4e9a-a0aa-1d1a21aad4de HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53049 - "GET /api/tenant-agent/chat/a0d3eb89-9360-4e9a-a0aa-1d1a21aad4de/thread/7944aa10-0d13-4f7f-8278-6489b0f58ac1/state-history HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:53049 - "GET /api/tenant-agent/chat/a0d3eb89-9360-4e9a-a0aa-1d1a21aad4de/thread/7944aa10-0d13-4f7f-8278-6489b0f58ac1/state-history HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:61634 - "GET /api/tenant-agent/chats/a0d3eb89-9360-4e9a-a0aa-1d1a21aad4de HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54725 - "GET /api/tenant-agent/chat/a0d3eb89-9360-4e9a-a0aa-1d1a21aad4de/thread/7944aa10-0d13-4f7f-8278-6489b0f58ac1/state-history HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:61634 - "GET /api/tenant-agent/chats/a0d3eb89-9360-4e9a-a0aa-1d1a21aad4de HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61634 - "GET /api/tenant-agent/chat/a0d3eb89-9360-4e9a-a0aa-1d1a21aad4de/thread/7944aa10-0d13-4f7f-8278-6489b0f58ac1/state-history HTTP/1.1" 404 Not Found

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useNotificationStore } from '@/store/notificationStore';
-import { X, CheckCircle2, AlertCircle, Info } from 'lucide-react';
+import { X, CheckCircle2, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils'; // Assuming ShadCN utility or standard classname manipulation
 
 export default function NotificationModal() {
@@ -14,12 +14,14 @@ export default function NotificationModal() {
         success: <CheckCircle2 className="text-emerald-500 shrink-0" size={24} />,
         error: <AlertCircle className="text-red-500 shrink-0" size={24} />,
         info: <Info className="text-blue-500 shrink-0" size={24} />,
+        warning: <AlertTriangle className="text-amber-500 shrink-0" size={24} />,
     };
 
     const borderMap = {
         success: "border-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.15)]",
         error: "border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.15)]",
         info: "border-blue-500/50 shadow-[0_0_20px_rgba(59,130,246,0.15)]",
+        warning: "border-amber-500/50 shadow-[0_0_20px_rgba(245,158,11,0.15)]",
     };
 
     return (

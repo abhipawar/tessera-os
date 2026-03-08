@@ -34,7 +34,9 @@ export default function OrgChartCanvas() {
     checkAdminStatus,
     publishGlobalTemplate,
     setSelectedNode,
-    deleteWorkspace
+    deleteWorkspace,
+    isCanvasMaximized,
+    testRunWorkspace
   } = useStudioStore();
 
   const [isPublishModalOpen, setIsPublishModalOpen] = React.useState(false);
@@ -98,125 +100,138 @@ export default function OrgChartCanvas() {
 
   return (
     <div className="w-full h-full flex flex-col bg-zinc-950 text-zinc-100">
-      <div className="h-16 bg-zinc-950 border-b border-zinc-800 flex items-center justify-between px-6 z-20 shrink-0">
-        <div className="flex items-center gap-6">
-          <div className="flex items-center">
-            <h1 className="text-xl font-bold text-zinc-100">Tessera OS</h1>
-          </div>
+      {!isCanvasMaximized && (
+        <div className="h-16 bg-zinc-950 border-b border-zinc-800 flex items-center justify-between px-6 z-20 shrink-0">
+          <div className="flex items-center gap-6">
+            <div className="flex items-center">
+              <h1 className="text-xl font-bold text-zinc-100">Tessera OS</h1>
+            </div>
 
-          <div className="h-6 w-px bg-zinc-800"></div>
+            <div className="h-6 w-px bg-zinc-800"></div>
 
-          <div className="flex items-center gap-3">
-            <select
-              value={currentChartId || (isTemplatePreview ? `template-${activeTemplate?.id}` : 'new')}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (val === 'new') createNewChart();
-                else if (val.startsWith('template-')) {
-                  const { loadTemplate } = useStudioStore.getState();
-                  loadTemplate(val.replace('template-', ''));
-                }
-                else loadChart(val);
-              }}
-              className="bg-zinc-900 border border-zinc-800 text-zinc-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 cursor-pointer outline-none"
-            >
-              <option value="new" className="font-semibold text-blue-400">+ Create New Workspace</option>
+            <div className="flex items-center gap-3">
+              <select
+                value={currentChartId || (isTemplatePreview ? `template-${activeTemplate?.id}` : 'new')}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === 'new') createNewChart();
+                  else if (val.startsWith('template-')) {
+                    const { loadTemplate } = useStudioStore.getState();
+                    loadTemplate(val.replace('template-', ''));
+                  }
+                  else loadChart(val);
+                }}
+                className="bg-zinc-900 border border-zinc-800 text-zinc-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 cursor-pointer outline-none"
+              >
+                <option value="new" className="font-semibold text-blue-400">+ Create New Workspace</option>
 
-              {globalTemplates.length > 0 && (
-                <optgroup label="Global Templates">
-                  {globalTemplates.map((template) => (
-                    <option key={`template-${template.id}`} value={`template-${template.id}`}>
-                      {template.name}
-                    </option>
+                {globalTemplates.length > 0 && (
+                  <optgroup label="Global Templates">
+                    {globalTemplates.map((template) => (
+                      <option key={`template-${template.id}`} value={`template-${template.id}`}>
+                        {template.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+
+                <optgroup label="Saved Workspaces">
+                  {chartList.map((chart) => (
+                    <option key={chart.id} value={chart.id}>{chart.name}</option>
                   ))}
                 </optgroup>
-              )}
+              </select>
 
-              <optgroup label="Saved Workspaces">
-                {chartList.map((chart) => (
-                  <option key={chart.id} value={chart.id}>{chart.name}</option>
-                ))}
-              </optgroup>
-            </select>
+              <input
+                type="text"
+                value={chartName}
+                onChange={(e) => setChartName(e.target.value)}
+                className="text-sm font-semibold text-zinc-100 border-b border-transparent hover:border-zinc-700 focus:border-blue-500 focus:outline-none bg-transparent px-1 py-0.5 transition-colors w-48"
+                placeholder="Chat Name"
+              />
+            </div>
+          </div>
 
-            <input
-              type="text"
-              value={chartName}
-              onChange={(e) => setChartName(e.target.value)}
-              className="text-sm font-semibold text-zinc-100 border-b border-transparent hover:border-zinc-700 focus:border-blue-500 focus:outline-none bg-transparent px-1 py-0.5 transition-colors w-48"
-              placeholder="Chat Name"
-            />
+          <div className="flex items-center gap-3">
+            {currentChartId && (
+              <button
+                onClick={() => setIsWorkspaceSettingsOpen(!isWorkspaceSettingsOpen)}
+                className="flex items-center justify-center bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-400 hover:text-white py-2 px-3 rounded-lg transition-all"
+                title="Workspace Settings"
+              >
+                <Settings size={16} />
+              </button>
+            )}
+
+            <button
+              onClick={() => {
+                setIsTeamPanelOpen(!isTeamPanelOpen);
+                setSelectedNode(null);
+              }}
+              className={`flex items-center gap-2 text-sm font-semibold py-2 px-4 rounded-lg transition-all border
+              ${isTeamPanelOpen ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'bg-zinc-900 text-zinc-300 border-zinc-800 hover:bg-zinc-800'}`}
+            >
+              <Users size={16} /> Manage Team
+            </button>
+
+            <button
+              onClick={createNewChart}
+              className="flex items-center gap-1.5 text-zinc-400 hover:text-blue-400 text-sm font-semibold py-2 px-3 transition-colors ml-2"
+            >
+              <Plus size={16} /> New
+            </button>
+
+            {currentChartId && (
+              <button
+                onClick={deleteWorkspace}
+                disabled={isSaving}
+                title="Delete Workspace permanently"
+                className="flex items-center justify-center bg-zinc-900 border border-zinc-800 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30 text-zinc-400 py-2 px-3 rounded-lg transition-all disabled:opacity-70"
+              >
+                <Trash2 size={16} />
+              </button>
+            )}
+
+            {isAdmin && (
+              <button
+                onClick={handlePublishClick}
+                disabled={isSaving}
+                className="flex items-center gap-2 bg-indigo-600/20 border border-indigo-500/30 hover:bg-indigo-600/40 text-indigo-300 text-sm font-semibold py-2 px-4 rounded-lg transition-all"
+              >
+                <Globe size={16} />
+                {activeTemplate ? 'Update Global Template' : 'Publish Global Template'}
+              </button>
+            )}
+
+            {currentChartId && (
+              <button
+                onClick={testRunWorkspace}
+                disabled={isSaving || !canSave}
+                title="Test run the workspace logic"
+                className="flex items-center justify-center bg-indigo-600/20 border border-indigo-500/30 hover:bg-indigo-600/40 text-indigo-300 py-2 px-3 rounded-lg transition-all disabled:opacity-70"
+              >
+                Test Run
+              </button>
+            )}
+
+            <button
+              onClick={saveOrgChart}
+              disabled={isSaving || (!canSave && !isAdmin)}
+              title={!canSave ? `Missing Tools: ${missingTools.join(', ')}` : "Save Workspace"}
+              className={`flex items-center gap-2 text-sm font-semibold py-2 px-4 rounded-lg transition-all 
+               ${(!canSave && !isAdmin || isSaving)
+                  ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed border border-dashed border-zinc-700/50'
+                  : 'bg-blue-600 hover:bg-blue-500 text-white'}`}
+            >
+              {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+              {(!canSave && !isAdmin) ? `Missing Integrations (${missingTools.length})` : isSaving ? 'Saving...' : 'Save Workspace'}
+            </button>
           </div>
         </div>
-
-        <div className="flex items-center gap-3">
-          {currentChartId && (
-            <button
-              onClick={() => setIsWorkspaceSettingsOpen(!isWorkspaceSettingsOpen)}
-              className="flex items-center justify-center bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-400 hover:text-white py-2 px-3 rounded-lg transition-all"
-              title="Workspace Settings"
-            >
-              <Settings size={16} />
-            </button>
-          )}
-
-          <button
-            onClick={() => {
-              setIsTeamPanelOpen(!isTeamPanelOpen);
-              setSelectedNode(null);
-            }}
-            className={`flex items-center gap-2 text-sm font-semibold py-2 px-4 rounded-lg transition-all border
-              ${isTeamPanelOpen ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'bg-zinc-900 text-zinc-300 border-zinc-800 hover:bg-zinc-800'}`}
-          >
-            <Users size={16} /> Manage Team
-          </button>
-
-          <button
-            onClick={createNewChart}
-            className="flex items-center gap-1.5 text-zinc-400 hover:text-blue-400 text-sm font-semibold py-2 px-3 transition-colors ml-2"
-          >
-            <Plus size={16} /> New
-          </button>
-
-          {currentChartId && (
-            <button
-              onClick={deleteWorkspace}
-              disabled={isSaving}
-              title="Delete Workspace permanently"
-              className="flex items-center justify-center bg-zinc-900 border border-zinc-800 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30 text-zinc-400 py-2 px-3 rounded-lg transition-all disabled:opacity-70"
-            >
-              <Trash2 size={16} />
-            </button>
-          )}
-
-          {isAdmin && (
-            <button
-              onClick={handlePublishClick}
-              disabled={isSaving}
-              className="flex items-center gap-2 bg-indigo-600/20 border border-indigo-500/30 hover:bg-indigo-600/40 text-indigo-300 text-sm font-semibold py-2 px-4 rounded-lg transition-all"
-            >
-              <Globe size={16} />
-              {activeTemplate ? 'Update Global Template' : 'Publish Global Template'}
-            </button>
-          )}
-
-          <button
-            onClick={saveOrgChart}
-            disabled={isSaving || (!canSave && !isAdmin)}
-            title={!canSave ? `Missing Tools: ${missingTools.join(', ')}` : "Save Workspace"}
-            className={`flex items-center gap-2 text-sm font-semibold py-2 px-4 rounded-lg transition-all 
-               ${(!canSave && !isAdmin || isSaving)
-                ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed border border-dashed border-zinc-700/50'
-                : 'bg-blue-600 hover:bg-blue-500 text-white'}`}
-          >
-            {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-            {(!canSave && !isAdmin) ? `Missing Integrations (${missingTools.length})` : isSaving ? 'Saving...' : 'Save Workspace'}
-          </button>
-        </div>
-      </div>
+      )}
 
       <div className="flex-1 w-full h-full relative flex">
-        <MarketplaceSidebar />
+        {!isCanvasMaximized && <MarketplaceSidebar />}
 
         <ReactFlowProvider>
           <StudioCanvas />

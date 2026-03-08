@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type NotificationType = 'success' | 'error' | 'info';
+export type NotificationType = 'success' | 'error' | 'info' | 'warning';
 
 interface NotificationState {
     isOpen: boolean;

@@ -18,6 +18,69 @@ class SignupOnboardRequest(BaseModel):
     company_name: str
     otp_code: str
 
+class SendOtpRequest(BaseModel):
+    email: str
+
+@router.post("/send-otp")
+def send_otp(req: SendOtpRequest):
+    import random
+    import datetime
+    import requests
+    try:
+        if not req.email or "@" not in req.email:
+            return {"error": "Invalid email address."}
+            
+        code = str(random.randint(100000, 999999))
+        expires_at = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=15)
+        
+        supabase_client.table("otp_verifications").delete().eq("email", req.email).execute()
+        supabase_client.table("otp_verifications").insert({
+            "email": req.email,
+            "code": code,
+            "expires_at": expires_at.isoformat()
+        }).execute()
+        
+        resend_key = os.environ.get("RESEND_API_KEY")
+        if not resend_key:
+            print(f"\n==========================================")
+            print(f"📧 [MOCK EMAIL] To: {req.email}")
+            print(f"🔑 [OTP CODE]: {code}")
+            print(f"==========================================\n")
+            return {"success": True, "message": "Code sent successfully (Mocked in Local Dev)."}
+            
+        html_content = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #09090b; padding: 40px; border-radius: 12px; border: 1px solid #27272a;">
+            <div style="text-align: center; margin-bottom: 24px;">
+                <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Verify your Email</h1>
+            </div>
+            <div style="background-color: #18181b; padding: 32px; border-radius: 8px; border: 1px solid #27272a;">
+                <p style="color: #a1a1aa; font-size: 16px; margin-top: 0;">Hello,</p>
+                <p style="color: #a1a1aa; font-size: 16px;">Please use the following verification code to complete your signup process for Tessera OS.</p>
+                
+                <div style="background-color: #09090b; border-radius: 8px; padding: 24px; text-align: center; margin: 32px 0; border: 1px solid #3f3f46;">
+                    <span style="font-family: monospace; font-size: 32px; font-weight: 700; letter-spacing: 8px; color: #10b981;">{code}</span>
+                </div>
+                
+                <p style="color: #71717a; font-size: 14px; margin-bottom: 0;">This code will expire in 15 minutes.</p>
+            </div>
+        </div>
+        """
+        
+        res = requests.post("https://api.resend.com/emails", json={
+            "from": "Tessera OS Security <security@tesseraos.ai>",
+            "to": req.email,
+            "subject": "Your Tessera OS Verification Code",
+            "html": html_content
+        }, headers={"Authorization": f"Bearer {resend_key}"})
+        
+        if not res.ok:
+            return {"error": "Failed to dispatch email provider."}
+            
+        return {"success": True}
+    except Exception as e:
+        print(f"OTP Generation Error: {e}")
+        return {"error": str(e)}
+
 @router.post("/signup-onboard")
 def signup_and_onboard(req: SignupOnboardRequest):
     try:

@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import os
 import jwt
@@ -6,8 +7,8 @@ import json
 from typing import Optional
 from langgraph.checkpoint.postgres import PostgresSaver
 import psycopg
-from compiler import build_dynamic_graph
-from langchain_core.messages import HumanMessage, AIMessage
+from graphs.builder import build_dynamic_graph
+from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from supabase import create_client, Client
 from dotenv import load_dotenv
 from config_db import get_system_setting
@@ -143,6 +144,15 @@ def get_chat_history(chat_id: str, req: Request):
         raw_nodes, raw_edges = chart_data.get("nodes", []), chart_data.get("edges", [])
         nodes = json.loads(raw_nodes) if isinstance(raw_nodes, str) else raw_nodes
         edges = json.loads(raw_edges) if isinstance(raw_edges, str) else raw_edges
+        
+        node_ids = set([n.get("id") for n in nodes])
+        if user_node_id not in node_ids and nodes:
+            # Check if this is a complex multi-agent graph
+            agent_nodes = [n for n in nodes if n.get("type") not in ["startNode", "endNode", "triggerNode", "conditionalNode"]]
+            if len(agent_nodes) > 1:
+                return {"result": [{"name": "System Orchestrator", "content": "I'm sorry, this workspace has multiple agents but is missing a 'Supervisor Co-Pilot' node. Please return to the Studio and add a Supervisor so I know how to route your instructions!"}]}
+            # Otherwise, graceful fallback for single agent test graphs
+            user_node_id = nodes[0].get("id")
     except Exception as e:
         return {"messages": [], "error": f"Error loading chat: {str(e)}"}
         
@@ -203,6 +213,15 @@ def run_tenant_agent(request: AgentRequest, req: Request):
         raw_nodes, raw_edges = chart_data.get("nodes", []), chart_data.get("edges", [])
         nodes = json.loads(raw_nodes) if isinstance(raw_nodes, str) else raw_nodes
         edges = json.loads(raw_edges) if isinstance(raw_edges, str) else raw_edges
+        
+        node_ids = set([n.get("id") for n in nodes])
+        if user_node_id not in node_ids and nodes:
+            # Check if this is a complex multi-agent graph
+            agent_nodes = [n for n in nodes if n.get("type") not in ["startNode", "endNode", "triggerNode", "conditionalNode"]]
+            if len(agent_nodes) > 1:
+                return {"result": [{"name": "System Orchestrator", "content": "I'm sorry, this workspace has multiple agents but is missing a 'Supervisor Co-Pilot' node. Please return to the Studio and add a Supervisor so I know how to route your instructions!"}]}
+            # Otherwise, graceful fallback for single agent test graphs
+            user_node_id = nodes[0].get("id")
     except Exception as e:
         return {"result": f"Error loading chat: {str(e)}"}
             
@@ -239,6 +258,86 @@ def run_tenant_agent(request: AgentRequest, req: Request):
     except Exception as e:
         return {"result": f"Execution error: {str(e)}"}
 
+@router.post("/tenant-agent/stream")
+def run_tenant_agent_stream(request: AgentRequest, req: Request):
+    auth_header = req.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return {"result": "Access Denied"}
+    token = auth_header.split(" ")[1]
+    
+    try:
+        decoded_token = jwt.decode(token, options={"verify_signature": False})
+        user_uuid = str(decoded_token.get("sub"))
+        config = {"configurable": {"thread_id": request.chat_id}}
+    except Exception as e:
+        return {"result": f"Token error: {str(e)}"}
+        
+    if not request.chat_id: return {"result": "No chat ID provided."}
+        
+    try:
+        chat_resp = supabase_client.table("chats").select("workspace_id").eq("id", request.chat_id).eq("user_id", user_uuid).execute()
+        if not chat_resp.data: return {"result": "Chat not found or access denied."}
+        workspace_id = chat_resp.data[0]["workspace_id"]
+        
+        member_resp = supabase_client.table("workspace_members").select("assigned_node_id").eq("workspace_id", workspace_id).eq("user_id", user_uuid).execute()
+        if not member_resp.data: return {"result": "Access Denied"}
+        user_node_id = member_resp.data[0]["assigned_node_id"]
+    except Exception as e:
+        return {"result": f"RBAC Error: {str(e)}"}
+        
+    try:
+        response = supabase_client.table("workspaces").select("nodes, edges").eq("id", workspace_id).execute()
+        if not response.data: return {"result": "Workspace not found."}
+        chart_data = response.data[0]
+        nodes = json.loads(chart_data.get("nodes", [])) if isinstance(chart_data.get("nodes", []), str) else chart_data.get("nodes", [])
+        edges = json.loads(chart_data.get("edges", [])) if isinstance(chart_data.get("edges", []), str) else chart_data.get("edges", [])
+        
+        node_ids = set([n.get("id") for n in nodes])
+        if user_node_id not in node_ids and nodes:
+            agent_nodes = [n for n in nodes if n.get("type") not in ["startNode", "endNode", "triggerNode", "conditionalNode"]]
+            if len(agent_nodes) > 1:
+                return {"result": "Missing Supervisor Node"}
+            user_node_id = nodes[0].get("id")
+    except Exception as e:
+        return {"result": f"Error loading chat: {str(e)}"}
+            
+    DB_URI = os.environ.get("DATABASE_URL")
+    
+    def event_generator():
+        try:
+            with psycopg.connect(DB_URI, prepare_threshold=None) as conn:
+                memory = PostgresSaver(conn)
+                memory.setup() 
+                compiled_graph = build_dynamic_graph(nodes, edges, user_node_id=user_node_id, memory=memory, workspace_id=workspace_id)
+                
+                initial_state = {
+                    "messages": [HumanMessage(content=request.query)],
+                    "context_variables": {"user": {"query": request.query}}
+                }
+                
+                yield f'data: {json.dumps({"event": "start"})}\\n\\n'
+                
+                # Fetch execution streaming updates and messages
+                for event_type, payload in compiled_graph.stream(initial_state, config=config, stream_mode=["updates", "messages"]):
+                    if event_type == "messages":
+                        # We get token chunks which include metadata about which node generated them
+                        chunk, metadata = payload
+                        node_name = metadata.get("langgraph_node", "unknown")
+                        if node_name != "unknown":
+                            msg_payload = {"event": "node_stream", "node": node_name}
+                            yield f'data: {json.dumps(msg_payload)}\\n\\n'
+                            
+                    elif event_type == "updates":
+                        # Node completely finished
+                        node_name = list(payload.keys())[0] if payload else "unknown"
+                        yield f'data: {json.dumps({"event": "node_update", "node": node_name})}\\n\\n'
+                        
+                yield f'data: {json.dumps({"event": "finish"})}\\n\\n'
+        except Exception as e:
+            yield f'data: {json.dumps({"event": "error", "message": str(e)})}\\n\\n'
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
+
 @router.get("/chat/{workspace_id}/layout")
 def get_secure_chat_layout(workspace_id: str, req: Request):
     auth_header = req.headers.get("Authorization")
@@ -265,7 +364,71 @@ def get_secure_chat_layout(workspace_id: str, req: Request):
         all_nodes = json.loads(raw_nodes) if isinstance(raw_nodes, str) else raw_nodes
         all_edges = json.loads(raw_edges) if isinstance(raw_edges, str) else raw_edges
     except Exception as e:
-        return {"error": f"Error loading chat: {str(e)}"}
+        return {"error": f"Error loading chat layout: {str(e)}"}
+
+@router.get("/chat/{workspace_id}/thread/{thread_id}/state-history")
+def get_state_history(workspace_id: str, thread_id: str, req: Request):
+    auth_header = req.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "): return {"error": "Access Denied"}
+    token = auth_header.split(" ")[1]
+    try:
+        decoded_token = jwt.decode(token, options={"verify_signature": False})
+        user_uuid = str(decoded_token.get("sub"))
+    except Exception as e:
+        return {"error": f"Token error: {str(e)}"}
+        
+    try:
+        # Verify access
+        chat_resp = supabase_client.table("chats").select("id").eq("id", thread_id).eq("workspace_id", workspace_id).eq("user_id", user_uuid).execute()
+        if not chat_resp.data: return {"error": "Chat not found or access denied."}
+    except Exception as e:
+        return {"error": f"RBAC Error: {str(e)}"}
+
+    DB_URI = os.environ.get("DATABASE_URL")
+    try:
+        with psycopg.connect(DB_URI, prepare_threshold=None) as conn:
+            memory = PostgresSaver(conn)
+            memory.setup() 
+            config = {"configurable": {"thread_id": thread_id}}
+            
+            history = list(memory.list(config)) # List of StateSnapshots
+            
+            formatted_history = []
+            
+            for state in history:
+                curr_vals = state.values
+                messages = curr_vals.get("messages", [])
+                
+                if not messages: continue
+                last_msg = messages[-1]
+                
+                item = {
+                    "checkpoint_id": state.config["configurable"]["checkpoint_id"],
+                    "next_nodes": list(state.next),
+                    "context_variables": curr_vals.get("context_variables", {})
+                }
+                
+                if isinstance(last_msg, AIMessage):
+                    item["type"] = "ai"
+                    item["name"] = last_msg.name
+                    item["content"] = last_msg.content
+                    if getattr(last_msg, "tool_calls", None):
+                        # Convert tool calls to dict to ensure JSON serializability
+                        item["tool_calls"] = [{"name": t["name"], "args": t["args"]} for t in last_msg.tool_calls]
+                elif isinstance(last_msg, HumanMessage):
+                    item["type"] = "human"
+                    item["content"] = last_msg.content
+                elif isinstance(last_msg, ToolMessage):
+                    item["type"] = "tool"
+                    item["name"] = getattr(last_msg, "name", "tool")
+                    item["content"] = last_msg.content
+                    
+                formatted_history.append(item)
+                
+            return {"history": formatted_history}
+            
+    except Exception as e:
+        return {"error": f"Failed to fetch execution history: {str(e)}"}
 
     adjacency_list = {}
     node_ids = set([n.get("id") for n in all_nodes])

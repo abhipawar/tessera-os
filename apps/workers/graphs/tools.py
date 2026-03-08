@@ -39,10 +39,10 @@ def build_tenant_tools(workspace_id: str, requested_tool_ids: List[str]) -> List
         if not ws_resp.data: return []
         tenant_id = ws_resp.data[0]["tenant_id"]
 
-        creds_resp = supabase_client.table("tenant_tools").select("id, tool_id, credentials").eq("tenant_id", tenant_id).in_("id", requested_tool_ids).execute()
+        creds_resp = supabase_client.table("tenant_tools").select("id, tool_id, credentials, connection_name").eq("tenant_id", tenant_id).in_("id", requested_tool_ids).execute()
         if not creds_resp.data: return []
         
-        tool_data_map = {row["id"]: {"global_tool_id": row["tool_id"], "credentials": row["credentials"]} for row in creds_resp.data}
+        tool_data_map = {row["id"]: {"global_tool_id": row["tool_id"], "credentials": row["credentials"], "connection_name": row.get("connection_name")} for row in creds_resp.data}
         global_tool_ids = list(set([row["tool_id"] for row in creds_resp.data]))
         tools_resp = supabase_client.table("global_tools").select("id, name").in_("id", global_tool_ids).execute()
         global_tools_map = {row["id"]: row["name"] for row in tools_resp.data}
@@ -145,6 +145,59 @@ def build_tenant_tools(workspace_id: str, requested_tool_ids: List[str]) -> List
                     args_schema=PythonSandboxSchema
                 )
                 langchain_tools.append(sandbox_tool)
+
+            elif "Custom Python Script" in t_name:
+                class CustomScriptSchema(BaseModel):
+                    input_payload: str = Field(description="Optional string or JSON payload to pass dynamically to the script if required.")
+
+                def build_custom_script_tool(custom_code: str, custom_name: str, custom_desc: str):
+                    def run_custom_script(input_payload: str = "") -> str:
+                        print(f"\n--- [E2B Sandbox] Executing Custom Runtime Script: {custom_name} ---")
+                        try:
+                            from e2b_code_interpreter import Sandbox
+                            e2b_key = os.environ.get("E2B_API_KEY") # Tenant BYOK logic can be expanded later
+                            
+                            if not e2b_key:
+                                return "Error: System missing E2B API Key."
+                                
+                            injection = f"\nINPUT_PAYLOAD = '''{input_payload}'''\n"
+                            script_to_run = injection + custom_code
+    
+                            with Sandbox.create(api_key=e2b_key) as sandbox:
+                                execution = sandbox.run_code(script_to_run)
+                                
+                                if execution.error:
+                                    return f"Error: {execution.error.name}: {execution.error.value}\n{execution.error.traceback}"
+                                
+                                output_blocks = []
+                                if execution.logs.stdout: output_blocks.append("\n".join(execution.logs.stdout))
+                                if execution.logs.stderr: output_blocks.append("\n".join(execution.logs.stderr))
+                                if execution.text and not execution.logs.stdout: output_blocks.append(execution.text)
+                                if execution.results:
+                                    for result in execution.results:
+                                        if result.text: output_blocks.append(result.text)
+                    
+                                final_result = "\n".join(output_blocks).strip()
+                                return final_result if final_result else "Script executed successfully with no output."
+                        except Exception as e:
+                            return f"Custom Script exception: {str(e)}"
+
+                    return StructuredTool.from_function(
+                        func=run_custom_script,
+                        name=custom_name,
+                        description=custom_desc,
+                        args_schema=CustomScriptSchema
+                    )
+                
+                custom_code = t_creds.get("code", "")
+                custom_desc = t_creds.get("description", "A custom Python automation script.")
+                raw_name = t_data.get("connection_name", "custom_script") or "custom_script"
+                custom_name_safe = raw_name.lower().replace(" ", "_")
+
+                if custom_code:
+                    script_tool = build_custom_script_tool(custom_code, custom_name_safe, custom_desc)
+                    langchain_tools.append(script_tool)
+
 
             elif "Email" in t_name or "Resend" in t_name:
                 def send_resend_email(to_email: str, subject: str, html_body: str) -> str:

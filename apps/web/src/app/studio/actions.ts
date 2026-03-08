@@ -35,6 +35,24 @@ export async function saveWorkspaceAction(payload: {
 
     const tenantId = tenantData[0].tenant_id
 
+    // Server-side graph validation warning
+    let warningMsg: string | undefined = undefined;
+    try {
+        const parsedNodes = JSON.parse(payload.nodesJson) || [];
+        const hasSupervisor = parsedNodes.some((n: any) => n.id === 'supervisor');
+
+        // Count how many actual AI nodes are present (excluding start/end/conditional/triggers)
+        const agentNodeCount = parsedNodes.filter((n: any) =>
+            !['startNode', 'endNode', 'triggerNode', 'conditionalNode'].includes(n.type)
+        ).length;
+
+        if (agentNodeCount > 1 && !hasSupervisor) {
+            warningMsg = "Warning: Multi-agent workflows typically require a 'Supervisor Co-pilot' to orchestrate execution correctly. Your workflow might not route appropriately.";
+        }
+    } catch (e) {
+        console.error("DEBUG: Failed to parse nodes for validation", e);
+    }
+
     if (payload.currentChartId) {
         const { error } = await adminDb
             .from('workspaces')
@@ -48,7 +66,7 @@ export async function saveWorkspaceAction(payload: {
             .eq('tenant_id', tenantId)
 
         if (error) return { error: error.message }
-        return { success: true, newChartId: payload.currentChartId }
+        return { success: true, newChartId: payload.currentChartId, warning: warningMsg }
     } else {
         const { data, error } = await adminDb
             .from('workspaces')
@@ -70,7 +88,7 @@ export async function saveWorkspaceAction(payload: {
                 assigned_node_id: 'supervisor',
                 role_id: null
             })
-            return { success: true, newChartId: newId }
+            return { success: true, newChartId: newId, warning: warningMsg }
         }
         return { error: 'Failed to create new workspace context in the central database.' }
     }

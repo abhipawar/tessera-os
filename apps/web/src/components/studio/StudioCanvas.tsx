@@ -1,5 +1,6 @@
-import React, { useRef } from 'react';
-import ReactFlow, { Background, Controls, MiniMap } from 'reactflow';
+import React, { useRef, useState, useCallback } from 'react';
+import ReactFlow, { Background, Controls, MiniMap, Panel } from 'reactflow';
+import { Maximize, Minimize } from 'lucide-react';
 import 'reactflow/dist/style.css';
 import AgentNode from '@/components/AgentNode';
 import TriggerNode from '@/components/TriggerNode';
@@ -7,8 +8,9 @@ import ApprovalNode from '@/components/ApprovalNode';
 import ConditionalNode from '@/components/ConditionalNode';
 import StartNode from '@/components/StartNode';
 import EndNode from '@/components/EndNode';
-import { useStudioStore, GlobalAgent } from '@/store/studioStore';
+import { useStudioStore, GlobalAgent, ChartItem } from '@/store/studioStore';
 import CanvasContextMenu from './CanvasContextMenu';
+import ExecutionInspector from './ExecutionInspector';
 
 const nodeTypes = {
     customAgent: AgentNode,
@@ -22,21 +24,25 @@ const nodeTypes = {
 export default function StudioCanvas() {
     const reactFlowWrapper = useRef<HTMLDivElement>(null);
     const {
-        nodes, edges,
+        nodes, edges, selectedNode, runningNodes,
         onNodesChange, onEdgesChange, onConnect,
-        setNodes, setSelectedNode, setIsTeamPanelOpen
+        setNodes, setSelectedNode, setIsTeamPanelOpen,
+        isCanvasMaximized, setIsCanvasMaximized
     } = useStudioStore();
-    const [reactFlowInstance, setReactFlowInstance] = React.useState<any>(null);
-    const [menuState, setMenuState] = React.useState<{ show: boolean, x: number, y: number, type: 'node' | 'pane' | 'edge', nodeId?: string, edgeId?: string }>({
+    const [reactFlowInstance, setReactFlowInstance] = useState<any>(null);
+    const [menuState, setMenuState] = useState<{ show: boolean, x: number, y: number, type: 'pane' | 'node' | 'edge', nodeId?: string, edgeId?: string }>({
         show: false, x: 0, y: 0, type: 'pane'
     });
 
-    const onDragOver = React.useCallback((event: React.DragEvent) => {
+    // Inspector Toggle State (only show if explicitly requested or let the component handle it)
+    const [showInspector, setShowInspector] = useState(false);
+
+    const onDragOver = useCallback((event: React.DragEvent) => {
         event.preventDefault();
         event.dataTransfer.dropEffect = 'move';
     }, []);
 
-    const onDrop = React.useCallback(
+    const onDrop = useCallback(
         (event: React.DragEvent) => {
             event.preventDefault();
             if (!reactFlowWrapper.current || !reactFlowInstance) return;
@@ -51,7 +57,7 @@ export default function StudioCanvas() {
             });
 
             const newNode = {
-                id: `agent_${Date.now()}`,
+                id: `agent_${Date.now()} `,
                 type: payload.type,
                 position,
                 data: {
@@ -125,15 +131,24 @@ export default function StudioCanvas() {
 
             <ReactFlow
                 nodes={nodes}
-                edges={edges}
+                edges={edges.map(e => ({
+                    ...e,
+                    animated: runningNodes.includes(e.source) || runningNodes.includes(e.target) || e.animated
+                }))}
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 onConnect={onConnect}
                 onInit={setReactFlowInstance}
                 onDrop={onDrop}
                 onDragOver={onDragOver}
-                onNodeClick={onNodeClick}
-                onPaneClick={onPaneClick}
+                onNodeClick={(e, node) => {
+                    onNodeClick(e, node);
+                    setShowInspector(true);
+                }}
+                onPaneClick={() => {
+                    onPaneClick();
+                    setShowInspector(false);
+                }}
                 onNodeContextMenu={onNodeContextMenu}
                 onPaneContextMenu={onPaneContextMenu}
                 onEdgeContextMenu={onEdgeContextMenu}
@@ -142,6 +157,21 @@ export default function StudioCanvas() {
                 fitViewOptions={{ maxZoom: 0.85 }}
                 className="bg-transparent z-10"
             >
+                <Panel position="top-left" className="m-4 z-50">
+                    <button
+                        onClick={() => setIsCanvasMaximized(!isCanvasMaximized)}
+                        className="p-2.5 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-white rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.5)] transition-all flex items-center justify-center group"
+                        title={isCanvasMaximized ? "Minimize Canvas" : "Maximize Canvas"}
+                    >
+                        {isCanvasMaximized ? <Minimize size={18} className="group-hover:scale-110 transition-transform" /> : <Maximize size={18} className="group-hover:scale-110 transition-transform" />}
+                    </button>
+                </Panel>
+
+                {/* Execution Inspector */}
+                {showInspector && selectedNode && (
+                    <ExecutionInspector onClose={() => setShowInspector(false)} />
+                )}
+
                 <Controls className="bg-zinc-900 border-zinc-800 fill-zinc-400" />
                 <MiniMap
                     className="bg-zinc-900 border-zinc-800 rounded-lg"

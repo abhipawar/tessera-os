@@ -28,3 +28,20 @@ INFO:     Finished server process [21768]
 INFO:     Started server process [26704]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'routers\chat.py'. Reloading...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [26704]
+WARNING:  WatchFiles detected changes in 'routers\chat.py'. Reloading...
+INFO:     Started server process [15732]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [15732]
+INFO:     Started server process [32256]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+WARNING:  WatchFiles detected changes in 'routers\chat.py'. Reloading...

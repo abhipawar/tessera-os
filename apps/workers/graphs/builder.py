@@ -63,8 +63,22 @@ def build_dynamic_graph(nodes: list, edges: list, user_node_id: str, memory=None
         tool_ids = node.get("data", {}).get("tools", [])
 
         node_llm_config = global_llm_config 
+        explicit_llm_id = node.get("data", {}).get("llm_integration_id")
         
-        if tool_ids and workspace_id:
+        if explicit_llm_id and workspace_id:
+            try:
+                sb_client = create_client(os.environ.get("SUPABASE_URL"), os.environ.get("SUPABASE_SERVICE_ROLE_KEY"))
+                ws_resp = sb_client.table("workspaces").select("tenant_id").eq("id", workspace_id).execute()
+                if ws_resp.data:
+                    tenant_id = ws_resp.data[0]["tenant_id"]
+                    tt_res = sb_client.table("tenant_tools").select("credentials").eq("tenant_id", tenant_id).eq("id", explicit_llm_id).execute()
+                    if tt_res.data:
+                        node_llm_config = decrypt_credentials(tt_res.data[0]["credentials"])
+                        print(f"--- [Compiler] '{label}' using Explicit Node LLM Override: {node_llm_config.get('provider', 'Unknown')}! ---")
+            except Exception as e:
+                print(f"--- [Compiler] Error loading Explicit Node Override LLM config for {label}: {e} ---")
+                
+        elif tool_ids and workspace_id:
             try:
                 sb_client = create_client(os.environ.get("SUPABASE_URL"), os.environ.get("SUPABASE_SERVICE_ROLE_KEY"))
                 ws_resp = sb_client.table("workspaces").select("tenant_id").eq("id", workspace_id).execute()
@@ -80,7 +94,7 @@ def build_dynamic_graph(nodes: list, edges: list, user_node_id: str, memory=None
                             g_name = gt_map.get(row["tool_id"], "").lower()
                             if "llm" in g_name or "ai compute" in g_name:
                                 node_llm_config = decrypt_credentials(row["credentials"])
-                                print(f"--- [Compiler] '{label}' using specialized Node LLM Override: {node_llm_config.get('provider', 'Unknown')}! ---")
+                                print(f"--- [Compiler] '{label}' using Implicit Tool Array Node LLM Override: {node_llm_config.get('provider', 'Unknown')}! ---")
                                 break
             except Exception as e:
                 print(f"--- [Compiler] Error loading Node Override LLM config for {label}: {e} ---")
@@ -190,9 +204,9 @@ def build_dynamic_graph(nodes: list, edges: list, user_node_id: str, memory=None
             node_function = create_conditional_evaluator(label, condition_str, true_label, false_label)
         elif node_id in manager_to_workers:
             worker_labels = [node_id_to_label[w_id] for w_id in manager_to_workers[node_id]]
-            node_function = create_supervisor_node(label, sys_prompt, worker_labels, node_tools, workspace_id, tenant_id, node_llm_config)
+            node_function = create_supervisor_node(label, sys_prompt, worker_labels, node_tools, workspace_id, tenant_id, node_llm_config, node.get("data", {}).get("outputSchema"))
         else:
-            node_function = create_worker_node(label, sys_prompt, node_tools, workspace_id, tenant_id, node_llm_config)
+            node_function = create_worker_node(label, sys_prompt, node_tools, workspace_id, tenant_id, node_llm_config, node.get("data", {}).get("outputSchema"))
             
         builder.add_node(label, node_function)
 
