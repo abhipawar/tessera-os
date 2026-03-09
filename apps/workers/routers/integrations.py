@@ -77,8 +77,9 @@ def get_tenant_integrations(req: Request):
                     
                 active_tools.append(tool_copy)
                 
-        # Only true, un-impersonated Superadmins get to see the global catalog 
-        final_catalog_tools = global_tools if (is_admin and not impersonated_tenant_id) else []
+        # Return global tools that haven't been configured by the tenant yet
+        active_tool_ids = {tt["tool_id"] for tt in tenant_tools}
+        final_catalog_tools = [t for t in global_tools if t["id"] not in active_tool_ids]
             
         return {"success": True, "active_tools": active_tools, "catalog_tools": final_catalog_tools}
         

@@ -34,17 +34,24 @@ export default function InboxPage() {
     const fetchTasks = async () => {
         setIsTasksLoading(true);
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) return;
 
-            const { data, error } = await supabase
-                .from('agent_tasks')
-                .select('*, workspaces(name)')
-                .eq('status', 'pending_approval')
-                .order('created_at', { ascending: false });
+            const isImpersonating = document.cookie.includes('tessera_impersonated_tenant=');
+            const impersonatedId = isImpersonating ? document.cookie.split('tessera_impersonated_tenant=')[1].split(';')[0] : '';
 
-            if (error) throw error;
-            setTasks(data || []);
+            const res = await fetch(`${API_URL}/api/tenant/agent-tasks`, {
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`,
+                    ...(isImpersonating && impersonatedId ? { 'X-Impersonated-Tenant-Id': impersonatedId } : {})
+                }
+            });
+
+            if (!res.ok) throw new Error("Failed to fetch tasks");
+            const data = await res.json();
+            if (data.success) {
+                setTasks(data.tasks || []);
+            }
         } catch (error) {
             console.error('Error fetching tasks:', error);
         } finally {
@@ -58,8 +65,14 @@ export default function InboxPage() {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) return;
 
+            const isImpersonating = document.cookie.includes('tessera_impersonated_tenant=');
+            const impersonatedId = isImpersonating ? document.cookie.split('tessera_impersonated_tenant=')[1].split(';')[0] : '';
+
             const res = await fetch(`${API_URL}/api/tenant/communications`, {
-                headers: { 'Authorization': `Bearer ${session.access_token}` }
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`,
+                    ...(isImpersonating && impersonatedId ? { 'X-Impersonated-Tenant-Id': impersonatedId } : {})
+                }
             });
 
             if (!res.ok) throw new Error("Failed to fetch logs");
