@@ -91,7 +91,9 @@ interface StudioState {
     isTeamPanelOpen: boolean;
     nodeAssignments: Record<string, string>;
     inviteEmail: string;
+    invitePassword: string;
     inviteRole: 'member' | 'tenant_admin';
+    eligibleMembers: { id: string, email: string, name: string }[];
     setIsTeamPanelOpen: (open: boolean) => void;
 
     // Execution History & Visual Feedback
@@ -103,6 +105,7 @@ interface StudioState {
     testRunWorkspace: () => Promise<void>;
     setNodeAssignments: (assignments: Record<string, string>) => void;
     setInviteEmail: (email: string) => void;
+    setInvitePassword: (password: string) => void;
     setInviteRole: (role: 'member' | 'tenant_admin') => void;
 
     // Actions
@@ -116,6 +119,7 @@ interface StudioState {
     publishGlobalTemplate: (templateData: Partial<Template>) => Promise<{ success: boolean, error?: string }>;
     deleteWorkspace: () => Promise<void>;
     createNewChart: () => void;
+    fetchEligibleMembers: (workspaceId: string) => Promise<void>;
 }
 
 const defaultNodes = [
@@ -161,7 +165,9 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     isFetchingHistory: false,
     runningNodes: [],
     inviteEmail: '',
+    invitePassword: '',
     inviteRole: 'member',
+    eligibleMembers: [],
 
     // Basic Setters
     setNodes: (nodes) => set((state) => ({ nodes: typeof nodes === 'function' ? nodes(state.nodes) : nodes })),
@@ -189,6 +195,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     setIsTeamPanelOpen: (open) => set({ isTeamPanelOpen: open }),
     setNodeAssignments: (assignments) => set({ nodeAssignments: assignments }),
     setInviteEmail: (email) => set({ inviteEmail: email }),
+    setInvitePassword: (password) => set({ invitePassword: password }),
     setInviteRole: (role) => set({ inviteRole: role }),
 
     // Async Actions
@@ -228,6 +235,22 @@ export const useStudioStore = create<StudioState>((set, get) => ({
             }
         } catch (e) {
             console.error("Failed to fetch workspaces:", e);
+        }
+    },
+
+    fetchEligibleMembers: async (workspaceId: string) => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) return;
+            const res = await fetch(`${API_URL}/api/chat/${workspaceId}/eligible-members`, {
+                headers: getImpersonationHeaders({ 'Authorization': `Bearer ${session.access_token}` })
+            });
+            const data = await res.json();
+            if (data.success && data.members) {
+                set({ eligibleMembers: data.members });
+            }
+        } catch (e) {
+            console.error("Failed to fetch eligible members:", e);
         }
     },
 

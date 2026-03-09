@@ -42,7 +42,8 @@ class ChatUpdateRequest(BaseModel):
 class InviteRequest(BaseModel):
     email: str
     node_id: str
-    workspace_role: str = "member"
+    workspace_role: str
+    temp_password: Optional[str] = None
 
 @router.get("/tenant-agent/chats/{workspace_id}")
 def get_workspace_chats(workspace_id: str, req: Request):
@@ -491,6 +492,44 @@ def get_state_history(workspace_id: str, thread_id: str, req: Request):
         "user_node_id": user_node_id
     }
 
+@router.get("/chat/{workspace_id}/eligible-members")
+def get_eligible_workspace_members(workspace_id: str, req: Request):
+    auth_header = req.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "): return {"error": "Access Denied"}
+    token = auth_header.split(" ")[1]
+    decoded_token = jwt.decode(token, options={"verify_signature": False})
+    user_uuid = str(decoded_token.get("sub"))
+    
+    try:
+        # Check if caller belongs to tenant
+        ws_resp = supabase_client.table("workspaces").select("tenant_id").eq("id", workspace_id).execute()
+        if not ws_resp.data: return {"error": "Workspace not found."}
+        tenant_id = ws_resp.data[0]["tenant_id"]
+        
+        member_resp = supabase_client.table("tenant_members").select("tenant_id").eq("user_id", user_uuid).execute()
+        is_admin_resp = supabase_client.table("profiles").select("is_tessera_admin").eq("id", user_uuid).execute()
+        is_admin = is_admin_resp.data and is_admin_resp.data[0].get("is_tessera_admin")
+
+        if not is_admin and (not member_resp.data or member_resp.data[0]["tenant_id"] != tenant_id):
+            return {"error": "Security Error: Missing Tenant Authorization."}
+
+        # Fetch all coworker profiles
+        coworkers_resp = supabase_client.table("tenant_members").select("user_id, profiles(email, full_name)").eq("tenant_id", tenant_id).execute()
+        
+        coworkers = []
+        for c in coworkers_resp.data:
+            if c.get("profiles"):
+                coworkers.append({
+                    "id": c["user_id"],
+                    "email": c["profiles"].get("email"),
+                    "name": c["profiles"].get("full_name") or "Unnamed User"
+                })
+                
+        return {"success": True, "members": coworkers}
+    except Exception as e:
+        print(f"--- [Get Eligible Members Error] {str(e)} ---")
+        return {"error": str(e)}
+
 @router.post("/chat/{workspace_id}/invite")
 def invite_team_member(workspace_id: str, invite_req: InviteRequest, req: Request):
     auth_header = req.headers.get("Authorization")
@@ -503,10 +542,27 @@ def invite_team_member(workspace_id: str, invite_req: InviteRequest, req: Reques
         if not member_resp.data or member_resp.data[0]["assigned_node_id"] != "supervisor":
             return {"error": "Security Lock: Only the Top Supervisor can assign team members."}
         
-        default_password = get_system_setting("default_invite_password", "Tessera2026!")
-        user_resp = supabase_client.auth.admin.create_user({"email": invite_req.email, "password": default_password, "email_confirm": True})
-        new_user_id = user_resp.user.id
+        role_resp = supabase_client.table("workspace_roles").select("id").eq("slug", invite_req.workspace_role).execute()
+        role_id = role_resp.data[0]["id"] if role_resp.data else None
         
+        # Check if user already exists
+        profile_resp = supabase_client.table("profiles").select("id").eq("email", invite_req.email).execute()
+        
+        actual_password = "N/A (Existing User)"
+        
+        if profile_resp.data:
+            # User exists, just link them
+            new_user_id = profile_resp.data[0]["id"]
+        else:
+            # User doesn't exist, generate them
+            if invite_req.temp_password and len(invite_req.temp_password) >= 6:
+                actual_password = invite_req.temp_password
+            else:
+                actual_password = "Tessera-" + os.urandom(6).hex()
+    
+            user_resp = supabase_client.auth.admin.create_user({"email": invite_req.email, "password": actual_password, "email_confirm": True})
+            new_user_id = user_resp.user.id
+            
         ws_resp = supabase_client.table("workspaces").select("tenant_id").eq("id", workspace_id).execute()
         tenant_id = ws_resp.data[0]["tenant_id"] if ws_resp.data else None
 
@@ -527,9 +583,47 @@ def invite_team_member(workspace_id: str, invite_req: InviteRequest, req: Reques
             "role_id": role_id 
         }).execute()
         
-        return {"success": True, "message": f"Success! {invite_req.email} created as {invite_req.workspace_role}.", "temp_password": default_password}
+        workspace_name = ws_resp.data[0].get("name", "Tessera OS") if ws_resp.data else "Tessera OS"
+        
+        # Only dispatch email if they were genuinely invited as a new user
+        if actual_password != "N/A (Existing User)":
+            resend_key = os.environ.get("RESEND_API_KEY")
+            if not resend_key:
+                print(f"\n==========================================")
+                print(f"📧 [MOCK INVITE EMAIL] To: {invite_req.email}")
+                print(f"🏢 [WORKSPACE]: {workspace_name}")
+                print(f"🔑 [TEMP PASSWORD]: {actual_password}")
+                print(f"==========================================\n")
+            else:
+                html_content = f"""
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #09090b; padding: 40px; border-radius: 12px; border: 1px solid #27272a;">
+                    <div style="text-align: center; margin-bottom: 24px;">
+                        <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Welcome to Tessera OS</h1>
+                    </div>
+                    <div style="background-color: #18181b; padding: 32px; border-radius: 8px; border: 1px solid #27272a;">
+                        <p style="color: #a1a1aa; font-size: 16px; margin-top: 0;">Hello,</p>
+                        <p style="color: #a1a1aa; font-size: 16px;">You have been invited to collaborate in the <strong>{workspace_name}</strong> workspace.</p>
+                        <p style="color: #a1a1aa; font-size: 16px;">Please use the following temporary password to log in. You will be prompted to change it upon your first access.</p>
+                        
+                        <div style="background-color: #09090b; border-radius: 8px; padding: 24px; text-align: center; margin: 32px 0; border: 1px solid #3f3f46;">
+                            <span style="font-family: monospace; font-size: 24px; font-weight: 700; letter-spacing: 2px; color: #10b981;">{actual_password}</span>
+                        </div>
+                        
+                        <a href="https://tesseraos.ai" style="display: block; width: 100%; text-align: center; background-color: #ffffff; color: #000000; text-decoration: none; padding: 12px 0; border-radius: 6px; font-weight: 600; font-size: 16px;">Log In Now</a>
+                    </div>
+                </div>
+                """
+                requests.post("https://api.resend.com/emails", json={
+                    "from": "Tessera OS Invitations <invites@tesseraos.ai>",
+                    "to": invite_req.email,
+                    "subject": f"You're invited to {workspace_name} on Tessera OS",
+                    "html": html_content
+                }, headers={"Authorization": f"Bearer {resend_key}"}, timeout=5)
+        
+        return {"success": True, "message": f"Success! {invite_req.email} assigned.", "temp_password": actual_password}
     except Exception as e:
-        if "already registered" in str(e).lower(): return {"error": "This email is already registered in the system."}
+        if "already registered" in str(e).lower() or "unique constraint" in str(e).lower(): 
+            return {"error": "This user is already assigned or exists."}
         return {"error": f"Failed to invite user: {str(e)}"}
 
 @router.get("/tenant/workspaces")

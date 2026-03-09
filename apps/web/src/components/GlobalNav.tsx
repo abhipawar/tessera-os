@@ -18,6 +18,7 @@ export default function GlobalNav({
 
   // Hydrate immediately from server props!
   const [isAdmin, setIsAdmin] = useState(isSuperAdmin);
+  const [isImpersonating, setIsImpersonating] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(!!initialUser);
 
   const [supabase] = useState(() => createBrowserClient(
@@ -48,6 +49,7 @@ export default function GlobalNav({
 
       if (mounted) {
         setIsAdmin(!!profile?.is_tessera_admin);
+        setIsImpersonating(document.cookie.includes('tessera_impersonated_tenant='));
       }
     };
 
@@ -92,8 +94,8 @@ export default function GlobalNav({
     { name: 'Co-Pilot Chat', path: '/chat', icon: MessageSquare },
   ];
 
-  // Dynamically inject the Admin route if they have permissions
-  if (isAdmin) {
+  // Dynamically inject the Admin route if they have permissions AND are not impersonating
+  if (isAdmin && !isImpersonating) {
     navLinks.push({ name: 'Control Plane', path: '/admin', icon: ShieldAlert });
   }
 

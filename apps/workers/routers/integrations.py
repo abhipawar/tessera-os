@@ -76,8 +76,11 @@ def get_tenant_integrations(req: Request):
                     tool_copy["credentials"] = {}
                     
                 active_tools.append(tool_copy)
+                
+        # Only true, un-impersonated Superadmins get to see the global catalog 
+        final_catalog_tools = global_tools if (is_admin and not impersonated_tenant_id) else []
             
-        return {"success": True, "active_tools": active_tools, "catalog_tools": global_tools}
+        return {"success": True, "active_tools": active_tools, "catalog_tools": final_catalog_tools}
         
     except Exception as e:
         print(f"--- [Tenant Tools Fetch Error] {str(e)} ---")

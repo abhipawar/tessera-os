@@ -1,5 +1,5 @@
-import React from 'react';
-import { UserPlus, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { UserPlus, X, Users, MailPlus } from 'lucide-react';
 import { useStudioStore } from '@/store/studioStore';
 import { createBrowserClient } from '@supabase/ssr';
 import { useNotificationStore } from '@/store/notificationStore';
@@ -14,10 +14,23 @@ export default function TeamManagementModal() {
         setNodeAssignments,
         inviteEmail,
         setInviteEmail,
+        invitePassword,
+        setInvitePassword,
         inviteRole,
         setInviteRole,
-        currentChartId
+        currentChartId,
+        eligibleMembers,
+        fetchEligibleMembers
     } = useStudioStore();
+
+    // Track which tab is open for each node: 'existing' or 'invite'
+    const [activeTabs, setActiveTabs] = useState<Record<string, 'existing' | 'invite'>>({});
+
+    useEffect(() => {
+        if (isTeamPanelOpen && currentChartId) {
+            fetchEligibleMembers(currentChartId);
+        }
+    }, [isTeamPanelOpen, currentChartId, fetchEligibleMembers]);
 
     if (!isTeamPanelOpen) return null;
 
@@ -32,13 +45,20 @@ export default function TeamManagementModal() {
         if (!session) return;
 
         try {
+            const payload = {
+                email: inviteEmail,
+                node_id: nodeId,
+                workspace_role: inviteRole,
+                ...(invitePassword.trim() ? { temp_password: invitePassword.trim() } : {})
+            };
+
             const res = await fetch(`${API_URL}/api/chat/${currentChartId}/invite`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${session.access_token}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ email: inviteEmail, node_id: nodeId, workspace_role: inviteRole })
+                body: JSON.stringify(payload)
             });
 
             const data = await res.json();
@@ -58,6 +78,7 @@ export default function TeamManagementModal() {
                 type: "success"
             });
             setInviteEmail("");
+            setInvitePassword("");
             setInviteRole("member");
 
         } catch (error) {
@@ -99,7 +120,31 @@ export default function TeamManagementModal() {
                                 {nodeAssignments[node.id]}
                             </div>
                         ) : (
-                            <div className="flex flex-col gap-2 mt-3">
+                            <div className="flex flex-col gap-3 mt-3">
+                                {/* Tab Toggle */}
+                                <div className="flex gap-2 rounded-lg bg-zinc-900 p-1">
+                                    <button
+                                        onClick={() => setActiveTabs(prev => ({ ...prev, [node.id]: 'existing' }))}
+                                        className={`flex-1 flex items-center justify-center gap-2 py-1.5 text-xs font-medium rounded-md transition-colors ${(activeTabs[node.id] || 'existing') === 'existing'
+                                                ? 'bg-zinc-800 text-zinc-100 shadow-sm'
+                                                : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50'
+                                            }`}
+                                    >
+                                        <Users size={12} />
+                                        Existing Team
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTabs(prev => ({ ...prev, [node.id]: 'invite' }))}
+                                        className={`flex-1 flex items-center justify-center gap-2 py-1.5 text-xs font-medium rounded-md transition-colors ${activeTabs[node.id] === 'invite'
+                                                ? 'bg-zinc-800 text-zinc-100 shadow-sm'
+                                                : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50'
+                                            }`}
+                                    >
+                                        <MailPlus size={12} />
+                                        Invite New
+                                    </button>
+                                </div>
+
                                 <select
                                     className="w-full bg-zinc-900 border border-zinc-800 text-zinc-300 text-xs rounded px-2 py-1.5 focus:outline-none focus:border-blue-500"
                                     value={inviteRole}
@@ -108,21 +153,54 @@ export default function TeamManagementModal() {
                                     <option value="member">Network Member (View Only)</option>
                                     <option value="tenant_admin">Tenant Admin (Full Access)</option>
                                 </select>
-                                <div className="flex gap-2">
-                                    <input
-                                        type="email"
-                                        placeholder="teammate@company.com"
-                                        value={inviteEmail}
-                                        onChange={(e) => setInviteEmail(e.target.value)}
-                                        className="flex-1 text-xs bg-zinc-900 border border-zinc-800 rounded px-2 py-1.5 focus:outline-none focus:border-blue-500 text-zinc-200"
-                                    />
-                                    <button
-                                        onClick={() => handleInviteHuman(node.id)}
-                                        className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-semibold px-3 py-1.5 rounded transition-colors"
-                                    >
-                                        Assign
-                                    </button>
-                                </div>
+
+                                {(activeTabs[node.id] || 'existing') === 'existing' ? (
+                                    <div className="flex gap-2">
+                                        <select
+                                            className="flex-1 text-xs bg-zinc-900 border border-zinc-800 rounded px-2 py-1.5 focus:outline-none focus:border-blue-500 text-zinc-200"
+                                            value={inviteEmail}
+                                            onChange={(e) => setInviteEmail(e.target.value)}
+                                        >
+                                            <option value="" disabled>Select Coworker...</option>
+                                            {eligibleMembers.map(member => (
+                                                <option key={member.id} value={member.email}>
+                                                    {member.name} ({member.email})
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <button
+                                            onClick={() => handleInviteHuman(node.id)}
+                                            className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-semibold px-3 py-1.5 rounded transition-colors shrink-0 disabled:opacity-50"
+                                            disabled={!inviteEmail}
+                                        >
+                                            Assign
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="email"
+                                            placeholder="teammate@company.com"
+                                            value={inviteEmail}
+                                            onChange={(e) => setInviteEmail(e.target.value)}
+                                            className="flex-[2] text-xs bg-zinc-900 border border-zinc-800 rounded px-2 py-1.5 focus:outline-none focus:border-blue-500 text-zinc-200"
+                                        />
+                                        <input
+                                            type="text"
+                                            placeholder="Temp Password (optional)"
+                                            value={invitePassword}
+                                            onChange={(e) => setInvitePassword(e.target.value)}
+                                            className="flex-[1.5] text-xs bg-zinc-900 border border-zinc-800 rounded px-2 py-1.5 focus:outline-none focus:border-blue-500 text-zinc-200"
+                                        />
+                                        <button
+                                            onClick={() => handleInviteHuman(node.id)}
+                                            className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-semibold px-3 py-1.5 rounded transition-colors shrink-0 disabled:opacity-50"
+                                            disabled={!inviteEmail}
+                                        >
+                                            Assign
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
