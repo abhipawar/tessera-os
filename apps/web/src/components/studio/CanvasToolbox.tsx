@@ -12,9 +12,9 @@ export default function CanvasToolbox() {
         if (type === 'tool') {
             payload = {
                 type: 'toolNode',
-                label: item.connection_name || item.global_tools.name,
-                description: item.global_tools.description,
-                tool_id: item.id
+                label: item.connection_name || item.global_tools?.name || 'Unknown Tool',
+                description: item.global_tools?.description || '',
+                tool_id: item.id || item.tenant_tool_id
             };
         } else {
             payload = {
@@ -70,8 +70,8 @@ export default function CanvasToolbox() {
             category: 'Connected Tools',
             items: configuredTools.map(t => ({
                 ...t,
-                name: t.connection_name || t.global_tools.name,
-                description: t.global_tools.description,
+                name: t.connection_name || t.global_tools?.name || 'Unknown Tool',
+                description: t.global_tools?.description || '',
                 icon: Wrench
             })),
             type: 'tool'
