@@ -49,9 +49,14 @@ export default function IntegrationsPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
+      const isImpersonating = document.cookie.includes('tessera_impersonated_tenant=');
+      const impersonatedId = isImpersonating ? document.cookie.split('tessera_impersonated_tenant=')[1].split(';')[0] : '';
 
       const res = await fetch(`${API_URL}/api/tenant/tools`, {
-        headers: { 'Authorization': `Bearer ${session.access_token}` }
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          ...(isImpersonating && impersonatedId ? { 'X-Impersonated-Tenant-Id': impersonatedId } : {})
+        }
       });
       const data = await res.json();
 
@@ -117,12 +122,15 @@ export default function IntegrationsPage() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
 
+      const isImpersonating = document.cookie.includes('tessera_impersonated_tenant=');
+      const impersonatedId = isImpersonating ? document.cookie.split('tessera_impersonated_tenant=')[1].split(';')[0] : '';
 
       const res = await fetch(`${API_URL}/api/tenant/tools/test-connection`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session?.access_token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(isImpersonating && impersonatedId ? { 'X-Impersonated-Tenant-Id': impersonatedId } : {})
         },
         body: JSON.stringify(dataToTest)
       });
@@ -154,12 +162,15 @@ export default function IntegrationsPage() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
 
+      const isImpersonating = document.cookie.includes('tessera_impersonated_tenant=');
+      const impersonatedId = isImpersonating ? document.cookie.split('tessera_impersonated_tenant=')[1].split(';')[0] : '';
 
       const res = await fetch(`${API_URL}/api/tenant/tools`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session?.access_token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          ...(isImpersonating && impersonatedId ? { 'X-Impersonated-Tenant-Id': impersonatedId } : {})
         },
         body: JSON.stringify({
           tool_id: selectedTool.id,
