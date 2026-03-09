@@ -73,3 +73,40 @@ INFO:     Started server process [20112]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 WARNING:  WatchFiles detected changes in 'routers\chat.py'. Reloading...
+WARNING:  WatchFiles detected changes in 'graphs\builder.py', 'routers\chat.py', 'routers\auth.py', 'test_auth_insert.py', 'graphs\tools.py', 'routers\integrations.py', 'seed_custom_tool.py', 'test_pg_insert.py'. Reloading...
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\abhip\.gemini\antigravity\scratch\tessera\tessera-os\apps\workers\.venv\Scripts\uvicorn.exe\__main__.py", line 7, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "C:\Users\abhip\.gemini\antigravity\scratch\tessera\tessera-os\apps\workers\.venv\Lib\site-packages\click\core.py", line 1485, in __call__
+    return self.main(*args, **kwargs)
+           ~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\abhip\.gemini\antigravity\scratch\tessera\tessera-os\apps\workers\.venv\Lib\site-packages\click\core.py", line 1406, in main
+    rv = self.invoke(ctx)
+  File "C:\Users\abhip\.gemini\antigravity\scratch\tessera\tessera-os\apps\workers\.venv\Lib\site-packages\click\core.py", line 1269, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\abhip\.gemini\antigravity\scratch\tessera\tessera-os\apps\workers\.venv\Lib\site-packages\click\core.py", line 824, in invoke
+    return callback(*args, **kwargs)
+  File "C:\Users\abhip\.gemini\antigravity\scratch\tessera\tessera-os\apps\workers\.venv\Lib\site-packages\uvicorn\main.py", line 433, in main
+    run(
+    ~~~^
+        app,
+        ^^^^
+    ...<47 lines>...
+        h11_max_incomplete_event_size=h11_max_incomplete_event_size,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\abhip\.gemini\antigravity\scratch\tessera\tessera-os\apps\workers\.venv\Lib\site-packages\uvicorn\main.py", line 601, in run
+    ChangeReload(config, target=server.run, sockets=[sock]).run()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\abhip\.gemini\antigravity\scratch\tessera\tessera-os\apps\workers\.venv\Lib\site-packages\uvicorn\supervisors\basereload.py", line 59, in run
+    self.restart()
+    ~~~~~~~~~~~~^^
+  File "C:\Users\abhip\.gemini\antigravity\scratch\tessera\tessera-os\apps\workers\.venv\Lib\site-packages\uvicorn\supervisors\basereload.py", line 91, in restart
+    os.kill(self.process.pid, signal.CTRL_C_EVENT)
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: [WinError 233] No process is on the other end of the pipe

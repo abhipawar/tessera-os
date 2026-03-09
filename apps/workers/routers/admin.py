@@ -99,6 +99,37 @@ def get_all_tenants(req: Request):
     except Exception as e:
         return {"error": str(e)}
 
+@router.delete("/tenants/{tenant_id}")
+def delete_tenant(tenant_id: str, req: Request):
+    try:
+        admin_uuid = verify_admin(req)
+        
+        # 1. Find all users associated with this tenant
+        t_members_resp = supabase_client.table("tenant_members").select("user_id").eq("tenant_id", tenant_id).execute()
+        users_to_check = set([m["user_id"] for m in t_members_resp.data])
+        
+        # 2. Check if these users belong to any OTHER tenant
+        users_to_delete = []
+        for uid in users_to_check:
+            other_tenants = supabase_client.table("tenant_members").select("tenant_id").eq("user_id", uid).neq("tenant_id", tenant_id).execute()
+            if not other_tenants.data:
+                users_to_delete.append(uid)
+                
+        # 3. Delete tenant from database (cascade handles related records)
+        # Note: tenant_members will be deleted by ON DELETE CASCADE
+        supabase_client.table("tenants").delete().eq("id", tenant_id).execute()
+        
+        # 4. Delete orphaned auth users
+        deleted_auth_count = 0
+        for uid in users_to_delete:
+            if str(uid) != str(admin_uuid): # Never delete the executing superadmin
+                supabase_client.auth.admin.delete_user(uid)
+                deleted_auth_count += 1
+                
+        return {"success": True, "message": f"Tenant deleted. {deleted_auth_count} orphaned users removed."}
+    except Exception as e:
+        return {"error": str(e)}
+
 @router.get("/master-data")
 def get_master_data(req: Request):
     try:

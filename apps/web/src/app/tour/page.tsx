@@ -40,7 +40,7 @@ export default function TourPage() {
         if (currentSlide < slides.length - 1) {
             setCurrentSlide(prev => prev + 1);
         } else {
-            router.push('/studio');
+            window.location.assign('/studio');
         }
     };
 
@@ -57,7 +57,7 @@ export default function TourPage() {
 
             {/* Skip Button */}
             <div className="absolute top-8 right-8 z-20">
-                <button onClick={() => router.push('/studio')} className="text-zinc-500 hover:text-zinc-300 text-sm font-medium transition-colors">
+                <button onClick={() => window.location.assign('/studio')} className="text-zinc-500 hover:text-zinc-300 text-sm font-medium transition-colors">
                     Skip Tour
                 </button>
             </div>
@@ -110,8 +110,8 @@ export default function TourPage() {
                     <button
                         onClick={nextSlide}
                         className={`h-14 px-8 rounded-full flex items-center justify-center gap-3 font-semibold transition-all ${currentSlide === slides.length - 1
-                                ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.3)] border border-emerald-500/50'
-                                : 'bg-white text-black hover:bg-zinc-200 shadow-[0_0_15px_rgba(255,255,255,0.2)]'
+                            ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.3)] border border-emerald-500/50'
+                            : 'bg-white text-black hover:bg-zinc-200 shadow-[0_0_15px_rgba(255,255,255,0.2)]'
                             }`}
                     >
                         {currentSlide === slides.length - 1 ? (

@@ -191,6 +191,10 @@ def run_tenant_agent(request: AgentRequest, req: Request):
         decoded_token = jwt.decode(token, options={"verify_signature": False})
         user_uuid = str(decoded_token.get("sub"))
         config = {"configurable": {"thread_id": request.chat_id}}
+        
+        # Check if user is a superadmin
+        profile_resp = supabase_client.table("profiles").select("is_tessera_admin").eq("id", user_uuid).execute()
+        is_admin = profile_resp.data and profile_resp.data[0].get("is_tessera_admin")
     except Exception as e:
         return {"result": f"Token error: {str(e)}"}
     if not request.chat_id: return {"result": "No chat ID provided."}
@@ -200,9 +204,11 @@ def run_tenant_agent(request: AgentRequest, req: Request):
         if not chat_resp.data: return {"result": "Chat not found or access denied."}
         workspace_id = chat_resp.data[0]["workspace_id"]
         
-        member_resp = supabase_client.table("workspace_members").select("assigned_node_id").eq("workspace_id", workspace_id).eq("user_id", user_uuid).execute()
-        if not member_resp.data: return {"result": "Access Denied"}
-        user_node_id = member_resp.data[0]["assigned_node_id"]
+        user_node_id = None
+        if not is_admin:
+            member_resp = supabase_client.table("workspace_members").select("assigned_node_id").eq("workspace_id", workspace_id).eq("user_id", user_uuid).execute()
+            if not member_resp.data: return {"result": "Access Denied"}
+            user_node_id = member_resp.data[0]["assigned_node_id"]
     except Exception as e:
         return {"result": f"RBAC Error: {str(e)}"}
         
@@ -269,6 +275,10 @@ def run_tenant_agent_stream(request: AgentRequest, req: Request):
         decoded_token = jwt.decode(token, options={"verify_signature": False})
         user_uuid = str(decoded_token.get("sub"))
         config = {"configurable": {"thread_id": request.chat_id}}
+        
+        # Check if user is a superadmin
+        profile_resp = supabase_client.table("profiles").select("is_tessera_admin").eq("id", user_uuid).execute()
+        is_admin = profile_resp.data and profile_resp.data[0].get("is_tessera_admin")
     except Exception as e:
         return {"result": f"Token error: {str(e)}"}
         
@@ -279,9 +289,11 @@ def run_tenant_agent_stream(request: AgentRequest, req: Request):
         if not chat_resp.data: return {"result": "Chat not found or access denied."}
         workspace_id = chat_resp.data[0]["workspace_id"]
         
-        member_resp = supabase_client.table("workspace_members").select("assigned_node_id").eq("workspace_id", workspace_id).eq("user_id", user_uuid).execute()
-        if not member_resp.data: return {"result": "Access Denied"}
-        user_node_id = member_resp.data[0]["assigned_node_id"]
+        user_node_id = None
+        if not is_admin:
+            member_resp = supabase_client.table("workspace_members").select("assigned_node_id").eq("workspace_id", workspace_id).eq("user_id", user_uuid).execute()
+            if not member_resp.data: return {"result": "Access Denied"}
+            user_node_id = member_resp.data[0]["assigned_node_id"]
     except Exception as e:
         return {"result": f"RBAC Error: {str(e)}"}
         
@@ -346,13 +358,19 @@ def get_secure_chat_layout(workspace_id: str, req: Request):
     try:
         decoded_token = jwt.decode(token, options={"verify_signature": False})
         user_uuid = str(decoded_token.get("sub"))
+        
+        # Check if user is a superadmin
+        profile_resp = supabase_client.table("profiles").select("is_tessera_admin").eq("id", user_uuid).execute()
+        is_admin = profile_resp.data and profile_resp.data[0].get("is_tessera_admin")
     except Exception as e:
         return {"error": f"Token error: {str(e)}"}
         
     try:
-        member_resp = supabase_client.table("workspace_members").select("assigned_node_id").eq("workspace_id", workspace_id).eq("user_id", user_uuid).execute()
-        if not member_resp.data: return {"error": "Access Denied"}
-        user_node_id = member_resp.data[0]["assigned_node_id"]
+        user_node_id = None
+        if not is_admin:
+            member_resp = supabase_client.table("workspace_members").select("assigned_node_id").eq("workspace_id", workspace_id).eq("user_id", user_uuid).execute()
+            if not member_resp.data: return {"error": "Access Denied"}
+            user_node_id = member_resp.data[0]["assigned_node_id"]
     except Exception as e:
         return {"error": f"RBAC Error: {str(e)}"}
 
@@ -500,3 +518,35 @@ def invite_team_member(workspace_id: str, invite_req: InviteRequest, req: Reques
     except Exception as e:
         if "already registered" in str(e).lower(): return {"error": "This email is already registered in the system."}
         return {"error": f"Failed to invite user: {str(e)}"}
+
+@router.get("/tenant/workspaces")
+def get_tenant_workspaces(req: Request):
+    auth_header = req.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "): return {"workspaces": [], "error": "Access Denied"}
+    token = auth_header.split(" ")[1]
+    
+    try:
+        decoded_token = jwt.decode(token, options={"verify_signature": False})
+        user_uuid = str(decoded_token.get("sub"))
+        
+        # Check if Superadmin (optional logging/bypass logic)
+        profile_resp = supabase_client.table("profiles").select("is_tessera_admin").eq("id", user_uuid).execute()
+        is_admin = profile_resp.data and profile_resp.data[0].get("is_tessera_admin")
+        
+        # Get user's active tenant(s). Even superadmins should only see workspaces for the tenant they are currently assigned/viewing context for to avoid cross-tenant pollution in the dropdown.
+        tenant_member_resp = supabase_client.table("tenant_members").select("tenant_id").eq("user_id", user_uuid).execute()
+        
+        if not tenant_member_resp.data:
+            if is_admin:
+                return {"success": True, "workspaces": []} # Admin with no tenant shouldn't see acme.
+            return {"workspaces": [], "error": "No tenant associated with user."}
+            
+        # For simplicity if they belong to multiple, we can grab the first or all
+        tenant_ids = [t['tenant_id'] for t in tenant_member_resp.data]
+        
+        # Get workspaces for those tenants
+        resp = supabase_client.table("workspaces").select("id, name").in_("tenant_id", tenant_ids).order("updated_at", desc=True).execute()
+        return {"success": True, "workspaces": resp.data}
+        
+    except Exception as e:
+        return {"workspaces": [], "error": str(e)}

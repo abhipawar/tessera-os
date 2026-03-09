@@ -195,17 +195,26 @@ export const useStudioStore = create<StudioState>((set, get) => ({
     },
 
     fetchChartList: async () => {
-        const { data, error } = await supabase
-            .from('workspaces')
-            .select('id, name')
-            .order('updated_at', { ascending: false });
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) return;
 
-        if (!error && data) {
-            set({ chartList: data });
-            const currentId = get().currentChartId;
-            if (data.length > 0 && !currentId) {
-                get().loadChart(data[0].id);
+            const res = await fetch(`${API_URL}/api/tenant/workspaces`, {
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`
+                }
+            });
+            const data = await res.json();
+
+            if (data.success && data.workspaces) {
+                set({ chartList: data.workspaces });
+                const currentId = get().currentChartId;
+                if (data.workspaces.length > 0 && !currentId && !window.location.pathname.includes('/preview')) {
+                    get().loadChart(data.workspaces[0].id);
+                }
             }
+        } catch (e) {
+            console.error("Failed to fetch workspaces:", e);
         }
     },
 

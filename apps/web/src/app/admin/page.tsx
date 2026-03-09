@@ -56,6 +56,10 @@ export default function AdminDashboard() {
   const [editingSetting, setEditingSetting] = useState<any>(null);
   const [settingFormValue, setSettingFormValue] = useState("");
 
+  // Deletion Modal State
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [tenantToDelete, setTenantToDelete] = useState<{ id: string, name: string } | null>(null);
+
   const [supabase] = useState(() => createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!));
 
   const fetchDashboardData = async () => {
@@ -290,6 +294,48 @@ export default function AdminDashboard() {
     } finally { setIsWiping(false); }
   }
 
+  const handleDeleteTenant = async () => {
+    if (!tenantToDelete) return;
+
+    setIsProcessing(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(`${API_URL}/api/admin/tenants/${tenantToDelete.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`
+        }
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        useNotificationStore.getState().showNotification({
+          title: "Tenant Deleted",
+          message: data.message || "Tenant successfully deleted.",
+          type: "success"
+        });
+        setIsDeleteModalOpen(false);
+        setTenantToDelete(null);
+        fetchDashboardData();
+      } else {
+        throw new Error(data.error || "Failed to delete tenant");
+      }
+    } catch (e: any) {
+      useNotificationStore.getState().showNotification({
+        title: "Deletion Failed",
+        message: e.message,
+        type: "error"
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const confirmDeleteTenant = (tenantId: string, tenantName: string) => {
+    setTenantToDelete({ id: tenantId, name: tenantName });
+    setIsDeleteModalOpen(true);
+  };
+
   return (
     <div className="p-10 text-white bg-zinc-950 min-h-screen space-y-6">
       <h1 className="text-3xl font-bold tracking-tight">Tessera Control Plane</h1>
@@ -304,7 +350,7 @@ export default function AdminDashboard() {
           </div>
           <table className="w-full text-left text-sm text-zinc-400">
             <thead className="text-xs text-zinc-500 uppercase bg-zinc-950/50 border-b border-zinc-800">
-              <tr><th className="px-4 py-3">Tenant Name</th><th className="px-4 py-3">Tier</th><th className="px-4 py-3">Workspaces</th><th className="px-4 py-3">Users</th></tr>
+              <tr><th className="px-4 py-3">Tenant Name</th><th className="px-4 py-3">Tier</th><th className="px-4 py-3">Workspaces</th><th className="px-4 py-3">Users</th><th className="px-4 py-3 text-right">Actions</th></tr>
             </thead>
             <tbody>
               {tenants.map((t) => (
@@ -313,6 +359,11 @@ export default function AdminDashboard() {
                   <td className="px-4 py-3"><span className="px-2 py-1 bg-blue-500/10 text-blue-400 rounded text-xs border border-blue-500/20">{t.tier}</span></td>
                   <td className="px-4 py-3">{t.workspace_count}</td>
                   <td className="px-4 py-3">{t.user_count}</td>
+                  <td className="px-4 py-3 flex justify-end gap-2">
+                    <Button onClick={() => confirmDeleteTenant(t.id, t.name)} disabled={isProcessing} variant="outline" className="h-6 px-2 text-xs bg-transparent text-red-500 border-zinc-700 hover:bg-red-900/30 hover:text-red-400">
+                      {isProcessing ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                    </Button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -587,6 +638,46 @@ export default function AdminDashboard() {
             <div className="flex justify-end gap-2 mt-6">
               <Button onClick={() => setIsSettingModalOpen(false)} variant="outline" className="bg-transparent text-zinc-300 border-zinc-700 hover:bg-zinc-800 hover:text-white">Cancel</Button>
               <Button onClick={saveSetting} className="bg-orange-600 text-white hover:bg-orange-500">Save Setting</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modern Delete Confirmation Modal */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-zinc-900 border border-red-900/30 rounded-2xl w-full max-w-md p-6 shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-600 to-red-400" />
+
+            <div className="flex flex-col items-center text-center mt-4">
+              <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-6">
+                <AlertTriangle className="text-red-500 w-8 h-8" />
+              </div>
+
+              <h3 className="text-2xl font-bold text-white mb-2">Delete Tenant?</h3>
+              <p className="text-zinc-400 text-sm mb-6 leading-relaxed">
+                You are about to permanently delete <strong className="text-white bg-zinc-800 px-2 py-0.5 rounded ml-1">{tenantToDelete?.name}</strong>.
+                This action is destructive and will wipe all associated workspaces, checkpoints, and orphaned user accounts.
+              </p>
+            </div>
+
+            <div className="flex gap-3 w-full">
+              <Button
+                onClick={() => setIsDeleteModalOpen(false)}
+                disabled={isProcessing}
+                variant="outline"
+                className="flex-1 bg-transparent text-zinc-300 border-zinc-700 hover:bg-zinc-800 hover:text-white"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleDeleteTenant}
+                disabled={isProcessing}
+                className="flex-1 bg-red-600 text-white hover:bg-red-500 shadow-lg shadow-red-500/20"
+              >
+                {isProcessing ? <Loader2 size={16} className="animate-spin mr-2" /> : <Trash2 size={16} className="mr-2" />}
+                Yes, Delete
+              </Button>
             </div>
           </div>
         </div>
