@@ -111,7 +111,7 @@ export default function ConfigurationPanel() {
             <div className="px-4 pt-4 border-b border-zinc-800/50 bg-zinc-900/20">
                 <div className="flex bg-zinc-950/50 p-1 rounded-lg border border-zinc-800/80 mb-4">
                     <button onClick={() => setActiveTab('general')} className={`flex-1 text-xs font-semibold py-1.5 rounded-md transition-colors ${activeTab === 'general' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}>General</button>
-                    {!['triggerNode', 'conditionalNode'].includes(selectedNode.type) && (
+                    {!['triggerNode', 'conditionalNode'].includes(selectedNode.type || '') && (
                         <button onClick={() => setActiveTab('instructions')} className={`flex-1 text-xs font-semibold py-1.5 rounded-md transition-colors ${activeTab === 'instructions' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}>Instructions</button>
                     )}
                     <button onClick={() => setActiveTab('tools')} className={`flex-1 text-xs font-semibold py-1.5 rounded-md transition-colors ${activeTab === 'tools' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}>Capabilities</button>
@@ -178,7 +178,7 @@ export default function ConfigurationPanel() {
                     </>
                 )}
 
-                {activeTab === 'instructions' && !['triggerNode', 'conditionalNode'].includes(selectedNode.type) && (
+                {activeTab === 'instructions' && !['triggerNode', 'conditionalNode'].includes(selectedNode.type || '') && (
                     <>
                         <div>
                             <div className="flex items-center justify-between mb-1">
