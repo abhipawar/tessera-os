@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { ReactFlowProvider } from 'reactflow';
-import { Loader2, Plus, Save, Users, Trash2, Globe, X, Settings } from 'lucide-react';
+import { Loader2, Plus, Save, Users, Trash2, Globe, X, Settings, ChevronUp, ChevronDown } from 'lucide-react';
 
 import StudioCanvas from '@/components/studio/StudioCanvas';
 import MarketplaceSidebar from '@/components/studio/MarketplaceSidebar';
@@ -41,6 +41,7 @@ export default function OrgChartCanvas() {
 
   const [isPublishModalOpen, setIsPublishModalOpen] = React.useState(false);
   const [isWorkspaceSettingsOpen, setIsWorkspaceSettingsOpen] = React.useState(false);
+  const [isTopNavVisible, setIsTopNavVisible] = React.useState(true);
   const [publishForm, setPublishForm] = React.useState({
     name: chartName,
     description: '',
@@ -102,7 +103,7 @@ export default function OrgChartCanvas() {
     <div className="w-full h-full flex flex-col bg-zinc-950 text-zinc-100 relative">
       {/* Floating Top Toolbar */}
       {!isCanvasMaximized && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between px-4 py-2 bg-zinc-900/80 backdrop-blur-md border border-zinc-800/80 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] w-auto min-w-[700px]">
+        <div className={`absolute top-4 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between px-4 py-2 bg-zinc-900/80 backdrop-blur-md border border-zinc-800/80 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] w-auto min-w-[700px] transition-transform duration-300 ${isTopNavVisible ? 'translate-y-0 opacity-100' : '-translate-y-24 opacity-0 pointer-events-none'}`}>
           <div className="flex items-center gap-6">
             <div className="flex items-center">
               <h1 className="text-xl font-bold text-zinc-100">Tessera OS</h1>
@@ -227,8 +228,28 @@ export default function OrgChartCanvas() {
               {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
               {(!canSave && !isAdmin) ? `Missing Integrations (${missingTools.length})` : isSaving ? 'Saving...' : 'Save Workspace'}
             </button>
+            <div className="w-px h-6 bg-zinc-800 mx-1"></div>
+            <button
+              onClick={() => setIsTopNavVisible(false)}
+              className="flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 p-2 rounded-lg transition-all"
+              title="Hide Navigation"
+            >
+              <ChevronUp size={16} />
+            </button>
           </div>
         </div>
+      )}
+
+      {/* Pull down tab when navbar is hidden */}
+      {!isCanvasMaximized && !isTopNavVisible && (
+        <button
+          onClick={() => setIsTopNavVisible(true)}
+          className="absolute top-0 left-1/2 -translate-x-1/2 z-50 bg-zinc-900/80 backdrop-blur-md border border-t-0 border-zinc-800/80 rounded-b-xl px-5 py-1.5 shadow-lg text-zinc-400 hover:text-white transition-all hover:bg-zinc-800 flex flex-col items-center gap-0.5 group animate-slide-in-top"
+          title="Show Navigation Bar"
+        >
+          <div className="w-8 h-1 bg-zinc-700 rounded-full mb-0.5 group-hover:bg-zinc-500 transition-colors" />
+          <ChevronDown size={14} />
+        </button>
       )}
 
       <div className="flex-1 w-full h-full relative flex">

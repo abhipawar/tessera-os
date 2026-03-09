@@ -5,6 +5,7 @@ import { useStudioStore } from '@/store/studioStore';
 export default function CanvasToolbox() {
     const { agents, isLoadingAgents, searchQuery, setSearchQuery, configuredTools } = useStudioStore();
     const [isOpen, setIsOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState<'agents' | 'flow' | 'tools'>('agents');
 
     const onDragStart = (event: React.DragEvent, item: any, type: string) => {
         let payload: any = {};
@@ -64,10 +65,11 @@ export default function CanvasToolbox() {
     ];
 
     const groupedItems = [
-        { category: 'Flow Control', items: controlNodes, type: 'agent' },
-        { category: 'AI Agents', items: agents.map(a => ({ ...a, icon: Bot })), type: 'agent' },
+        { category: 'AI Agents', tabId: 'agents', items: agents.map(a => ({ ...a, icon: Bot })), type: 'agent' },
+        { category: 'Flow Control', tabId: 'flow', items: controlNodes, type: 'agent' },
         {
-            category: 'Connected Tools',
+            category: 'Integrations',
+            tabId: 'tools',
             items: configuredTools.map(t => ({
                 ...t,
                 name: t.connection_name || t.global_tools?.name || 'Unknown Tool',
@@ -78,7 +80,7 @@ export default function CanvasToolbox() {
         }
     ];
 
-    const filteredCategories = groupedItems.map(group => ({
+    const filteredCategories = groupedItems.filter(g => g.tabId === activeTab).map(group => ({
         ...group,
         items: group.items.filter((item: any) => {
             const nameMatch = item.name ? item.name.toLowerCase().includes(searchQuery.toLowerCase()) : false;
@@ -110,6 +112,11 @@ export default function CanvasToolbox() {
                     <button onClick={() => setIsOpen(false)} className="text-zinc-500 hover:text-white transition-colors bg-zinc-800/50 hover:bg-zinc-800 rounded-full p-1.5">
                         <X size={16} />
                     </button>
+                </div>
+                <div className="flex bg-zinc-950/50 p-1 rounded-lg border border-zinc-800/80">
+                    <button onClick={() => setActiveTab('agents')} className={`flex-1 text-xs font-semibold py-1.5 rounded-md transition-colors ${activeTab === 'agents' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}>Agents</button>
+                    <button onClick={() => setActiveTab('flow')} className={`flex-1 text-xs font-semibold py-1.5 rounded-md transition-colors ${activeTab === 'flow' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}>Controllers</button>
+                    <button onClick={() => setActiveTab('tools')} className={`flex-1 text-xs font-semibold py-1.5 rounded-md transition-colors ${activeTab === 'tools' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}>Tools</button>
                 </div>
                 <div className="relative">
                     <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />

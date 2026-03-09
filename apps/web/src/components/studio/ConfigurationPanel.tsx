@@ -10,6 +10,8 @@ export default function ConfigurationPanel() {
     const { nodes, edges, selectedNode, setSelectedNode, setNodes, configuredTools } = useStudioStore();
     const [isCustomToolModalOpen, setIsCustomToolModalOpen] = useState(false);
     const [isEnhancingPrompt, setIsEnhancingPrompt] = useState(false);
+    const [activeTab, setActiveTab] = useState<'general' | 'instructions' | 'tools'>('general');
+
     if (!selectedNode) return null;
 
     const supabase = createBrowserClient(
@@ -96,69 +98,88 @@ export default function ConfigurationPanel() {
     const llmIntegrations = configuredTools.filter((t: any) => t.name.toLowerCase().includes('llm') || t.name.toLowerCase().includes('ai compute'));
 
     return (
-        <div className="absolute top-4 right-4 w-80 bg-zinc-900/80 backdrop-blur-xl shadow-[0_0_30px_rgba(0,0,0,0.5)] rounded-2xl border border-zinc-800/50 flex flex-col z-50 overflow-hidden font-sans">
-            <div className="px-5 py-4 border-b border-zinc-800/50 flex justify-between items-center bg-zinc-950/50 backdrop-blur-md">
+        <div className="absolute top-0 right-0 h-full w-[450px] bg-zinc-950/95 backdrop-blur-3xl border-l border-zinc-800/80 shadow-2xl flex flex-col z-50 overflow-hidden font-sans animate-slide-in-right">
+            <div className="px-5 py-4 border-b border-zinc-800/50 flex justify-between items-center bg-zinc-950/80">
                 <div className="flex items-center gap-2 text-zinc-100 font-semibold text-sm">
-                    <Settings size={16} /> Agent Configuration
+                    <Settings size={16} className="text-indigo-400" /> Node Configuration
                 </div>
-                <button onClick={() => setSelectedNode(null)} className="text-zinc-500 hover:text-zinc-300">
+                <button onClick={() => setSelectedNode(null)} className="text-zinc-500 hover:text-white transition-colors bg-zinc-800/50 hover:bg-zinc-800 rounded-full p-1.5">
                     <X size={16} />
                 </button>
             </div>
 
-            <div className="p-4 flex flex-col gap-4 overflow-y-auto max-h-[calc(100vh-120px)]">
-                <div>
-                    <label className="block text-xs font-semibold text-zinc-500 mb-1 uppercase tracking-wider">Agent Name</label>
-                    <input
-                        type="text"
-                        value={selectedNode.data.label}
-                        onChange={(e) => updateNodeData('label', e.target.value)}
-                        className="w-full text-sm p-2.5 bg-zinc-950/50 border border-zinc-800/50 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-zinc-100"
-                    />
+            <div className="px-4 pt-4 border-b border-zinc-800/50 bg-zinc-900/20">
+                <div className="flex bg-zinc-950/50 p-1 rounded-lg border border-zinc-800/80 mb-4">
+                    <button onClick={() => setActiveTab('general')} className={`flex-1 text-xs font-semibold py-1.5 rounded-md transition-colors ${activeTab === 'general' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}>General</button>
+                    {!['triggerNode', 'conditionalNode'].includes(selectedNode.type) && (
+                        <button onClick={() => setActiveTab('instructions')} className={`flex-1 text-xs font-semibold py-1.5 rounded-md transition-colors ${activeTab === 'instructions' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}>Instructions</button>
+                    )}
+                    <button onClick={() => setActiveTab('tools')} className={`flex-1 text-xs font-semibold py-1.5 rounded-md transition-colors ${activeTab === 'tools' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}>Capabilities</button>
                 </div>
-                <div>
-                    <label className="block text-xs font-semibold text-zinc-500 mb-1 uppercase tracking-wider">Role Description</label>
-                    <input
-                        type="text"
-                        value={selectedNode.data.description || ''}
-                        onChange={(e) => updateNodeData('description', e.target.value)}
-                        className="w-full text-sm p-2.5 bg-zinc-950/50 border border-zinc-800/50 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-zinc-100"
-                    />
-                </div>
-                {selectedNode.type === 'conditionalNode' ? (
-                    <div>
-                        <label className="block text-xs font-semibold text-zinc-500 mb-1 uppercase tracking-wider">Natural Language Condition</label>
-                        <textarea
-                            value={selectedNode.data.condition || ''}
-                            onChange={(e) => updateNodeData('condition', e.target.value)}
-                            placeholder="e.g. 'If {{Data Analyst.output}} contains the word URGENT'"
-                            className="w-full text-sm p-2.5 bg-zinc-950/50 border border-zinc-800/50 rounded-lg h-32 resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-zinc-100"
-                        />
-                        <div className="mt-2 text-[10px] text-zinc-500 bg-amber-500/5 rounded p-2 border border-amber-500/10 flex items-start gap-1.5">
-                            <Info size={12} className="text-amber-400 mt-0.5 shrink-0" />
-                            <div>
-                                <span className="font-semibold text-amber-400 block mb-1">Conditional Routing:</span>
-                                The AI Execution Engine will evaluate this condition at runtime to return a simple True or False, and route the pipeline down the corresponding path.
-                            </div>
-                        </div>
-                    </div>
-                ) : (
+            </div>
+
+            <div className="p-5 flex flex-col gap-6 overflow-y-auto flex-1 custom-scrollbar">
+                {activeTab === 'general' && (
                     <>
-                        <div className="mb-0">
-                            <label className="block text-xs font-semibold text-zinc-500 mb-1 uppercase tracking-wider">AI Model Integration</label>
-                            <select
-                                value={selectedNode.data.llm_integration_id || ''}
-                                onChange={(e) => updateNodeData('llm_integration_id', e.target.value)}
+                        <div>
+                            <label className="block text-xs font-semibold text-zinc-500 mb-1 uppercase tracking-wider">Agent Name</label>
+                            <input
+                                type="text"
+                                value={selectedNode.data.label}
+                                onChange={(e) => updateNodeData('label', e.target.value)}
                                 className="w-full text-sm p-2.5 bg-zinc-950/50 border border-zinc-800/50 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-zinc-100"
-                            >
-                                <option value="">Default Workspace LLM</option>
-                                {llmIntegrations.map((llm: any) => (
-                                    <option key={llm.tenant_tool_id} value={llm.tenant_tool_id}>
-                                        {llm.connection_name || llm.name}
-                                    </option>
-                                ))}
-                            </select>
+                            />
                         </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-zinc-500 mb-1 uppercase tracking-wider">Role Description</label>
+                            <input
+                                type="text"
+                                value={selectedNode.data.description || ''}
+                                onChange={(e) => updateNodeData('description', e.target.value)}
+                                className="w-full text-sm p-2.5 bg-zinc-950/50 border border-zinc-800/50 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-zinc-100"
+                            />
+                        </div>
+                        {selectedNode.type === 'conditionalNode' ? (
+                            <div>
+                                <label className="block text-xs font-semibold text-zinc-500 mb-1 uppercase tracking-wider">Natural Language Condition</label>
+                                <textarea
+                                    value={selectedNode.data.condition || ''}
+                                    onChange={(e) => updateNodeData('condition', e.target.value)}
+                                    placeholder="e.g. 'If {{Data Analyst.output}} contains the word URGENT'"
+                                    className="w-full text-sm p-2.5 bg-zinc-950/50 border border-zinc-800/50 rounded-lg h-32 resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-zinc-100"
+                                />
+                                <div className="mt-2 text-[10px] text-zinc-500 bg-amber-500/5 rounded p-2 border border-amber-500/10 flex items-start gap-1.5">
+                                    <Info size={12} className="text-amber-400 mt-0.5 shrink-0" />
+                                    <div>
+                                        <span className="font-semibold text-amber-400 block mb-1">Conditional Routing:</span>
+                                        The AI Execution Engine will evaluate this condition at runtime to return a simple True or False, and route the pipeline down the corresponding path.
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="mb-0">
+                                    <label className="block text-xs font-semibold text-zinc-500 mb-1 uppercase tracking-wider">AI Model Integration</label>
+                                    <select
+                                        value={selectedNode.data.llm_integration_id || ''}
+                                        onChange={(e) => updateNodeData('llm_integration_id', e.target.value)}
+                                        className="w-full text-sm p-2.5 bg-zinc-950/50 border border-zinc-800/50 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-zinc-100"
+                                    >
+                                        <option value="">Default Workspace LLM</option>
+                                        {llmIntegrations.map((llm: any) => (
+                                            <option key={llm.tenant_tool_id} value={llm.tenant_tool_id}>
+                                                {llm.connection_name || llm.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </>
+                        )}
+                    </>
+                )}
+
+                {activeTab === 'instructions' && !['triggerNode', 'conditionalNode'].includes(selectedNode.type) && (
+                    <>
                         <div>
                             <div className="flex items-center justify-between mb-1">
                                 <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider">System Instructions</label>
@@ -320,7 +341,7 @@ export default function ConfigurationPanel() {
                     </>
                 )}
 
-                <div className="pt-4 mt-2 border-t border-zinc-800 flex justify-end">
+                <div className="pt-6 mt-2 border-t border-zinc-800/50 flex justify-end pb-4">
                     <button
                         onClick={() => {
                             setNodes((nds) => nds.filter((n) => n.id !== selectedNode.id));
@@ -333,6 +354,12 @@ export default function ConfigurationPanel() {
                 </div>
             </div>
             <CustomToolModal isOpen={isCustomToolModalOpen} onClose={() => setIsCustomToolModalOpen(false)} />
-        </div>
+            <style>{`
+                .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 10px; }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #52525b; }
+            `}</style>
+        </div >
     );
 }
