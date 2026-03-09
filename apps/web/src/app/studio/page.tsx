@@ -99,9 +99,10 @@ export default function OrgChartCanvas() {
   };
 
   return (
-    <div className="w-full h-full flex flex-col bg-zinc-950 text-zinc-100">
+    <div className="w-full h-full flex flex-col bg-zinc-950 text-zinc-100 relative">
+      {/* Floating Top Toolbar */}
       {!isCanvasMaximized && (
-        <div className="h-16 bg-zinc-950 border-b border-zinc-800 flex items-center justify-between px-6 z-20 shrink-0">
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between px-4 py-2 bg-zinc-900/80 backdrop-blur-md border border-zinc-800/80 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] w-auto min-w-[700px]">
           <div className="flex items-center gap-6">
             <div className="flex items-center">
               <h1 className="text-xl font-bold text-zinc-100">Tessera OS</h1>
@@ -231,8 +232,6 @@ export default function OrgChartCanvas() {
       )}
 
       <div className="flex-1 w-full h-full relative flex">
-        {!isCanvasMaximized && <MarketplaceSidebar />}
-
         <ReactFlowProvider>
           <StudioCanvas />
           <ConfigurationPanel />

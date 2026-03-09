@@ -15,6 +15,7 @@ def build_dynamic_graph(nodes: list, edges: list, user_node_id: str, memory=None
     manager_to_workers = {}
     worker_to_parent = {} 
     conditional_routes = {}
+    node_assigned_tools = {}
     
     for edge in edges:
         src = edge.get("source")
@@ -22,6 +23,14 @@ def build_dynamic_graph(nodes: list, edges: list, user_node_id: str, memory=None
         source_handle = edge.get("sourceHandle")
         
         src_node = next((n for n in nodes if n.get("id") == src), None)
+        if src_node and src_node.get("type") == "toolNode":
+            if tgt not in node_assigned_tools:
+                node_assigned_tools[tgt] = []
+            tool_id = src_node.get("data", {}).get("tool_id")
+            if tool_id:
+                node_assigned_tools[tgt].append(tool_id)
+            continue
+            
         if src_node and src_node.get("type") == "conditionalNode":
             if src not in conditional_routes:
                 conditional_routes[src] = {}
@@ -60,7 +69,7 @@ def build_dynamic_graph(nodes: list, edges: list, user_node_id: str, memory=None
         node_id = node.get("id")
         label = node_id_to_label[node_id]
         sys_prompt = node.get("data", {}).get("systemPrompt", "")
-        tool_ids = node.get("data", {}).get("tools", [])
+        tool_ids = node.get("data", {}).get("tools", []) + node_assigned_tools.get(node_id, [])
 
         node_llm_config = global_llm_config 
         explicit_llm_id = node.get("data", {}).get("llm_integration_id")

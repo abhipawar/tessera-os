@@ -46,11 +46,20 @@ function AgentNode({ id, data, selected }: { id: string, data: any, selected: bo
         </div>
       </div>
 
-      {/* Bottom Handle (Outgoing Connections) */}
+      {/* Bottom Handle (Outgoing Execution Flow) */}
       <Handle
         type="source"
         position={Position.Bottom}
+        id="execution"
         className="w-5 h-5 bg-zinc-900 border-2 border-zinc-500 rounded-full -mb-2.5 hover:bg-emerald-500 hover:border-emerald-400 hover:scale-150 transition-all z-20"
+      />
+
+      {/* Bottom Sub-Handle (Incoming Tool Integrations) */}
+      <Handle
+        type="target"
+        position={Position.Bottom}
+        id="tools"
+        className="w-8 h-2.5 bg-zinc-900 border border-emerald-500/50 rounded-full -mb-1 translate-y-2 hover:bg-emerald-500 hover:border-emerald-400 transition-all z-10"
       />
     </div>
   );

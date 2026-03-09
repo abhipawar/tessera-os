@@ -11,6 +11,8 @@ import EndNode from '@/components/EndNode';
 import { useStudioStore, GlobalAgent, ChartItem } from '@/store/studioStore';
 import CanvasContextMenu from './CanvasContextMenu';
 import ExecutionInspector from './ExecutionInspector';
+import CanvasToolbox from './CanvasToolbox';
+import ToolNode from '../ToolNode';
 
 const nodeTypes = {
     customAgent: AgentNode,
@@ -18,7 +20,8 @@ const nodeTypes = {
     approvalNode: ApprovalNode,
     conditionalNode: ConditionalNode,
     startNode: StartNode,
-    endNode: EndNode
+    endNode: EndNode,
+    toolNode: ToolNode
 };
 
 export default function StudioCanvas() {
@@ -128,6 +131,9 @@ export default function StudioCanvas() {
             {/* Ambient Canvas Glows */}
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/5 blur-[120px] rounded-full pointer-events-none z-0" />
             <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-emerald-500/5 blur-[150px] rounded-full pointer-events-none z-0" />
+
+            {/* Unified Node Toolbox Overlay */}
+            {!isCanvasMaximized && <CanvasToolbox />}
 
             <ReactFlow
                 nodes={nodes}

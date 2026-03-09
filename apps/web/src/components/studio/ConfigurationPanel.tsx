@@ -88,6 +88,11 @@ export default function ConfigurationPanel() {
 
     const upstreamNodes = getUpstreamNodes(selectedNode.id);
 
+    const connectedToolNodes = nodes.filter(n =>
+        n.type === 'toolNode' &&
+        edges.some(e => e.target === selectedNode.id && e.source === n.id)
+    );
+
     const llmIntegrations = configuredTools.filter((t: any) => t.name.toLowerCase().includes('llm') || t.name.toLowerCase().includes('ai compute'));
 
     return (
@@ -283,46 +288,23 @@ export default function ConfigurationPanel() {
                             </div>
 
                             <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-4 block border-b border-zinc-800 pb-2">
-                                Node Capabilities & Actions
+                                Connected Capabilities
                             </label>
-                            <div className="space-y-6">
-                                {configuredTools.filter((t: any) => !t.name.toLowerCase().includes('llm') && !t.name.toLowerCase().includes('ai compute')).length === 0 ? (
-                                    <p className="text-sm text-zinc-500 italic p-3 bg-zinc-950/50 rounded-lg border border-zinc-800/50">No action capabilities configured in Integrations Hub yet.</p>
+                            <div className="space-y-3">
+                                {connectedToolNodes.length === 0 ? (
+                                    <div className="text-[10px] text-zinc-600 italic p-3 bg-zinc-950/50 rounded border border-zinc-800/50">
+                                        No tools connected. Drag a tool from the "Add Node" menu and wire it to the bottom of this agent.
+                                    </div>
                                 ) : (
-                                    (Object.entries(
-                                        configuredTools
-                                            .filter((t: any) => !t.name.toLowerCase().includes('llm') && !t.name.toLowerCase().includes('ai compute'))
-                                            .reduce((acc, tool) => {
-                                                const category = tool.name; // The global template name acts as category
-                                                if (!acc[category]) acc[category] = [];
-                                                acc[category].push(tool);
-                                                return acc;
-                                            }, {} as Record<string, any[]>)
-                                    ) as [string, any[]][]).map(([category, tools]) => (
-                                        <div key={category} className="space-y-2">
-                                            <h4 className="text-xs font-bold text-zinc-400 capitalize flex items-center gap-2">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                                                {category}
-                                            </h4>
-                                            <div className="space-y-2 pl-3 border-l border-zinc-800/50 ml-1">
-                                                {tools.map((tool: any) => {
-                                                    const isAssigned = selectedNode.data.tools?.includes(tool.tenant_tool_id);
-                                                    return (
-                                                        <label key={tool.tenant_tool_id} className={`flex items-center space-x-3 p-3 rounded-xl cursor-pointer transition-all border ${isAssigned ? 'bg-blue-500/10 border-blue-500/30' : 'bg-zinc-900/50 border-zinc-800/50 hover:bg-zinc-800/50 hover:border-zinc-700'}`}>
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={isAssigned || false}
-                                                                onChange={() => toggleToolAssignment(tool.tenant_tool_id)}
-                                                                className="w-4 h-4 bg-zinc-950 border-zinc-700 rounded text-blue-500 focus:ring-blue-500 focus:ring-offset-zinc-900"
-                                                            />
-                                                            <div className="flex-1">
-                                                                <div className={`text-sm font-semibold transition-colors ${isAssigned ? 'text-blue-400' : 'text-zinc-200'}`}>
-                                                                    {tool.connection_name || tool.name}
-                                                                </div>
-                                                            </div>
-                                                        </label>
-                                                    );
-                                                })}
+                                    connectedToolNodes.map(tNode => (
+                                        <div key={tNode.id} className="flex items-center gap-3 p-3 bg-zinc-900/50 border border-zinc-800/80 rounded-xl relative overflow-hidden group">
+                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500/50" />
+                                            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                                                <Sparkles size={14} className="text-emerald-400" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="text-sm font-bold text-zinc-200 truncate">{tNode.data.label}</h4>
+                                                <p className="text-[10px] text-zinc-500 truncate">{tNode.data.description}</p>
                                             </div>
                                         </div>
                                     ))
