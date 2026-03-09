@@ -46,12 +46,17 @@ def ingest_telemetry_events(payload: TelemetryBatchRequest, req: Request):
         raise HTTPException(status_code=401, detail=f"Token error: {str(e)}")
 
     try:
-        # Get the tenant ID for this user
-        member_resp = supabase_client.table("tenant_members").select("tenant_id").eq("user_id", user_uuid).execute()
-        if not member_resp.data:
-            raise HTTPException(status_code=403, detail="User is not associated with any tenant")
+        profile_resp = supabase_client.table("profiles").select("is_tessera_admin").eq("id", user_uuid).execute()
+        is_admin = profile_resp.data and profile_resp.data[0].get("is_tessera_admin")
+        impersonated_tenant_id = req.headers.get("X-Impersonated-Tenant-Id")
         
-        tenant_id = member_resp.data[0]["tenant_id"]
+        if is_admin and impersonated_tenant_id:
+            tenant_id = impersonated_tenant_id
+        else:
+            member_resp = supabase_client.table("tenant_members").select("tenant_id").eq("user_id", user_uuid).execute()
+            if not member_resp.data:
+                raise HTTPException(status_code=403, detail="User is not associated with any tenant")
+            tenant_id = member_resp.data[0]["tenant_id"]
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database Error: {str(e)}")
 
@@ -152,10 +157,18 @@ def synthesize_telemetry(payload: SynthesizeRequest, req: Request):
     try:
         decoded_token = jwt.decode(token, options={"verify_signature": False})
         user_uuid = str(decoded_token.get("sub"))
-        member_resp = supabase_client.table("tenant_members").select("tenant_id").eq("user_id", user_uuid).execute()
-        if not member_resp.data:
-            raise HTTPException(status_code=403, detail="User is not associated with any tenant")
-        tenant_id = member_resp.data[0]["tenant_id"]
+        
+        profile_resp = supabase_client.table("profiles").select("is_tessera_admin").eq("id", user_uuid).execute()
+        is_admin = profile_resp.data and profile_resp.data[0].get("is_tessera_admin")
+        impersonated_tenant_id = req.headers.get("X-Impersonated-Tenant-Id")
+        
+        if is_admin and impersonated_tenant_id:
+            tenant_id = impersonated_tenant_id
+        else:
+            member_resp = supabase_client.table("tenant_members").select("tenant_id").eq("user_id", user_uuid).execute()
+            if not member_resp.data:
+                raise HTTPException(status_code=403, detail="User is not associated with any tenant")
+            tenant_id = member_resp.data[0]["tenant_id"]
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Auth error: {str(e)}")
 

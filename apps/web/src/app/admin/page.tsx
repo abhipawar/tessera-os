@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { createBrowserClient } from '@supabase/ssr'
-import { Trash2, AlertTriangle, Users, Database, Network, RefreshCw, Wrench, CheckCircle2, XCircle, Bot, Settings, Sparkles, Loader2 } from 'lucide-react'
+import { Trash2, AlertTriangle, Users, Database, Network, RefreshCw, Wrench, CheckCircle2, XCircle, Bot, Settings, Sparkles, Loader2, VenetianMask } from 'lucide-react'
 import { API_URL } from '@/config'
 import { useNotificationStore } from '@/store/notificationStore'
 
@@ -336,6 +336,12 @@ export default function AdminDashboard() {
     setIsDeleteModalOpen(true);
   };
 
+  const handleImpersonate = (tenantId: string, tenantName: string) => {
+    document.cookie = `tessera_impersonated_tenant=${tenantId}; path=/; max-age=86400;`;
+    document.cookie = `tessera_impersonated_tenant_name=${encodeURIComponent(tenantName)}; path=/; max-age=86400;`;
+    window.location.href = '/studio';
+  };
+
   return (
     <div className="p-10 text-white bg-zinc-950 min-h-screen space-y-6">
       <h1 className="text-3xl font-bold tracking-tight">Tessera Control Plane</h1>
@@ -360,7 +366,10 @@ export default function AdminDashboard() {
                   <td className="px-4 py-3">{t.workspace_count}</td>
                   <td className="px-4 py-3">{t.user_count}</td>
                   <td className="px-4 py-3 flex justify-end gap-2">
-                    <Button onClick={() => confirmDeleteTenant(t.id, t.name)} disabled={isProcessing} variant="outline" className="h-6 px-2 text-xs bg-transparent text-red-500 border-zinc-700 hover:bg-red-900/30 hover:text-red-400">
+                    <Button onClick={() => handleImpersonate(t.id, t.name)} variant="outline" className="h-6 px-2 text-xs bg-transparent text-indigo-400 border-zinc-700 hover:bg-indigo-900/30 hover:text-indigo-300" title="Impersonate Tenant">
+                      <VenetianMask size={12} />
+                    </Button>
+                    <Button onClick={() => confirmDeleteTenant(t.id, t.name)} disabled={isProcessing} variant="outline" className="h-6 px-2 text-xs bg-transparent text-red-500 border-zinc-700 hover:bg-red-900/30 hover:text-red-400" title="Delete Tenant">
                       {isProcessing ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
                     </Button>
                   </td>

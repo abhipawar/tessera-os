@@ -381,6 +381,19 @@ def get_secure_chat_layout(workspace_id: str, req: Request):
         raw_nodes, raw_edges = chart_data.get("nodes", []), chart_data.get("edges", [])
         all_nodes = json.loads(raw_nodes) if isinstance(raw_nodes, str) else raw_nodes
         all_edges = json.loads(raw_edges) if isinstance(raw_edges, str) else raw_edges
+        
+        if not user_node_id and is_admin and all_nodes:
+            supervisor = next((n for n in all_nodes if n.get("id") == "supervisor"), None)
+            if supervisor:
+                user_node_id = "supervisor"
+            else:
+                user_node_id = all_nodes[0].get("id")
+                
+        return {
+            "nodes": all_nodes,
+            "edges": all_edges,
+            "user_node_id": user_node_id
+        }
     except Exception as e:
         return {"error": f"Error loading chat layout: {str(e)}"}
 
@@ -532,6 +545,11 @@ def get_tenant_workspaces(req: Request):
         # Check if Superadmin (optional logging/bypass logic)
         profile_resp = supabase_client.table("profiles").select("is_tessera_admin").eq("id", user_uuid).execute()
         is_admin = profile_resp.data and profile_resp.data[0].get("is_tessera_admin")
+        
+        impersonated_tenant_id = req.headers.get("X-Impersonated-Tenant-Id")
+        if is_admin and impersonated_tenant_id:
+            resp = supabase_client.table("workspaces").select("id, name").eq("tenant_id", impersonated_tenant_id).order("updated_at", desc=True).execute()
+            return {"success": True, "workspaces": resp.data}
         
         # Get user's active tenant(s). Even superadmins should only see workspaces for the tenant they are currently assigned/viewing context for to avoid cross-tenant pollution in the dropdown.
         tenant_member_resp = supabase_client.table("tenant_members").select("tenant_id").eq("user_id", user_uuid).execute()

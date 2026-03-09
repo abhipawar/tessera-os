@@ -5,6 +5,19 @@ import { API_URL } from '@/config';
 import { createBrowserClient } from '@supabase/ssr';
 import { useNotificationStore } from './notificationStore';
 
+function getImpersonationHeaders(baseHeaders: Record<string, string> = {}): Record<string, string> {
+    if (typeof document === 'undefined') return baseHeaders;
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; tessera_impersonated_tenant=`);
+    if (parts.length === 2) {
+        const tenantId = parts.pop()?.split(';').shift();
+        if (tenantId) {
+            return { ...baseHeaders, 'X-Impersonated-Tenant-Id': tenantId };
+        }
+    }
+    return baseHeaders;
+}
+
 export type GlobalAgent = {
     id: string;
     name: string;
@@ -200,9 +213,9 @@ export const useStudioStore = create<StudioState>((set, get) => ({
             if (!session) return;
 
             const res = await fetch(`${API_URL}/api/tenant/workspaces`, {
-                headers: {
+                headers: getImpersonationHeaders({
                     'Authorization': `Bearer ${session.access_token}`
-                }
+                })
             });
             const data = await res.json();
 
@@ -224,7 +237,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
             if (!session) return;
 
 
-            const headers = { 'Authorization': `Bearer ${session.access_token}` };
+            const headers = getImpersonationHeaders({ 'Authorization': `Bearer ${session.access_token}` });
 
             const [agentsRes, toolsRes] = await Promise.all([
                 fetch(`${API_URL}/api/tenant/agents`, { headers }),
@@ -270,10 +283,10 @@ export const useStudioStore = create<StudioState>((set, get) => ({
 
             const res = await fetch(`${API_URL}/api/chat/${id}/layout`, {
                 method: 'GET',
-                headers: {
+                headers: getImpersonationHeaders({
                     'Authorization': `Bearer ${session.access_token}`,
                     'Content-Type': 'application/json'
-                }
+                })
             });
 
             const data = await res.json();
@@ -481,7 +494,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
 
             await fetch(`/api/workspace?id=${currentChartId}`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${session.access_token}` },
+                headers: getImpersonationHeaders({ 'Authorization': `Bearer ${session.access_token}` }),
             });
 
             // Clear state and reload list
@@ -516,7 +529,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
 
             // 1. Fetch latest thread for workspace
             const resChats = await fetch(`http://localhost:8000/api/tenant-agent/chats/${currentChartId}`, {
-                headers: { 'Authorization': `Bearer ${session.access_token}` }
+                headers: getImpersonationHeaders({ 'Authorization': `Bearer ${session.access_token}` })
             });
             const chatData = await resChats.json();
             if (!chatData.chats || chatData.chats.length === 0) {
@@ -527,7 +540,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
 
             // 2. Fetch state history for that thread
             const resHist = await fetch(`http://localhost:8000/api/tenant-agent/chat/${currentChartId}/thread/${latestThreadId}/state-history`, {
-                headers: { 'Authorization': `Bearer ${session.access_token}` }
+                headers: getImpersonationHeaders({ 'Authorization': `Bearer ${session.access_token}` })
             });
             const histData = await resHist.json();
 
@@ -560,7 +573,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
             // Re-fetch chat ID to run in latest thread or just let the backend create one?
             // Actually, backend needs a chat ID.
             const resChats = await fetch(`${API_URL}/api/tenant-agent/chats/${currentChartId}`, {
-                headers: { 'Authorization': `Bearer ${session.access_token}` }
+                headers: getImpersonationHeaders({ 'Authorization': `Bearer ${session.access_token}` })
             });
             const chatData = await resChats.json();
             let chatId = '';
@@ -571,7 +584,7 @@ export const useStudioStore = create<StudioState>((set, get) => ({
                 // Let's create a temporary chat thread
                 const createRes = await fetch(`${API_URL}/api/tenant-agent/chats`, {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+                    headers: getImpersonationHeaders({ 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' }),
                     body: JSON.stringify({ title: 'Studio Test Run', workspace_id: currentChartId })
                 });
                 const createData = await createRes.json();
@@ -587,11 +600,11 @@ export const useStudioStore = create<StudioState>((set, get) => ({
             // Listen to SSE
             const res = await fetch(`${API_URL}/api/tenant-agent/stream`, {
                 method: 'POST',
-                headers: {
+                headers: getImpersonationHeaders({
                     'Authorization': `Bearer ${session.access_token}`,
                     'Content-Type': 'application/json',
                     'Accept': 'text/event-stream'
-                },
+                }),
                 body: JSON.stringify({
                     chat_id: chatId,
                     query: prompt

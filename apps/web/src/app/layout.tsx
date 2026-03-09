@@ -5,6 +5,7 @@ import GlobalNav from "@/components/GlobalNav";
 import TopNav from "@/components/TopNav";
 import NotificationModal from "@/components/NotificationModal";
 import Footer from "@/components/Footer";
+import ImpersonationBanner from "@/components/global/ImpersonationBanner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -73,6 +74,9 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} bg-zinc-950 text-white flex h-screen overflow-hidden`}>
+        {/* Feature: Superadmin Tenant Impersonation global persistent UI element */}
+        <ImpersonationBanner />
+
         {/* Global Sidebar */}
         <GlobalNav initialUser={initialUser} isSuperAdmin={isSuperAdmin} />
         <NotificationModal />

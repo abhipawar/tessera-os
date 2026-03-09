@@ -46,13 +46,19 @@ def get_tenant_integrations(req: Request):
         decoded_token = jwt.decode(token, options={"verify_signature": False})
         user_uuid = str(decoded_token.get("sub"))
         
-        member_resp = supabase_client.table("tenant_members").select("tenant_id").eq("user_id", user_uuid).execute()
+        profile_resp = supabase_client.table("profiles").select("is_tessera_admin").eq("id", user_uuid).execute()
+        is_admin = profile_resp.data and profile_resp.data[0].get("is_tessera_admin")
+        impersonated_tenant_id = req.headers.get("X-Impersonated-Tenant-Id")
+        
+        if is_admin and impersonated_tenant_id:
+            tenant_id = impersonated_tenant_id
+        else:
+            member_resp = supabase_client.table("tenant_members").select("tenant_id").eq("user_id", user_uuid).execute()
+            if not member_resp.data: 
+                return {"success": True, "tools": []}
+            tenant_id = member_resp.data[0]["tenant_id"]
+            
         global_tools = supabase_client.table("global_tools").select("*, tool_types(display_name), tool_categories(display_name)").eq("is_active", True).execute().data
-
-        if not member_resp.data: 
-            return {"success": True, "tools": []}
-
-        tenant_id = member_resp.data[0]["tenant_id"]
         tenant_tools = supabase_client.table("tenant_tools").select("*").eq("tenant_id", tenant_id).execute().data
         
         global_tools_map = {t["id"]: t for t in global_tools}
@@ -175,10 +181,17 @@ def get_tenant_configured_tools(req: Request):
         decoded_token = jwt.decode(token, options={"verify_signature": False})
         user_uuid = str(decoded_token.get("sub"))
 
-        member_resp = supabase_client.table("tenant_members").select("tenant_id").eq("user_id", user_uuid).execute()
-        if not member_resp.data: 
-            return {"success": True, "tools": []}
-        tenant_id = member_resp.data[0]["tenant_id"]
+        profile_resp = supabase_client.table("profiles").select("is_tessera_admin").eq("id", user_uuid).execute()
+        is_admin = profile_resp.data and profile_resp.data[0].get("is_tessera_admin")
+        impersonated_tenant_id = req.headers.get("X-Impersonated-Tenant-Id")
+
+        if is_admin and impersonated_tenant_id:
+            tenant_id = impersonated_tenant_id
+        else:
+            member_resp = supabase_client.table("tenant_members").select("tenant_id").eq("user_id", user_uuid).execute()
+            if not member_resp.data: 
+                return {"success": True, "tools": []}
+            tenant_id = member_resp.data[0]["tenant_id"]
 
         tools_resp = supabase_client.table("tenant_tools").select("id, tool_id, connection_name, status").eq("tenant_id", tenant_id).eq("status", "active").execute()
         global_tools_resp = supabase_client.table("global_tools").select("id, name, logo_icon").execute()
@@ -210,11 +223,17 @@ def save_tenant_integration(payload: TenantToolPayload, req: Request):
         decoded_token = jwt.decode(token, options={"verify_signature": False})
         user_uuid = str(decoded_token.get("sub"))
         
-        member_resp = supabase_client.table("tenant_members").select("tenant_id").eq("user_id", user_uuid).execute()
-        if not member_resp.data:
-            return {"error": "Security Error: You are not assigned to a company tenant."} 
-            
-        tenant_id = member_resp.data[0]["tenant_id"]
+        profile_resp = supabase_client.table("profiles").select("is_tessera_admin").eq("id", user_uuid).execute()
+        is_admin = profile_resp.data and profile_resp.data[0].get("is_tessera_admin")
+        impersonated_tenant_id = req.headers.get("X-Impersonated-Tenant-Id")
+        
+        if is_admin and impersonated_tenant_id:
+            tenant_id = impersonated_tenant_id
+        else:
+            member_resp = supabase_client.table("tenant_members").select("tenant_id").eq("user_id", user_uuid).execute()
+            if not member_resp.data:
+                return {"error": "Security Error: You are not assigned to a company tenant."} 
+            tenant_id = member_resp.data[0]["tenant_id"]
 
         encrypted_creds = encrypt_credentials(payload.credentials)
         if payload.tenant_tool_id:
@@ -265,9 +284,16 @@ def get_llm_models(tenant_tool_id: str, req: Request):
         decoded_token = jwt.decode(token, options={"verify_signature": False})
         user_uuid = str(decoded_token.get("sub"))
         
-        member_resp = supabase_client.table("tenant_members").select("tenant_id").eq("user_id", user_uuid).execute()
-        if not member_resp.data: return {"error": "Access Denied"}
-        tenant_id = member_resp.data[0]["tenant_id"]
+        profile_resp = supabase_client.table("profiles").select("is_tessera_admin").eq("id", user_uuid).execute()
+        is_admin = profile_resp.data and profile_resp.data[0].get("is_tessera_admin")
+        impersonated_tenant_id = req.headers.get("X-Impersonated-Tenant-Id")
+        
+        if is_admin and impersonated_tenant_id:
+            tenant_id = impersonated_tenant_id
+        else:
+            member_resp = supabase_client.table("tenant_members").select("tenant_id").eq("user_id", user_uuid).execute()
+            if not member_resp.data: return {"error": "Access Denied"}
+            tenant_id = member_resp.data[0]["tenant_id"]
 
         tool_resp = supabase_client.table("tenant_tools").select("credentials").eq("id", tenant_tool_id).eq("tenant_id", tenant_id).execute()
         if not tool_resp.data: return {"error": "Tool connection not found."}
@@ -314,9 +340,16 @@ def enhance_prompt(payload: EnhancePromptRequest, req: Request):
         decoded_token = jwt.decode(token, options={"verify_signature": False})
         user_uuid = str(decoded_token.get("sub"))
         
-        member_resp = supabase_client.table("tenant_members").select("tenant_id").eq("user_id", user_uuid).execute()
-        if not member_resp.data: return {"error": "Access Denied"}
-        tenant_id = member_resp.data[0]["tenant_id"]
+        profile_resp = supabase_client.table("profiles").select("is_tessera_admin").eq("id", user_uuid).execute()
+        is_admin = profile_resp.data and profile_resp.data[0].get("is_tessera_admin")
+        impersonated_tenant_id = req.headers.get("X-Impersonated-Tenant-Id")
+        
+        if is_admin and impersonated_tenant_id:
+            tenant_id = impersonated_tenant_id
+        else:
+            member_resp = supabase_client.table("tenant_members").select("tenant_id").eq("user_id", user_uuid).execute()
+            if not member_resp.data: return {"error": "Access Denied"}
+            tenant_id = member_resp.data[0]["tenant_id"]
 
         llm_type_resp = supabase_client.table("tool_types").select("id").eq("slug", "llm").execute()
         if not llm_type_resp.data: return {"error": "Internal logic error missing LLM type."}

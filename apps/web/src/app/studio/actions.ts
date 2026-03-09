@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient, createAdminClient } from '@/utils/supabase/server'
+import { cookies } from 'next/headers'
 
 export async function saveWorkspaceAction(payload: {
     currentChartId: string | null;
@@ -21,19 +22,34 @@ export async function saveWorkspaceAction(payload: {
     }
 
     const adminDb = await createAdminClient()
+    const cookieStore = await cookies();
+    const impersonatedTenant = cookieStore.get('tessera_impersonated_tenant')?.value;
 
-    const { data: tenantData, error: tenantError } = await adminDb
-        .from('tenant_members')
-        .select('tenant_id')
-        .eq('user_id', user.id)
-        .limit(1)
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_tessera_admin')
+        .eq('id', user.id)
+        .single();
 
-    if (tenantError || !tenantData || tenantData.length === 0) {
-        console.error("DEBUG server action tenant fetch error:", tenantError)
-        return { error: 'Authentication Error: Could not determine your tenant via the server.' }
+    const isSuperAdmin = profile?.is_tessera_admin || false;
+
+    let tenantId = null;
+
+    if (isSuperAdmin && impersonatedTenant) {
+        tenantId = impersonatedTenant;
+    } else {
+        const { data: tenantData, error: tenantError } = await adminDb
+            .from('tenant_members')
+            .select('tenant_id')
+            .eq('user_id', user.id)
+            .limit(1)
+
+        if (tenantError || !tenantData || tenantData.length === 0) {
+            console.error("DEBUG server action tenant fetch error:", tenantError)
+            return { error: 'Authentication Error: Could not determine your tenant via the server.' }
+        }
+        tenantId = tenantData[0].tenant_id;
     }
-
-    const tenantId = tenantData[0].tenant_id
 
     // Server-side graph validation warning
     let warningMsg: string | undefined = undefined;
@@ -103,18 +119,33 @@ export async function deleteWorkspaceAction(workspace_id: string) {
     }
 
     const adminDb = await createAdminClient()
+    const cookieStore = await cookies();
+    const impersonatedTenant = cookieStore.get('tessera_impersonated_tenant')?.value;
 
-    const { data: tenantData, error: tenantError } = await adminDb
-        .from('tenant_members')
-        .select('tenant_id')
-        .eq('user_id', user.id)
-        .limit(1)
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_tessera_admin')
+        .eq('id', user.id)
+        .single();
 
-    if (tenantError || !tenantData || tenantData.length === 0) {
-        return { error: 'Authentication Error: Could not determine your tenant.' }
+    const isSuperAdmin = profile?.is_tessera_admin || false;
+
+    let tenantId = null;
+
+    if (isSuperAdmin && impersonatedTenant) {
+        tenantId = impersonatedTenant;
+    } else {
+        const { data: tenantData, error: tenantError } = await adminDb
+            .from('tenant_members')
+            .select('tenant_id')
+            .eq('user_id', user.id)
+            .limit(1)
+
+        if (tenantError || !tenantData || tenantData.length === 0) {
+            return { error: 'Authentication Error: Could not determine your tenant.' }
+        }
+        tenantId = tenantData[0].tenant_id;
     }
-
-    const tenantId = tenantData[0].tenant_id
 
     const { error } = await adminDb
         .from('workspaces')

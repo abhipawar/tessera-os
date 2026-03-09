@@ -41,17 +41,36 @@ export default function ChatDashboard() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   )
 
+  // Helper for Impersonation Headers
+  const getImpersonationHeaders = (baseHeaders: Record<string, string> = {}) => {
+    if (typeof document === 'undefined') return baseHeaders;
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; tessera_impersonated_tenant=`);
+    if (parts.length === 2) {
+      const tenantId = parts.pop()?.split(';').shift();
+      if (tenantId) {
+        return { ...baseHeaders, 'X-Impersonated-Tenant-Id': tenantId };
+      }
+    }
+    return baseHeaders;
+  };
+
   // Fetch Workspaces on load
   useEffect(() => {
     const fetchWorkspaces = async () => {
-      const { data, error } = await supabase
-        .from('workspaces')
-        .select('id, name')
-        .order('updated_at', { ascending: false })
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
 
-      if (data && data.length > 0) {
-        setWorkspaces(data)
-        setSelectedWorkspaceId(data[0].id)
+      const res = await fetch(`${API_URL}/api/tenant/workspaces`, {
+        headers: getImpersonationHeaders({
+          'Authorization': `Bearer ${session.access_token}`
+        })
+      });
+      const data = await res.json();
+
+      if (data.success && data.workspaces && data.workspaces.length > 0) {
+        setWorkspaces(data.workspaces);
+        setSelectedWorkspaceId(data.workspaces[0].id);
       }
     }
     fetchWorkspaces()
@@ -66,7 +85,7 @@ export default function ChatDashboard() {
       if (!session) return;
 
       const res = await fetch(`${API_URL}/api/tenant-agent/chats/${selectedWorkspaceId}`, {
-        headers: { 'Authorization': `Bearer ${session.access_token}` }
+        headers: getImpersonationHeaders({ 'Authorization': `Bearer ${session.access_token}` })
       });
       const data = await res.json();
       if (data.chats && data.chats.length > 0) {
@@ -95,10 +114,10 @@ export default function ChatDashboard() {
 
         const res = await fetch(`${API_URL}/api/tenant-agent/history/${selectedThreadId}`, {
           method: 'GET',
-          headers: {
+          headers: getImpersonationHeaders({
             'Authorization': `Bearer ${session.access_token}`,
             'Content-Type': 'application/json'
-          }
+          })
         });
 
         const data = await res.json();
@@ -168,10 +187,10 @@ export default function ChatDashboard() {
 
       const res = await fetch(`${API_URL}/api/tenant-agent`, {
         method: 'POST',
-        headers: {
+        headers: getImpersonationHeaders({
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
-        },
+        }),
         body: JSON.stringify({
           query: userMessage,
           workspace_id: selectedWorkspaceId,
@@ -213,10 +232,10 @@ export default function ChatDashboard() {
 
       const res = await fetch(`${API_URL}/api/tenant-agent/chats`, {
         method: 'POST',
-        headers: {
+        headers: getImpersonationHeaders({
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session?.access_token}`
-        },
+        }),
         body: JSON.stringify({ workspace_id: selectedWorkspaceId })
       });
       const data = await res.json();
@@ -233,7 +252,7 @@ export default function ChatDashboard() {
 
       await fetch(`${API_URL}/api/tenant-agent/chats/${id}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${session?.access_token}` }
+        headers: getImpersonationHeaders({ 'Authorization': `Bearer ${session?.access_token}` })
       });
       const newThreads = threads.filter(t => t.id !== id);
       setThreads(newThreads);
@@ -249,10 +268,10 @@ export default function ChatDashboard() {
 
       await fetch(`${API_URL}/api/tenant-agent/chats/${id}`, {
         method: 'PATCH',
-        headers: {
+        headers: getImpersonationHeaders({
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session?.access_token}`
-        },
+        }),
         body: JSON.stringify({ is_pinned: !currentPinStatus })
       });
 
@@ -278,10 +297,10 @@ export default function ChatDashboard() {
 
       await fetch(`${API_URL}/api/tenant-agent/chats/${id}`, {
         method: 'PATCH',
-        headers: {
+        headers: getImpersonationHeaders({
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session?.access_token}`
-        },
+        }),
         body: JSON.stringify({ title: editTitle.trim() })
       });
 
