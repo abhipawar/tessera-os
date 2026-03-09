@@ -52,6 +52,12 @@ def get_workspace_chats(workspace_id: str, req: Request):
     token = auth_header.split(" ")[1]
     decoded_token = jwt.decode(token, options={"verify_signature": False})
     user_uuid = str(decoded_token.get("sub"))
+    
+    _prof_resp = supabase_client.table("profiles").select("is_tessera_admin").eq("id", user_uuid).execute()
+    _is_admin = _prof_resp.data and _prof_resp.data[0].get("is_tessera_admin")
+    _imp_user = req.headers.get("X-Impersonated-User-Id")
+    if _is_admin and _imp_user:
+        user_uuid = _imp_user
     try:
         resp = supabase_client.table("chats").select("*").eq("workspace_id", workspace_id).eq("user_id", user_uuid).order("is_pinned", desc=True).order("created_at", desc=True).execute()
         return {"chats": resp.data}
@@ -65,6 +71,12 @@ def create_chat(payload: ChatCreateRequest, req: Request):
     token = auth_header.split(" ")[1]
     decoded_token = jwt.decode(token, options={"verify_signature": False})
     user_uuid = str(decoded_token.get("sub"))
+    
+    _prof_resp = supabase_client.table("profiles").select("is_tessera_admin").eq("id", user_uuid).execute()
+    _is_admin = _prof_resp.data and _prof_resp.data[0].get("is_tessera_admin")
+    _imp_user = req.headers.get("X-Impersonated-User-Id")
+    if _is_admin and _imp_user:
+        user_uuid = _imp_user
     try:
         resp = supabase_client.table("chats").insert({
             "workspace_id": payload.workspace_id,
@@ -83,6 +95,12 @@ def update_chat(chat_id: str, payload: ChatUpdateRequest, req: Request):
     token = auth_header.split(" ")[1]
     decoded_token = jwt.decode(token, options={"verify_signature": False})
     user_uuid = str(decoded_token.get("sub"))
+    
+    _prof_resp = supabase_client.table("profiles").select("is_tessera_admin").eq("id", user_uuid).execute()
+    _is_admin = _prof_resp.data and _prof_resp.data[0].get("is_tessera_admin")
+    _imp_user = req.headers.get("X-Impersonated-User-Id")
+    if _is_admin and _imp_user:
+        user_uuid = _imp_user
     update_data = payload.model_dump(exclude_unset=True)
     if not update_data: return {"status": "ok"}
     try:
@@ -98,6 +116,12 @@ def delete_chat(chat_id: str, req: Request):
     token = auth_header.split(" ")[1]
     decoded_token = jwt.decode(token, options={"verify_signature": False})
     user_uuid = str(decoded_token.get("sub"))
+    
+    _prof_resp = supabase_client.table("profiles").select("is_tessera_admin").eq("id", user_uuid).execute()
+    _is_admin = _prof_resp.data and _prof_resp.data[0].get("is_tessera_admin")
+    _imp_user = req.headers.get("X-Impersonated-User-Id")
+    if _is_admin and _imp_user:
+        user_uuid = _imp_user
     try:
         supabase_client.table("chats").delete().eq("id", chat_id).eq("user_id", user_uuid).execute()
         DB_URI = os.environ.get("DATABASE_URL")
@@ -499,6 +523,12 @@ def get_eligible_workspace_members(workspace_id: str, req: Request):
     token = auth_header.split(" ")[1]
     decoded_token = jwt.decode(token, options={"verify_signature": False})
     user_uuid = str(decoded_token.get("sub"))
+    
+    _prof_resp = supabase_client.table("profiles").select("is_tessera_admin").eq("id", user_uuid).execute()
+    _is_admin = _prof_resp.data and _prof_resp.data[0].get("is_tessera_admin")
+    _imp_user = req.headers.get("X-Impersonated-User-Id")
+    if _is_admin and _imp_user:
+        user_uuid = _imp_user
     
     try:
         # Check if caller belongs to tenant

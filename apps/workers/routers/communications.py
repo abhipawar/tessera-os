@@ -25,6 +25,10 @@ def get_tenant_communications(req: Request):
         profile_resp = supabase_client.table("profiles").select("is_tessera_admin").eq("id", user_uuid).execute()
         is_superadmin = profile_resp.data and profile_resp.data[0].get("is_tessera_admin")
         impersonated_tenant_id = req.headers.get("X-Impersonated-Tenant-Id")
+        impersonated_user_id = req.headers.get("X-Impersonated-User-Id")
+        
+        if is_superadmin and impersonated_user_id:
+            user_uuid = impersonated_user_id
         
         tenant_id = None
         if is_superadmin and impersonated_tenant_id:
@@ -71,6 +75,10 @@ def get_tenant_agent_tasks(req: Request):
         profile_resp = supabase_client.table("profiles").select("is_tessera_admin").eq("id", user_uuid).execute()
         is_superadmin = profile_resp.data and profile_resp.data[0].get("is_tessera_admin")
         impersonated_tenant_id = req.headers.get("X-Impersonated-Tenant-Id")
+        impersonated_user_id = req.headers.get("X-Impersonated-User-Id")
+        
+        if is_superadmin and impersonated_user_id:
+            user_uuid = impersonated_user_id
         
         tenant_id = None
         if is_superadmin and impersonated_tenant_id:

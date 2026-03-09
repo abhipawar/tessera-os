@@ -24,6 +24,7 @@ export async function saveWorkspaceAction(payload: {
     const adminDb = await createAdminClient()
     const cookieStore = await cookies();
     const impersonatedTenant = cookieStore.get('tessera_impersonated_tenant')?.value;
+    const impersonatedUserId = cookieStore.get('tessera_impersonated_user')?.value;
 
     const { data: profile } = await supabase
         .from('profiles')
@@ -100,7 +101,7 @@ export async function saveWorkspaceAction(payload: {
 
             await adminDb.from('workspace_members').insert({
                 workspace_id: newId,
-                user_id: user.id,
+                user_id: (isSuperAdmin && impersonatedUserId) ? impersonatedUserId : user.id,
                 assigned_node_id: 'supervisor',
                 role_id: null
             })

@@ -39,11 +39,13 @@ export default function InboxPage() {
 
             const isImpersonating = document.cookie.includes('tessera_impersonated_tenant=');
             const impersonatedId = isImpersonating ? document.cookie.split('tessera_impersonated_tenant=')[1].split(';')[0] : '';
+            const impersonatedUserId = isImpersonating ? document.cookie.split('tessera_impersonated_user=')[1]?.split(';')[0] : '';
 
             const res = await fetch(`${API_URL}/api/tenant/agent-tasks`, {
                 headers: {
                     'Authorization': `Bearer ${session.access_token}`,
-                    ...(isImpersonating && impersonatedId ? { 'X-Impersonated-Tenant-Id': impersonatedId } : {})
+                    ...(isImpersonating && impersonatedId ? { 'X-Impersonated-Tenant-Id': impersonatedId } : {}),
+                    ...(isImpersonating && impersonatedUserId ? { 'X-Impersonated-User-Id': impersonatedUserId } : {})
                 }
             });
 
@@ -67,11 +69,13 @@ export default function InboxPage() {
 
             const isImpersonating = document.cookie.includes('tessera_impersonated_tenant=');
             const impersonatedId = isImpersonating ? document.cookie.split('tessera_impersonated_tenant=')[1].split(';')[0] : '';
+            const impersonatedUserId = isImpersonating ? document.cookie.split('tessera_impersonated_user=')[1]?.split(';')[0] : '';
 
             const res = await fetch(`${API_URL}/api/tenant/communications`, {
                 headers: {
                     'Authorization': `Bearer ${session.access_token}`,
-                    ...(isImpersonating && impersonatedId ? { 'X-Impersonated-Tenant-Id': impersonatedId } : {})
+                    ...(isImpersonating && impersonatedId ? { 'X-Impersonated-Tenant-Id': impersonatedId } : {}),
+                    ...(isImpersonating && impersonatedUserId ? { 'X-Impersonated-User-Id': impersonatedUserId } : {})
                 }
             });
 

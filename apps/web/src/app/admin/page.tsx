@@ -60,6 +60,12 @@ export default function AdminDashboard() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [tenantToDelete, setTenantToDelete] = useState<{ id: string, name: string } | null>(null);
 
+  // Tenant Users Modal State
+  const [isTenantUsersModalOpen, setIsTenantUsersModalOpen] = useState(false);
+  const [selectedTenantForUsers, setSelectedTenantForUsers] = useState<{ id: string, name: string } | null>(null);
+  const [tenantUsers, setTenantUsers] = useState<any[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+
   const [supabase] = useState(() => createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!));
 
   const fetchDashboardData = async () => {
@@ -342,6 +348,34 @@ export default function AdminDashboard() {
     window.location.href = '/studio';
   };
 
+  const openTenantUsersModal = async (tenantId: string, tenantName: string) => {
+    setSelectedTenantForUsers({ id: tenantId, name: tenantName });
+    setIsTenantUsersModalOpen(true);
+    setIsLoadingUsers(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(`${API_URL}/api/admin/tenants/${tenantId}/users`, {
+        headers: { 'Authorization': `Bearer ${session?.access_token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTenantUsers(data.users || []);
+      }
+    } catch (e) {
+      console.error("Failed to fetch tenant users", e);
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
+
+  const handleUserImpersonate = (tenantId: string, tenantName: string, userId: string, userEmail: string) => {
+    document.cookie = `tessera_impersonated_tenant=${tenantId}; path=/; max-age=86400;`;
+    document.cookie = `tessera_impersonated_tenant_name=${encodeURIComponent(tenantName)}; path=/; max-age=86400;`;
+    document.cookie = `tessera_impersonated_user=${userId}; path=/; max-age=86400;`;
+    document.cookie = `tessera_impersonated_user_email=${encodeURIComponent(userEmail)}; path=/; max-age=86400;`;
+    window.location.href = '/studio';
+  };
+
   return (
     <div className="p-10 text-white bg-zinc-950 min-h-screen space-y-6">
       <h1 className="text-3xl font-bold tracking-tight">Tessera Control Plane</h1>
@@ -366,6 +400,9 @@ export default function AdminDashboard() {
                   <td className="px-4 py-3">{t.workspace_count}</td>
                   <td className="px-4 py-3">{t.user_count}</td>
                   <td className="px-4 py-3 flex justify-end gap-2">
+                    <Button onClick={() => openTenantUsersModal(t.id, t.name)} variant="outline" className="h-6 px-2 text-xs bg-transparent text-emerald-400 border-zinc-700 hover:bg-emerald-900/30 hover:text-emerald-300" title="View Users">
+                      <Users size={12} />
+                    </Button>
                     <Button onClick={() => handleImpersonate(t.id, t.name)} variant="outline" className="h-6 px-2 text-xs bg-transparent text-indigo-400 border-zinc-700 hover:bg-indigo-900/30 hover:text-indigo-300" title="Impersonate Tenant">
                       <VenetianMask size={12} />
                     </Button>
@@ -686,6 +723,58 @@ export default function AdminDashboard() {
               >
                 {isProcessing ? <Loader2 size={16} className="animate-spin mr-2" /> : <Trash2 size={16} className="mr-2" />}
                 Yes, Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tenant Users List Modal */}
+      {isTenantUsersModalOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl w-full max-w-2xl p-6 space-y-4 shadow-2xl relative overflow-hidden flex flex-col max-h-[85vh]">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                <Users className="text-emerald-500" />
+                {selectedTenantForUsers?.name} Users
+              </h3>
+              <Button onClick={() => setIsTenantUsersModalOpen(false)} variant="ghost" className="h-8 w-8 p-0 text-zinc-400 hover:text-white rounded-full">
+                <XCircle size={20} />
+              </Button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto min-h-[300px]">
+              {isLoadingUsers ? (
+                <div className="flex items-center justify-center h-full">
+                  <Loader2 className="animate-spin text-zinc-500" size={32} />
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {tenantUsers.length === 0 ? (
+                    <div className="text-center py-10 text-zinc-500">No active users found for this tenant.</div>
+                  ) : (
+                    tenantUsers.map((user) => (
+                      <div key={user.id} className="bg-zinc-950 border border-zinc-800 rounded-lg p-4 flex items-center justify-between hover:border-zinc-700 transition-colors">
+                        <div>
+                          <div className="font-medium text-zinc-200">{user.full_name || 'Anonymous User'}</div>
+                          <div className="text-xs text-zinc-500 font-mono mt-1">{user.email}</div>
+                        </div>
+                        <Button
+                          onClick={() => handleUserImpersonate(selectedTenantForUsers!.id, selectedTenantForUsers!.name, user.id, user.email)}
+                          className="bg-indigo-600/10 text-indigo-400 hover:bg-indigo-600 hover:text-white border border-indigo-500/20 text-xs h-8"
+                        >
+                          <VenetianMask size={14} className="mr-2" /> Login As
+                        </Button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="pt-4 border-t border-zinc-800 flex justify-end">
+              <Button onClick={() => setIsTenantUsersModalOpen(false)} variant="outline" className="bg-transparent text-zinc-300 border-zinc-700 hover:bg-zinc-800 hover:text-white">
+                Close
               </Button>
             </div>
           </div>

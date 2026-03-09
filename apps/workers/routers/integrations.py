@@ -49,6 +49,10 @@ def get_tenant_integrations(req: Request):
         profile_resp = supabase_client.table("profiles").select("is_tessera_admin").eq("id", user_uuid).execute()
         is_admin = profile_resp.data and profile_resp.data[0].get("is_tessera_admin")
         impersonated_tenant_id = req.headers.get("X-Impersonated-Tenant-Id")
+        impersonated_user_id = req.headers.get("X-Impersonated-User-Id")
+        
+        if is_admin and impersonated_user_id:
+            user_uuid = impersonated_user_id
         
         if is_admin and impersonated_tenant_id:
             tenant_id = impersonated_tenant_id
@@ -188,6 +192,10 @@ def get_tenant_configured_tools(req: Request):
         profile_resp = supabase_client.table("profiles").select("is_tessera_admin").eq("id", user_uuid).execute()
         is_admin = profile_resp.data and profile_resp.data[0].get("is_tessera_admin")
         impersonated_tenant_id = req.headers.get("X-Impersonated-Tenant-Id")
+        impersonated_user_id = req.headers.get("X-Impersonated-User-Id")
+        
+        if is_admin and impersonated_user_id:
+            user_uuid = impersonated_user_id
 
         if is_admin and impersonated_tenant_id:
             tenant_id = impersonated_tenant_id
@@ -230,6 +238,10 @@ def save_tenant_integration(payload: TenantToolPayload, req: Request):
         profile_resp = supabase_client.table("profiles").select("is_tessera_admin").eq("id", user_uuid).execute()
         is_admin = profile_resp.data and profile_resp.data[0].get("is_tessera_admin")
         impersonated_tenant_id = req.headers.get("X-Impersonated-Tenant-Id")
+        impersonated_user_id = req.headers.get("X-Impersonated-User-Id")
+        
+        if is_admin and impersonated_user_id:
+            user_uuid = impersonated_user_id
         
         if is_admin and impersonated_tenant_id:
             tenant_id = impersonated_tenant_id
@@ -291,6 +303,10 @@ def get_llm_models(tenant_tool_id: str, req: Request):
         profile_resp = supabase_client.table("profiles").select("is_tessera_admin").eq("id", user_uuid).execute()
         is_admin = profile_resp.data and profile_resp.data[0].get("is_tessera_admin")
         impersonated_tenant_id = req.headers.get("X-Impersonated-Tenant-Id")
+        impersonated_user_id = req.headers.get("X-Impersonated-User-Id")
+        
+        if is_admin and impersonated_user_id:
+            user_uuid = impersonated_user_id
         
         if is_admin and impersonated_tenant_id:
             tenant_id = impersonated_tenant_id
@@ -347,6 +363,10 @@ def enhance_prompt(payload: EnhancePromptRequest, req: Request):
         profile_resp = supabase_client.table("profiles").select("is_tessera_admin").eq("id", user_uuid).execute()
         is_admin = profile_resp.data and profile_resp.data[0].get("is_tessera_admin")
         impersonated_tenant_id = req.headers.get("X-Impersonated-Tenant-Id")
+        impersonated_user_id = req.headers.get("X-Impersonated-User-Id")
+        
+        if is_admin and impersonated_user_id:
+            user_uuid = impersonated_user_id
         
         if is_admin and impersonated_tenant_id:
             tenant_id = impersonated_tenant_id

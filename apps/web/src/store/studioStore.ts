@@ -8,14 +8,22 @@ import { useNotificationStore } from './notificationStore';
 function getImpersonationHeaders(baseHeaders: Record<string, string> = {}): Record<string, string> {
     if (typeof document === 'undefined') return baseHeaders;
     const value = `; ${document.cookie}`;
-    const parts = value.split(`; tessera_impersonated_tenant=`);
-    if (parts.length === 2) {
-        const tenantId = parts.pop()?.split(';').shift();
-        if (tenantId) {
-            return { ...baseHeaders, 'X-Impersonated-Tenant-Id': tenantId };
-        }
+
+    let headers = { ...baseHeaders };
+
+    const tenantParts = value.split(`; tessera_impersonated_tenant=`);
+    if (tenantParts.length === 2) {
+        const tenantId = tenantParts.pop()?.split(';').shift();
+        if (tenantId) headers['X-Impersonated-Tenant-Id'] = tenantId;
     }
-    return baseHeaders;
+
+    const userParts = value.split(`; tessera_impersonated_user=`);
+    if (userParts.length === 2) {
+        const userId = userParts.pop()?.split(';').shift();
+        if (userId) headers['X-Impersonated-User-Id'] = userId;
+    }
+
+    return headers;
 }
 
 export type GlobalAgent = {

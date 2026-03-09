@@ -99,6 +99,22 @@ def get_all_tenants(req: Request):
     except Exception as e:
         return {"error": str(e)}
 
+@router.get("/tenants/{tenant_id}/users")
+def get_tenant_users(tenant_id: str, req: Request):
+    try:
+        verify_admin(req)
+        members_resp = supabase_client.table("tenant_members").select("user_id").eq("tenant_id", tenant_id).execute()
+        if not members_resp.data:
+            return {"success": True, "users": []}
+            
+        user_ids = [m["user_id"] for m in members_resp.data]
+        
+        profiles_resp = supabase_client.table("profiles").select("id, email, full_name, created_at").in_("id", user_ids).execute()
+        
+        return {"success": True, "users": profiles_resp.data or []}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
 @router.delete("/tenants/{tenant_id}")
 def delete_tenant(tenant_id: str, req: Request):
     try:

@@ -13,17 +13,25 @@ function getCookie(name: string) {
 
 export default function ImpersonationBanner() {
     const [tenantName, setTenantName] = useState<string | null>(null);
+    const [userEmail, setUserEmail] = useState<string | null>(null);
 
     useEffect(() => {
         const impersonatedName = getCookie('tessera_impersonated_tenant_name');
         if (impersonatedName) {
             setTenantName(decodeURIComponent(impersonatedName));
         }
+
+        const impersonatedUserEmail = getCookie('tessera_impersonated_user_email');
+        if (impersonatedUserEmail) {
+            setUserEmail(decodeURIComponent(impersonatedUserEmail));
+        }
     }, []);
 
     const handleStopImpersonating = () => {
         document.cookie = 'tessera_impersonated_tenant=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
         document.cookie = 'tessera_impersonated_tenant_name=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        document.cookie = 'tessera_impersonated_user=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        document.cookie = 'tessera_impersonated_user_email=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
         window.location.href = '/admin'; // Hard reload to clear client contexts
     };
 
@@ -34,6 +42,7 @@ export default function ImpersonationBanner() {
             <div className="flex items-center gap-2 font-medium text-sm">
                 <VenetianMask size={16} className="animate-pulse" />
                 <span>Superadmin Support Mode — Impersonating: <strong className="font-bold bg-white/20 px-2 py-0.5 rounded ml-1">{tenantName}</strong></span>
+                {userEmail && <span className="ml-2 text-indigo-200 text-xs shadow-sm bg-indigo-900/50 px-2 py-0.5 rounded-full border border-indigo-500/30">as {userEmail}</span>}
             </div>
             <button
                 onClick={handleStopImpersonating}
