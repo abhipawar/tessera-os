@@ -1,7 +1,13 @@
 import psycopg
 import os
+from dotenv import load_dotenv
 
-conn_string = "postgresql://postgres.zxbqdlpdgffshgdbuyxy:XDYIbIsvvFMQvIeQ@aws-0-us-west-2.pooler.supabase.com:6543/postgres?sslmode=require"
+load_dotenv()
+conn_string = os.getenv("DATABASE_URL")
+
+if not conn_string:
+    print("Error: DATABASE_URL environment variable is not set. Please set it in your .env file or environment.")
+    exit(1)
 
 sql = """
 CREATE TABLE IF NOT EXISTS public.otp_verifications (
