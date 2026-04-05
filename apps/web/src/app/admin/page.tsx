@@ -7,14 +7,33 @@ import { createBrowserClient } from '@supabase/ssr'
 import { Trash2, AlertTriangle, Users, Database, Network, RefreshCw, Wrench, CheckCircle2, XCircle, Bot, Settings, Sparkles, Loader2, VenetianMask } from 'lucide-react'
 import { API_URL } from '@/config'
 import { useNotificationStore } from '@/store/notificationStore'
+import ReactFlow, { Background, MiniMap, Controls } from 'reactflow';
+import 'reactflow/dist/style.css';
+import AgentNode from '@/components/AgentNode';
+import TriggerNode from '@/components/TriggerNode';
+import ApprovalNode from '@/components/ApprovalNode';
+import ConditionalNode from '@/components/ConditionalNode';
+import StartNode from '@/components/StartNode';
+import EndNode from '@/components/EndNode';
+import ToolNode from '@/components/ToolNode';
+import SystemDocumentation from '@/components/admin/SystemDocumentation';
 
+const nodeTypes = {
+    customAgent: AgentNode,
+    triggerNode: TriggerNode,
+    approvalNode: ApprovalNode,
+    conditionalNode: ConditionalNode,
+    startNode: StartNode,
+    endNode: EndNode,
+    toolNode: ToolNode
+};
 // Master Data & Types
 type MasterCategory = { id: string; slug: string; display_name: string; icon_name: string; }
 type MasterType = { id: string; slug: string; display_name: string; }
 
 type GlobalTool = { id: string; name: string; description: string; type_id: string; category_id: string; logo_icon: string; config_schema: any; is_active: boolean; tool_types?: { display_name: string }; tool_categories?: { display_name: string }; }
 type GlobalAgent = { id: string; name: string; description: string; system_prompt: string; category_id: string; logo_icon: string; is_active: boolean; tool_categories?: { display_name: string }; }
-type Template = { id: string; name: string; description: string; target_audience: string; icon: string; prerequisite_tools: string[]; is_active: boolean; }
+type Template = { id: string; name: string; description: string; target_audience: string; icon: string; prerequisite_tools: string[]; is_active: boolean; graph_json?: { nodes: any[]; edges: any[] }; }
 type TenantMetric = { id: string; name: string; created_at: string; tier: string; workspace_count: number; user_count: number; }
 
 export default function AdminDashboard() {
@@ -65,6 +84,8 @@ export default function AdminDashboard() {
   const [selectedTenantForUsers, setSelectedTenantForUsers] = useState<{ id: string, name: string } | null>(null);
   const [tenantUsers, setTenantUsers] = useState<any[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+
+  const [adminTab, setAdminTab] = useState<'management' | 'blueprint'>('management');
 
   const [supabase] = useState(() => createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!));
 
@@ -378,8 +399,27 @@ export default function AdminDashboard() {
 
   return (
     <div className="p-10 text-white bg-zinc-950 min-h-screen space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight">Tessera Control Plane</h1>
+      <div className="flex items-center justify-between border-b border-zinc-800 pb-6">
+        <h1 className="text-3xl font-bold tracking-tight">Tessera Control Plane</h1>
+        <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-1 flex">
+          <button 
+            onClick={() => setAdminTab('management')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${adminTab === 'management' ? 'bg-indigo-600 text-white shadow' : 'text-zinc-400 hover:text-white'}`}
+          >
+            Platform Management
+          </button>
+          <button 
+            onClick={() => setAdminTab('blueprint')}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${adminTab === 'blueprint' ? 'bg-indigo-600 text-white shadow' : 'text-zinc-400 hover:text-white'}`}
+          >
+            Blueprint & Strategy
+          </button>
+        </div>
+      </div>
 
+      {adminTab === 'blueprint' && <SystemDocumentation />}
+
+      {adminTab === 'management' && (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
 
         {/* Active Organizations */}
@@ -532,6 +572,7 @@ export default function AdminDashboard() {
         </div>
 
       </div>
+      )}
 
       {/* Tool Modal Overlay */}
       {isToolModalOpen && (
@@ -597,7 +638,7 @@ export default function AdminDashboard() {
       {/* Template Modal Overlay */}
       {isTemplateModalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl w-full max-w-lg p-6 space-y-4">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl w-full max-w-3xl p-6 space-y-4">
             <h3 className="text-xl font-semibold">{editingTemplate ? 'Edit Template Metadata' : 'Add Blank Template'}</h3>
             {!editingTemplate && (
               <div className="bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs p-3 rounded-lg flex gap-2 items-start mt-1">
@@ -640,6 +681,25 @@ export default function AdminDashboard() {
               <input type="checkbox" checked={templateForm.is_active} onChange={e => setTemplateForm({ ...templateForm, is_active: e.target.checked })} className="rounded bg-zinc-900 border-zinc-700 text-indigo-500 focus:ring-indigo-500" />
               <span className="text-sm text-zinc-300">Active (Visible to Tenants)</span>
             </label>
+
+            {editingTemplate?.graph_json && (
+              <div className="mt-4 border border-zinc-800 rounded-xl overflow-hidden h-[350px] relative bg-zinc-950">
+                <div className="absolute top-2 left-3 z-[60] text-[10px] font-semibold text-zinc-400 uppercase tracking-widest bg-zinc-900/80 backdrop-blur-sm px-2 py-1 rounded shadow-md pointer-events-none border border-zinc-800">Workflow Preview</div>
+                <ReactFlow 
+                  nodes={editingTemplate.graph_json.nodes || []} 
+                  edges={editingTemplate.graph_json.edges || []} 
+                  nodeTypes={nodeTypes} 
+                  fitView 
+                  proOptions={{ hideAttribution: true }}
+                  nodesDraggable={false} 
+                  nodesConnectable={false}
+                  elementsSelectable={false}
+                >
+                  <Background color="#3f3f46" gap={16} size={1} />
+                  <Controls showInteractive={false} className="bg-zinc-900 border-zinc-800 fill-zinc-400" />
+                </ReactFlow>
+              </div>
+            )}
 
             <div className="flex justify-end gap-2 mt-6">
               <Button onClick={() => setIsTemplateModalOpen(false)} variant="outline" className="bg-transparent text-zinc-300 border-zinc-700 hover:bg-zinc-800 hover:text-white">Cancel</Button>

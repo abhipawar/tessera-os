@@ -91,7 +91,7 @@ class ReactFlowNode(BaseModel):
     id: str
     type: str = Field(description="Must be one of: 'triggerNode', 'customAgent', 'startNode', 'endNode', 'approvalNode'")
     position: Dict[str, float] = Field(description="A dict with x and y coordinates")
-    data: Dict[str, Any] = Field(description="The data payload. MUST include 'label', 'description', and 'tools' (a list of tool objects with 'id', 'name'). For customAgent, it's just 'customAgent'.")
+    data: Dict[str, Any] = Field(description="The data payload. MUST include 'label', 'description', and 'tools' (an array of string IDs). For customAgent, it's just 'customAgent'.")
 
 class ReactFlowEdge(BaseModel):
     id: str
@@ -104,6 +104,7 @@ class SynthesisResult(BaseModel):
     description: Optional[str] = Field(description="What this automation does.")
     nodes: Optional[List[ReactFlowNode]] = Field(description="List of React Flow nodes to create.")
     edges: Optional[List[ReactFlowEdge]] = Field(description="List of React Flow edges connecting the nodes.")
+    recommended_global_tools: Optional[List[str]] = Field(default=[], description="List of global tool IDs required but not actively configured by the tenant.")
 
 def get_llm_for_tenant(tenant_id: str):
     # Fetch active LLM tools
@@ -209,10 +210,29 @@ def synthesize_telemetry(payload: SynthesizeRequest, req: Request):
 
         # 2. Fetch global agents
         agents_resp = supabase_client.table("global_agents").select("id, name, description").eq("is_active", True).execute()
-        tools_resp = supabase_client.table("global_tools").select("id, name, description").eq("is_active", True).execute()
-
+        
+        # ACTIVE TENANT TOOLS (what they can use right now)
+        tenant_tools_resp = supabase_client.table("tenant_tools").select("id, connection_name, tool_id").eq("tenant_id", tenant_id).eq("status", "active").execute()
+        
+        # ALL GLOBAL TOOLS (what they could configure)
+        global_tools_resp = supabase_client.table("global_tools").select("id, name, description").eq("is_active", True).execute()
+        
+        global_tools_map = {t["id"]: t for t in global_tools_resp.data}
+        global_tools_context = str([{"id": t["id"], "name": t["name"], "description": t["description"]} for t in global_tools_resp.data])
+        
+        tenant_tools_context_list = []
+        if tenant_tools_resp.data:
+            for t in tenant_tools_resp.data:
+                gt = global_tools_map.get(t["tool_id"])
+                if gt:
+                    tenant_tools_context_list.append({
+                        "id": t["id"], # IMPORTANT: tenant tool ID
+                        "name": t.get("connection_name") or gt["name"],
+                        "description": gt["description"]
+                    })
+                    
+        tenant_tools_context = str(tenant_tools_context_list)
         agents_context = str([{"id": a["id"], "name": a["name"], "description": a["description"]} for a in agents_resp.data])
-        tools_context = str([{"id": t["id"], "name": t["name"], "description": t["description"]} for t in tools_resp.data])
 
         # Convert logs to string
         logs_str = ""
@@ -221,14 +241,19 @@ def synthesize_telemetry(payload: SynthesizeRequest, req: Request):
 
         default_prompt = (
             "You are an expert business process analyst and workflow designer.\n"
-            "You will receive a sequence of user UI interactions (clicks, copy/pastes).\n"
-            "Your job is to identify a repetitive task and construct an automated agent workflow using ONLY the available agents and tools provided below.\n\n"
+            "You will receive a sequence of user UI interactions.\n"
+            "Your job is to identify a repetitive task and construct an automated agent workflow using the available agents and tools provided below.\n\n"
             "Available Agents: {agents_context}\n"
-            "Available Tools: {tools_context}\n\n"
+            "Active Tenant Tools: {tenant_tools_context}\n"
+            "Global Tool Catalog: {global_tools_context}\n\n"
             "If you find a pattern, generate a React Flow JSON structure.\n"
             "Node types must be 'customAgent' (for agents) or 'triggerNode' (as the start of the flow).\n"
-            "DO NOT create standalone tool nodes. Instead, if an agent needs a tool, add that tool object (with its 'id' and 'name' from the catalog) into the 'tools' array inside the customAgent's data payload.\n"
+            "When assigning capabilities (tools) to an agent node, follow these RULES STRICTLY:\n"
+            "1. If the required tool exists in 'Active Tenant Tools', assign its string ID into the node's 'tools' array (e.g., tools: ['id1'])\n"
+            "2. If the required tool does NOT exist in 'Active Tenant Tools', but exists in the 'Global Tool Catalog', add its global ID to the root 'recommended_global_tools' list.\n"
+            "DO NOT create standalone tool nodes.\n"
             "The data payload MUST include 'label' and 'description' based on the catalog.\n"
+            "CRITICAL: For every 'customAgent' node, you MUST generate a detailed 'systemPrompt' inside its data dictionary explaining exactly how it should behave and use its tools.\n"
             "Position nodes linearly using an x/y coordinate system (e.g. x:250, y: spacing of 150).\n"
         )
         system_instructions = get_system_setting("telemetry_synthesis_prompt", default_prompt)
@@ -244,7 +269,9 @@ def synthesize_telemetry(payload: SynthesizeRequest, req: Request):
         print(f"--- [Process Discovery] Invoking LLM for tenant {tenant_id} over {len(telemetry_data)} logs ---")
         result: SynthesisResult = chain.invoke({
             "agents_context": agents_context,
-            "tools_context": tools_context,
+            "tenant_tools_context": tenant_tools_context,
+            "global_tools_context": global_tools_context,
+            "tools_context": tenant_tools_context, # Fallback for stale DB prompt caches
             "logs": logs_str[:15000] # Cap prompt size to prevent token explosion
         })
 
@@ -264,10 +291,14 @@ def synthesize_telemetry(payload: SynthesizeRequest, req: Request):
                     if "description" not in d: d["description"] = "Generated Autonomous Agent"
                     if "tools" not in d: d["tools"] = []
                     
-                    # If LLM put agent_id or tool_id mapping natively into payload rather than the tools array, standardize it
-                    if "tool_id" in d and isinstance(d["tool_id"], str) and len(d["tools"]) == 0:
-                         d["tools"].append({"id": d["tool_id"], "name": d.get("label", "Tool")})
-                         del d["tool_id"]
+                    # Convert any object dictionaries generated by the LLM back to just string IDs to fix legacy bugs
+                    cleaned_tools = []
+                    for t in d["tools"]:
+                        if isinstance(t, dict) and "id" in t:
+                            cleaned_tools.append(t["id"])
+                        elif isinstance(t, str):
+                            cleaned_tools.append(t)
+                    d["tools"] = cleaned_tools
                          
                 nodes_json.append(n_dict)
 
@@ -294,11 +325,19 @@ def synthesize_telemetry(payload: SynthesizeRequest, req: Request):
                     "role_id": None
                 }).execute()
 
+            rec_tools = []
+            if result.recommended_global_tools:
+                for gt_id in result.recommended_global_tools:
+                    gt = global_tools_map.get(gt_id)
+                    if gt:
+                        rec_tools.append({"id": gt["id"], "name": gt["name"]})
+
             return {
                 "pattern_found": True,
                 "workspace_id": draft_id,
                 "name": ws_name,
-                "description": result.description
+                "description": result.description,
+                "recommended_global_tools": rec_tools
             }
         else:
             return {"pattern_found": False}

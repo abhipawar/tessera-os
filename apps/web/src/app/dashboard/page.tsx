@@ -14,7 +14,8 @@ import {
     Bot,
     Download,
     ShieldCheck,
-    X
+    X,
+    AlertTriangle
 } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -235,20 +236,40 @@ export default function Dashboard() {
                             )}
 
                             {synthesisResult && synthesisResult.pattern_found === true && (
-                                <div className="mt-6 p-5 bg-emerald-900/20 border border-emerald-500/30 rounded-xl flex items-start gap-4 animate-in fade-in zoom-in-95">
-                                    <div className="p-2 bg-emerald-500/20 rounded-lg text-emerald-400"><Bot size={24} /></div>
-                                    <div className="flex-1">
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <h4 className="font-bold text-emerald-300 text-lg">Pattern Identified!</h4>
-                                                <p className="text-sm text-emerald-100 font-semibold mt-1">{synthesisResult.name}</p>
-                                                <p className="text-sm text-zinc-400 mt-1">{synthesisResult.description}</p>
+                                <div className="mt-6 flex flex-col gap-3">
+                                    <div className="p-5 bg-emerald-900/20 border border-emerald-500/30 rounded-xl flex items-start gap-4 animate-in fade-in zoom-in-95">
+                                        <div className="p-2 bg-emerald-500/20 rounded-lg text-emerald-400"><Bot size={24} /></div>
+                                        <div className="flex-1">
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <h4 className="font-bold text-emerald-300 text-lg">Pattern Identified!</h4>
+                                                    <p className="text-sm text-emerald-100 font-semibold mt-1">{synthesisResult.name}</p>
+                                                    <p className="text-sm text-zinc-400 mt-1">{synthesisResult.description}</p>
+                                                </div>
+                                                <Link href="/studio" className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-sm shadow-lg border border-emerald-400/50 transition-colors whitespace-nowrap">
+                                                    Review & Activate
+                                                </Link>
                                             </div>
-                                            <Link href="/studio" className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-sm shadow-lg border border-emerald-400/50 transition-colors whitespace-nowrap">
-                                                Review & Activate
-                                            </Link>
                                         </div>
                                     </div>
+                                    
+                                    {synthesisResult.recommended_global_tools && synthesisResult.recommended_global_tools.length > 0 && (
+                                        <div className="p-4 bg-amber-900/20 border border-amber-500/30 rounded-xl flex items-start gap-3 animate-in fade-in">
+                                            <div className="text-amber-400 mt-0.5"><AlertTriangle size={18} /></div>
+                                            <div className="flex-1">
+                                                <h4 className="font-bold text-amber-400 text-sm">Missing Recommended Capabilities</h4>
+                                                <p className="text-sm text-zinc-300 mt-1">
+                                                    To thoroughly automate this pattern, the AI requested tools you haven't configured yet: 
+                                                    <span className="font-bold text-white ml-1">
+                                                        {synthesisResult.recommended_global_tools.map((t: any) => t.name).join(", ")}
+                                                    </span>
+                                                </p>
+                                                <Link href="/integrations" className="inline-block mt-2 text-xs font-bold text-amber-500 hover:text-amber-400 underline decoration-amber-500/30 underline-offset-4">
+                                                    Open Integrations Hub &rarr;
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 

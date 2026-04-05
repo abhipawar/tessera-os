@@ -169,6 +169,8 @@ def test_connection(payload: ConnectionTestRequest, req: Request):
             res = requests.get("https://api.resend.com/domains", headers={"Authorization": f"Bearer {payload.api_key}"}, timeout=5)
             if res.status_code == 200:
                 return {"success": True, "message": "Successfully authenticated with Resend API!"}
+            elif res.status_code == 401 and res.json().get("name") == "restricted_api_key":
+                return {"success": True, "message": "Successfully authenticated with Resend! (Restricted Key Mode)"}
             else:
                 return {"success": False, "error": "Invalid Resend API Key. Authentication failed."}
             

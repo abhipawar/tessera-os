@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
 
         const { data, error } = await supabase
             .from('global_workspace_templates')
-            .select('id, name, description, target_audience, icon, prerequisite_tools, is_active, created_at')
+            .select('id, name, description, target_audience, icon, prerequisite_tools, is_active, created_at, graph_json')
             .order('created_at', { ascending: false });
 
         if (error) throw error;

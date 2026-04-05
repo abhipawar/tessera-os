@@ -488,18 +488,32 @@ export const useStudioStore = create<StudioState>((set, get) => ({
                 is_active: true
             };
 
-            // If we're updating an existing template specifically
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) throw new Error("User session not found. Please log in.");
+
+            const headers = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            };
+
+            let res;
             if (templateData.id) {
-                const { error } = await supabase
-                    .from('global_workspace_templates')
-                    .update(payload)
-                    .eq('id', templateData.id);
-                if (error) throw error;
+                res = await fetch(`/api/admin/templates/${templateData.id}`, {
+                    method: 'PUT',
+                    headers,
+                    body: JSON.stringify(payload)
+                });
             } else {
-                const { error } = await supabase
-                    .from('global_workspace_templates')
-                    .insert([payload]);
-                if (error) throw error;
+                res = await fetch('/api/admin/templates', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify(payload)
+                });
+            }
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.error || `Server responded with status ${res.status}`);
             }
 
             await state.fetchGlobalTemplates();

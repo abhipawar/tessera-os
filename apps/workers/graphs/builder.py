@@ -69,6 +69,14 @@ def build_dynamic_graph(nodes: list, edges: list, user_node_id: str, memory=None
         node_id = node.get("id")
         label = node_id_to_label[node_id]
         sys_prompt = node.get("data", {}).get("systemPrompt", "")
+        tool_instructions = node.get("data", {}).get("toolInstructions", {})
+        if tool_instructions:
+            sys_prompt += "\n\n--- Node-Specific Tool Constraints ---\n"
+            sys_prompt += "The user has provided overriding instructions for how you must use your capabilities on this specific node:\n"
+            for tid, instr in tool_instructions.items():
+                if instr.strip():
+                    sys_prompt += f"- {instr.strip()}\n"
+                    
         tool_ids = node.get("data", {}).get("tools", []) + node_assigned_tools.get(node_id, [])
 
         node_llm_config = global_llm_config 

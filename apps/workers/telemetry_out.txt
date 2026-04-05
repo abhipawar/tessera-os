@@ -1,0 +1,117 @@
+[2026-04-04T16:27:34.112+00:00] click on https://docs.google.com/document/d/1QBXyuVoAzH7XC0mY9k2MCSVWKP4VE0XiPir2kywZs2A/edit?tab=t.0
+  Target: Name before sharing
+  Context: 
+----------------------------------------
+[2026-04-04T16:27:29.751+00:00] click on https://docs.google.com/document/d/1QBXyuVoAzH7XC0mY9k2MCSVWKP4VE0XiPir2kywZs2A/edit?tab=t.0
+  Target:  
+Share
+  Context: 
+----------------------------------------
+[2026-04-04T16:27:25.081+00:00] copy on https://en.wikipedia.org/wiki/Neural_network
+  Target: A neural network is a group of interconnected units called neurons that send signals to one another.
+  Context: A neural network is a group of interconnected units called neurons that send signals to one another. Neurons can be either biological cells or mathematical models. While individual neurons are simple, many of them together in a network can perform complex tasks. There are two main types of neural networks.
+
+In neuroscience, a biological neural network is a physical structure found in brains and complex nervous systems – a population of nerve cells connected by synapses.
+In machine learning, an a
+----------------------------------------
+[2026-04-04T16:27:24.456+00:00] click on https://en.wikipedia.org/wiki/Neural_network
+  Target: Contents hide
+(Top)
+In biology
+In machine learning
+History
+See also
+References
+Neural network
+23 lan
+  Context: 
+----------------------------------------
+[2026-04-04T16:27:20.402+00:00] submit on https://en.wikipedia.org/wiki/Machine_learning
+  Target: Search
+  Context: 
+----------------------------------------
+[2026-04-04T16:27:20.399+00:00] click on https://en.wikipedia.org/wiki/Machine_learning
+  Target: Search
+  Context: 
+----------------------------------------
+[2026-04-04T16:27:16.866+00:00] click on https://en.wikipedia.org/wiki/Machine_learning
+  Target: Search Wikipedia
+  Context: 
+----------------------------------------
+[2026-04-04T16:27:09.844+00:00] click on https://docs.google.com/document/d/1QBXyuVoAzH7XC0mY9k2MCSVWKP4VE0XiPir2kywZs2A/edit?tab=t.0
+  Target: Unknown Context
+  Context: 
+----------------------------------------
+[2026-04-04T16:27:04.344+00:00] copy on https://en.wikipedia.org/wiki/Machine_learning
+  Target: Machine learning
+  Context: Machine learning (ML) is a field of study in artificial intelligence concerned with the development and study of statistical algorithms that can learn from data and generalize to unseen data, and thus perform tasks without explicit programming language instructions.[1] Within a subdiscipline of machine learning, advances in the field of deep learning have allowed neural networks, a class of statistical algorithms, to surpass many previous machine learning approaches in performance.
+----------------------------------------
+[2026-04-04T16:27:03.649+00:00] click on https://en.wikipedia.org/wiki/Machine_learning
+  Target: Machine learning (ML) is a field of study in artificial intelligence concerned with the development 
+  Context: 
+----------------------------------------
+[2026-04-04T16:26:58.598+00:00] submit on https://www.wikipedia.org/
+  Target: Search Wikipedia
+EN
+Afrikaans
+Shqip
+العربية
+Asturianu
+Azərbaycanca
+Български
+閩南語 / Bân-lâm-gú
+বাংলা
+
+  Context: 
+----------------------------------------
+[2026-04-04T16:26:58.594+00:00] click on https://www.wikipedia.org/
+  Target: Search
+  Context: 
+----------------------------------------
+[2026-04-04T16:26:54.753+00:00] click on https://www.wikipedia.org/
+  Target: 
+
+Wikipedia
+
+The Free Encyclopedia
+
+  Context: 
+----------------------------------------
+[2026-04-04T16:26:50.943+00:00] click on https://www.tesseraos.ai/inbox
+  Target: Command Center
+
+Review pending tasks and monitor autonomous agent communications.
+
+Pending Approvals
+  Context: 
+----------------------------------------
+[2026-04-04T16:26:36.623+00:00] click on https://www.tesseraos.ai/dashboard
+  Target: Unknown Context
+  Context: 
+----------------------------------------
+[2026-04-04T16:26:31.587+00:00] click on https://www.tesseraos.ai/studio
+  Target: Unknown Context
+  Context: 
+----------------------------------------
+[2026-04-04T16:26:27.893+00:00] click on https://www.tesseraos.ai/admin
+  Target: Unknown Context
+  Context: 
+----------------------------------------
+[2026-03-05T20:43:48.914+00:00] click on https://www.tesseraos.ai/chat
+  Target: Unknown Context
+  Context: 
+----------------------------------------
+[2026-03-05T20:36:09.761+00:00] submit on https://dash.cloudflare.com/0bdfef28c0a4f3a544eb3790d097ca60/email-service/routing/7dafd5445d136758e25470319827e886/routes/new
+  Target: Custom Address
+@
+agents.tesseraos.ai
+Action
+Send to a Worker
+
+Send to an email: Routes all emails fr
+  Context: 
+----------------------------------------
+[2026-03-05T20:36:09.756+00:00] click on https://dash.cloudflare.com/0bdfef28c0a4f3a544eb3790d097ca60/email-service/routing/7dafd5445d136758e25470319827e886/routes/new
+  Target: Save
+  Context: 
+----------------------------------------

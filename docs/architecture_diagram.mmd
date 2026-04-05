@@ -1,0 +1,96 @@
+graph TD
+    %% Data Ingestion
+    subgraph Phase1 [Phase 1: Data Ingestion & Batch/Stream Routing]
+        DB[SQL DB]
+        PDF[Scanned PDF]
+        Audio[Audio]
+        Stream[Kafka Stream]
+        
+        Airflow[Airflow Orchestration]
+        LlamaParse[LlamaParse]
+        Masquerade[PII Masking]
+        
+        DB --> Airflow
+        PDF --> LlamaParse
+        LlamaParse --> Airflow
+        Audio --> Airflow
+        
+        Airflow -->|Batch to Stream Handoff| KafkaTopic[(Kafka Topic Layer)]
+        Stream --> KafkaTopic
+    end
+
+    %% Context Engineering
+    subgraph Phase2 [Phase 2: Context Engineering]
+        KafkaTopic --> Chunking[Advanced Chunking]
+        Chunking --> GraphRAG[(Knowledge Graph - GraphRAG)]
+        Chunking --> VDB[(Vector Database)]
+    end
+
+    %% Routing
+    subgraph Phase4 [Phase 4: Prompt & Intent Routing]
+        UserQuery[User Query] --> Router(Semantic Router)
+        Router --> Cache[(RedisVL Cache)]
+        Router --> PromptReg[Git Prompt Registry]
+    end
+
+    %% Retrieval
+    subgraph Phase3 [Phase 3: Retrieval Hybrid/Re-ranking]
+        Cache -.->|Miss| HybridSearch{Hybrid Search}
+        HybridSearch --> GraphRAG
+        HybridSearch --> VDB
+        GraphRAG --> ReRanker[Re-ranker]
+        VDB --> ReRanker
+    end
+
+    %% Orchestration
+    subgraph Phase6 [Phase 6: Agentic Orchestration]
+        ReRanker --> LangGraph[LangGraph State Machine]
+        LangGraph -->|Action| Tools[Tool Bindings]
+        Tools -->|Text-to-SQL| EnterpriseDB[(Enterprise DW)]
+        Tools -->|Policy Search| APIs[Internal APIs]
+        LangGraph -->|Thought/Observation| LangGraph
+        LangGraph -.->|HITL| Approver(Human-in-the-Loop)
+    end
+    
+    %% Model Cust
+    subgraph Phase5 [Phase 5: Model Customization]
+        DataLake[(Data Lake)] --> Kubeflow[Kubeflow Pipelines]
+        Kubeflow --> A100[A100 GPU LoRA Training]
+        A100 --> MLflow[(MLflow Model Registry)]
+    end
+
+    %% Inference
+    subgraph Phase7 [Phase 7: Serving & Inference]
+        MLflow --> vLLM[vLLM Server]
+        LangGraph -->|Inference Call| vLLM
+        vLLM --> PagedAttn[PagedAttention & Multi-Tenant LoRA]
+    end
+
+    %% Governance & Out
+    subgraph Phase9 [Phase 9: Governance & Security]
+        UserQuery --> NeMoIn[NeMo Guardrails Input]
+        NeMoIn --> Router
+        
+        vLLM --> NeMoOut[NeMo Guardrails Output]
+        NeMoOut --> Apps[Apps: Chatbot, Mobile, Dashboard]
+    end
+
+    %% Observability
+    subgraph Phase8 [Phase 8: Observability & Auto-Evals]
+        vLLM -.-> LangSmith[LangSmith Tracing]
+        LangGraph -.-> LangSmith
+        LangSmith --> AutoEval{LLM-as-a-Judge Eval}
+    end
+
+    %% Connections
+    PromptReg --> HybridSearch
+    
+    classDef cluster fill:#1E293B,stroke:#94A3B8,stroke-width:2px,color:#F8FAFC;
+    classDef node fill:#3B82F6,stroke:#60A5FA,stroke-width:2px,color:#FFF;
+    classDef external fill:#10B981,stroke:#34D399,stroke-width:2px,color:#FFF;
+    classDef db fill:#8B5CF6,stroke:#A78BFA,stroke-width:2px,color:#FFF;
+    
+    class Phase1,Phase2,Phase3,Phase4,Phase5,Phase6,Phase7,Phase8,Phase9 cluster;
+    class DB,PDF,Audio,Stream,EnterpriseDB,APIs external;
+    class GraphRAG,VDB,Cache,MLflow,KafkaTopic db;
+    class Airflow,LlamaParse,Chunking,Router,PromptReg,HybridSearch,ReRanker,LangGraph,Tools,Kubeflow,A100,vLLM,NeMoIn,NeMoOut,LangSmith,AutoEval node;

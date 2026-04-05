@@ -83,6 +83,14 @@ export default function ConfigurationPanel() {
 
         updateNodeData('tools', newTools);
     };
+
+    const updateToolInstruction = (toolId: string, instruction: string) => {
+        const currentInstructions = selectedNode.data.toolInstructions || {};
+        updateNodeData('toolInstructions', {
+            ...currentInstructions,
+            [toolId]: instruction
+        });
+    };
     const getUpstreamNodes = (nodeId: string): any[] => {
         const directSourceIds = edges.filter(e => e.target === nodeId).map(e => e.source);
         return nodes.filter(n => directSourceIds.includes(n.id));
@@ -308,32 +316,78 @@ export default function ConfigurationPanel() {
                                 </div>
                             </div>
 
-                            <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-4 block border-b border-zinc-800 pb-2">
-                                Connected Capabilities
-                            </label>
-                            <div className="space-y-3">
-                                {connectedToolNodes.length === 0 ? (
-                                    <div className="text-[10px] text-zinc-600 italic p-3 bg-zinc-950/50 rounded border border-zinc-800/50">
-                                        No tools connected. Drag a tool from the "Add Node" menu and wire it to the bottom of this agent.
+                            {connectedToolNodes.length > 0 && (
+                                <div className="mb-6">
+                                    <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-3 block border-b border-zinc-800 pb-2">
+                                        Wired Capabilities (Visual Add)
+                                    </label>
+                                    <div className="space-y-3">
+                                        {connectedToolNodes.map(tNode => (
+                                            <div key={tNode.id} className="flex items-center gap-3 p-3 bg-zinc-900/50 border border-zinc-800/80 rounded-xl relative overflow-hidden group">
+                                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500/50" />
+                                                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                                                    <Sparkles size={14} className="text-emerald-400" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="text-sm font-bold text-zinc-200 truncate">{tNode.data.label}</h4>
+                                                    <p className="text-[10px] text-zinc-500 truncate">{tNode.data.description}</p>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
-                                ) : (
-                                    connectedToolNodes.map(tNode => (
-                                        <div key={tNode.id} className="flex items-center gap-3 p-3 bg-zinc-900/50 border border-zinc-800/80 rounded-xl relative overflow-hidden group">
-                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500/50" />
-                                            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
-                                                <Sparkles size={14} className="text-emerald-400" />
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <h4 className="text-sm font-bold text-zinc-200 truncate">{tNode.data.label}</h4>
-                                                <p className="text-[10px] text-zinc-500 truncate">{tNode.data.description}</p>
-                                            </div>
+                                </div>
+                            )}
+
+                            <div className="flex items-center justify-between mb-4 border-b border-zinc-800 pb-2">
+                                <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
+                                    Tenant Integrations (Direct Add)
+                                </label>
+                            </div>
+                            
+                            <div className="space-y-4">
+                                {configuredTools.filter(t => !t.name.toLowerCase().includes('llm') && !t.name.toLowerCase().includes('ai compute')).map((tool: any) => {
+                                    const isSelected = (selectedNode.data.tools || []).includes(tool.tenant_tool_id);
+                                    return (
+                                        <div key={tool.tenant_tool_id} className={`border rounded-xl p-3 transition-colors ${isSelected ? 'bg-zinc-900/80 border-emerald-500/30' : 'bg-zinc-950/50 border-zinc-800/80'}`}>
+                                            <label className="flex items-start gap-3 cursor-pointer select-none">
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={isSelected}
+                                                    onChange={() => toggleToolAssignment(tool.tenant_tool_id)}
+                                                    className="mt-1 rounded bg-zinc-900 border-zinc-700 text-emerald-500 focus:ring-emerald-500" 
+                                                />
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <h4 className="text-sm font-bold text-zinc-200">{tool.name}</h4>
+                                                    </div>
+                                                    <p className="text-[10px] text-zinc-500">{tool.connection_name || "Default Connection"}</p>
+                                                </div>
+                                            </label>
+                                            
+                                            {isSelected && (
+                                                <div className="mt-3 pl-7">
+                                                    <textarea 
+                                                        placeholder="Custom constraints/instructions for this node exactly (e.g., 'Only search files in /docs')"
+                                                        value={(selectedNode.data.toolInstructions || {})[tool.tenant_tool_id] || ''}
+                                                        onChange={(e) => updateToolInstruction(tool.tenant_tool_id, e.target.value)}
+                                                        className="w-full text-xs p-2.5 bg-black/40 border border-zinc-800/80 rounded-lg resize-none min-h-[60px] focus:ring-1 focus:ring-emerald-500/50 focus:border-emerald-500/50 outline-none text-zinc-300 placeholder-zinc-700"
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
-                                    ))
+                                    );
+                                })}
+                                
+                                {configuredTools.filter(t => !t.name.toLowerCase().includes('llm') && !t.name.toLowerCase().includes('ai compute')).length === 0 && (
+                                    <div className="text-[10px] text-zinc-600 italic p-3 bg-zinc-950/50 rounded border border-zinc-800/50">
+                                        No tools configured in your tenant. Go to Integrations Hub to add tools.
+                                    </div>
                                 )}
                             </div>
+
                             <button
                                 onClick={() => setIsCustomToolModalOpen(true)}
-                                className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-2 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700 text-zinc-300 text-xs font-semibold rounded-xl transition-all"
+                                className="w-full mt-6 flex items-center justify-center gap-2 px-4 py-2 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700 text-zinc-300 text-xs font-semibold rounded-xl transition-all"
                             >
                                 <span className="text-orange-400 font-bold text-sm">+</span> Build Sandboxed Script
                             </button>
