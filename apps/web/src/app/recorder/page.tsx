@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Play, CheckCircle, RefreshCcw, Activity, FileText, ChevronRight, Video, Trash2 } from 'lucide-react';
 import { createBrowserClient } from '@supabase/ssr';
+import { API_URL } from '@/config';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -36,7 +37,7 @@ export default function RecorderDashboard() {
   const synthesizeIntent = async () => {
     if (!selectedRec) return;
     try {
-      const res = await fetch(`http://localhost:8000/api/recordings/${selectedRec.id}/summarize`, { method: 'POST' });
+      const res = await fetch(`${API_URL}/api/recordings/${selectedRec.id}/summarize`, { method: 'POST' });
       const data = await res.json();
       if (data.summary) {
         setSelectedRec({ ...selectedRec, llm_summary: data.summary, status: 'summarized' });
@@ -71,7 +72,7 @@ export default function RecorderDashboard() {
     }, 4500);
 
     try {
-      const res = await fetch(`http://localhost:8000/api/recordings/${selectedRec.id}/replicate`, { method: 'POST' });
+      const res = await fetch(`${API_URL}/api/recordings/${selectedRec.id}/replicate`, { method: 'POST' });
       const data = await res.json();
       setReplayOutput(data);
     } catch (e) {
