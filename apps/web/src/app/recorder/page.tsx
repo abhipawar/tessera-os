@@ -17,6 +17,32 @@ export default function RecorderDashboard() {
   const [replayPhase, setReplayPhase] = useState<string>("Initializing secure sandbox...");
   const [replayOutput, setReplayOutput] = useState<any>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [videoModalUrl, setVideoModalUrl] = useState<string | null>(null);
+
+  // Convert Base64 Video to a Blob URL
+  const openVideoModal = (base64Str: string) => {
+    try {
+        const raw = base64Str.startsWith('data:') ? base64Str.split(',')[1] : base64Str;
+        const byteCharacters = atob(raw);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        setVideoModalUrl(url);
+    } catch(e) {
+        console.error("Failed to decode video blob", e);
+    }
+  };
+
+  const closeVideoModal = () => {
+      if (videoModalUrl) {
+          URL.revokeObjectURL(videoModalUrl);
+          setVideoModalUrl(null);
+      }
+  };
 
   useEffect(() => {
     fetchRecordings();
@@ -195,15 +221,13 @@ export default function RecorderDashboard() {
                   
                   {replayOutput.video_b64 && (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mt-4">
-                        <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2 flex items-center gap-2"><Video size={14}/> Headless Video Artifact</h4>
-                        <div className="w-full h-[300px] md:h-[450px] rounded-lg overflow-hidden border border-indigo-500/30 shadow-lg shadow-indigo-900/20 bg-black flex items-center justify-center relative">
-                            <video 
-                                src={replayOutput.video_b64.startsWith('data:') ? replayOutput.video_b64 : `data:video/webm;base64,${replayOutput.video_b64}`} 
-                                controls={true}
-                                preload="metadata"
-                                className="absolute inset-0 w-full h-full object-contain bg-black rounded"
-                            />
-                        </div>
+                        <button 
+                            onClick={() => openVideoModal(replayOutput.video_b64)}
+                            className="w-full py-4 border border-indigo-500/50 bg-indigo-900/20 hover:bg-indigo-600/30 transition-colors rounded-xl flex items-center justify-center gap-3 text-indigo-300 font-bold shadow-lg shadow-indigo-900/20 group"
+                        >
+                            <Play size={20} className="text-indigo-400 group-hover:scale-110 transition-transform" fill="currentColor"/>
+                            Play Headless Video Artifact (WebM)
+                        </button>
                     </div>
                   )}
                 </div>
@@ -270,6 +294,32 @@ export default function RecorderDashboard() {
                 className="max-w-full max-h-[90vh] object-contain rounded shadow-2xl border border-zinc-800" 
                 alt="Enlarged Screenshot" 
             />
+        </div>
+      )}
+
+      {videoModalUrl && (
+        <div 
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4 backdrop-blur-md animate-in fade-in duration-300"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) closeVideoModal();
+            }}
+        >
+            <div className="w-full max-w-5xl bg-black rounded-2xl overflow-hidden border border-indigo-500/30 shadow-2xl shadow-indigo-900/20 flex flex-col">
+                <div className="bg-zinc-900/80 p-3 flex justify-between items-center border-b border-zinc-800">
+                    <h3 className="text-indigo-400 font-bold flex items-center gap-2"><Video size={18}/> Headless E2B Execution Replay</h3>
+                    <button onClick={closeVideoModal} className="text-zinc-400 hover:text-white p-2 rounded-lg hover:bg-zinc-800 transition-colors">
+                        Close
+                    </button>
+                </div>
+                <div className="w-full aspect-video bg-black flex items-center justify-center relative">
+                  <video 
+                      src={videoModalUrl} 
+                      controls 
+                      autoPlay 
+                      className="w-full h-full object-contain absolute inset-0"
+                  />
+                </div>
+            </div>
         </div>
       )}
     </div>
