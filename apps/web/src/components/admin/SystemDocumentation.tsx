@@ -621,6 +621,15 @@ export default function SystemDocumentation() {
                       </div>
                    </div>
 
+                   {/* Video Telemetry Phase */}
+                   <div className="flex gap-4 items-stretch ml-16 mt-4">
+                      <div className="w-10 bg-orange-900/40 border border-orange-500/50 flex items-center justify-center rounded-lg text-orange-400 font-bold shadow-[0_0_15px_rgba(249,115,22,0.2)]">5</div>
+                      <div className="flex-1 bg-orange-950/20 border-2 border-orange-500/50 p-4 rounded-lg">
+                         <h5 className="font-bold text-orange-400 text-sm mb-1">Video Data Exfiltration (Blob Hydration)</h5>
+                         <p className="text-xs text-zinc-300">The Playwright context records a headless <code>.webm</code> buffer. Upon script completion, the binary file is read, encoded entirely as a Base64 string to bypass Chromium DOM limits, and returned to the frontend. The UI decodes this string into a native <code>Uint8Array</code> Buffer and mounts it locally via <code>URL.createObjectURL()</code>.</p>
+                      </div>
+                   </div>
+
                 </div>
              </div>
           </div>
