@@ -57,11 +57,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 async function sendPayloadToBackend() {
     if (currentSessionEvents.length === 0) return;
     
-    const url = "http://localhost:8000/api/recordings/upload";
-    
     return new Promise((resolve, reject) => {
-        chrome.storage.local.get(['jwtToken'], async (result) => {
+        chrome.storage.local.get(['jwtToken', 'apiUrl'], async (result) => {
             const token = result.jwtToken;
+            const baseUrl = result.apiUrl || "http://localhost:8000";
+            const url = `${baseUrl.replace(/\/$/, '')}/api/recordings/upload`;
             if (!token) {
                 console.error("No authentication token found! Please provide it in the popup.");
                 return reject(new Error("No authentication token found"));
