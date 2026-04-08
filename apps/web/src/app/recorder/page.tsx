@@ -132,7 +132,7 @@ export default function RecorderDashboard() {
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
         
         {/* Left Col: Master List */}
-        <div className="bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden shadow-xl flex flex-col h-[85vh]">
+        <div className="bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden shadow-xl flex flex-col h-[calc(100vh-8rem)] min-h-[600px]">
           <div className="p-4 border-b border-zinc-500/20 bg-zinc-900/50">
             <h2 className="text-xl font-bold flex items-center gap-2"><Video size={20} className="text-indigo-400"/> Captured Processes</h2>
           </div>
@@ -161,7 +161,7 @@ export default function RecorderDashboard() {
         </div>
 
         {/* Right Col: Details & Replication */}
-        <div className="md:col-span-2 bg-zinc-950 border border-zinc-800 rounded-xl shadow-xl flex flex-col h-[85vh] overflow-hidden">
+        <div className="md:col-span-2 bg-zinc-950 border border-zinc-800 rounded-xl shadow-xl flex flex-col h-[calc(100vh-8rem)] min-h-[600px] overflow-hidden">
           {selectedRec ? (
             <>
               <div className="p-6 border-b border-zinc-500/20 bg-zinc-900/50 flex justify-between items-start">
@@ -194,7 +194,8 @@ export default function RecorderDashboard() {
                 </div>
               </div>
 
-              {selectedRec.llm_summary && (
+              <div className="flex-1 overflow-y-auto flex flex-col pb-12 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-transparent">
+                {selectedRec.llm_summary && (
                 <div className="m-6 mb-0 p-4 border border-indigo-500/30 bg-indigo-900/10 rounded-xl">
                   <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2 flex items-center gap-2"><CheckCircle size={14}/> LLM Synthesized Intent</h4>
                   <p className="text-zinc-200 text-sm leading-relaxed">{selectedRec.llm_summary}</p>
@@ -233,7 +234,7 @@ export default function RecorderDashboard() {
                 </div>
               )}
 
-              <div className="p-6 flex-1 overflow-y-auto">
+              <div className="p-6">
                 <h4 className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-4">Event Timeline ({events.length})</h4>
                 <div className="space-y-4">
                   {events.map((ev, i) => (
@@ -274,8 +275,9 @@ export default function RecorderDashboard() {
                   ))}
                 </div>
               </div>
-            </>
-          ) : (
+            </div>
+          </>
+        ) : (
             <div className="flex flex-col items-center justify-center h-full text-zinc-500">
               <Activity size={48} className="mb-4 opacity-50" />
               <p>Select a recording to view its execution graph.</p>
