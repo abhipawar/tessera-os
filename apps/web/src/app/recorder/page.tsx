@@ -196,7 +196,7 @@ export default function RecorderDashboard() {
                   {replayOutput.video_b64 && (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 mt-4">
                         <h4 className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-2 flex items-center gap-2"><Video size={14}/> Headless Video Artifact</h4>
-                        <div className="rounded-lg overflow-hidden border border-indigo-500/30 shadow-lg shadow-indigo-900/20 bg-black aspect-video flex items-center justify-center p-2">
+                        <div className="w-full rounded-lg overflow-hidden border border-indigo-500/30 shadow-lg shadow-indigo-900/20 bg-black aspect-video flex items-center justify-center p-2">
                             <video 
                                 src={`data:video/webm;base64,${replayOutput.video_b64}`} 
                                 controls={true}
