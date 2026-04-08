@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { width: 300px; font-family: -apple-system, sans-serif; padding: 16px; background: #09090b; color: #f4f4f5; }
+    h2 { font-size: 16px; margin-top: 0; color: #fff; border-bottom: 1px solid #27272a; padding-bottom: 8px; }
+    .btn { width: 100%; padding: 10px; margin-top: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; border: none; }
+    #startBtn { background: #10b981; color: #064e3b; }
+    #stopBtn { background: #ef4444; color: #450a0a; display: none; }
+    #status { margin-top: 12px; font-size: 12px; color: #a1a1aa; text-align: center; }
+    .recording-pulse { display: inline-block; width: 8px; height: 8px; background: #ef4444; border-radius: 50%; animation: pulse 1s infinite; margin-right: 6px; }
+    @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+    .token-input { width: calc(100% - 16px); padding: 8px; margin-top: 10px; background: #18181b; border: 1px solid #3f3f46; color: white; border-radius: 4px; font-size: 11px; }
+  </style>
+</head>
+<body>
+  <h2>Process Recorder</h2>
+  <div style="font-size:11px; color:#a1a1aa; margin-top:4px;">Secure E2B Workflows</div>
+  <input type="password" id="jwtToken" class="token-input" placeholder="Paste Session JWT Token..." />
+  <div id="status">Status: Idle</div>
+  <button id="startBtn" class="btn">Start Recording</button>
+  <button id="stopBtn" class="btn">Stop Recording</button>
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowRight, Bot, BrainCircuit, Database, Lock, Network, ShieldCheck, Cpu, GitBranch, Zap, Code2, Server, Users, Eye } from 'lucide-react'
+import { ArrowRight, Bot, BrainCircuit, Database, Lock, Network, ShieldCheck, Cpu, GitBranch, Zap, Code2, Server, Users, Eye, Activity, Video } from 'lucide-react'
 
 export default function LandingPage() {
   return (
@@ -95,6 +95,49 @@ export default function LandingPage() {
               </div>
 
             </div>
+          </div>
+        </section>
+
+        {/* 3.5. Telemetry Highlight Section */}
+        <section className="max-w-7xl mx-auto px-6 pt-24 pb-12">
+          <div className="text-center max-w-3xl mx-auto mb-16 animate-in fade-in slide-in-from-bottom-8">
+             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-sm font-bold tracking-wider uppercase mb-6">
+                  <Activity size={16} /> Telemetry Suite
+             </div>
+             <h2 className="text-4xl font-bold mb-4">Automate without Engineering</h2>
+             <p className="text-lg text-zinc-400">Capture process knowledge straight from the browser and securely translate raw user behavior into deployed AI agents.</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 relative">
+             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-[300px] bg-purple-600/10 blur-[120px] rounded-full pointer-events-none z-0" />
+
+             {/* Discovery Card */}
+             <div className="bg-gradient-to-b from-blue-900/20 to-zinc-950 border border-blue-500/30 p-8 rounded-3xl relative overflow-hidden group hover:border-blue-500/50 transition-colors z-10 shadow-2xl">
+                <div className="w-14 h-14 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-6 text-blue-400">
+                  <BrainCircuit size={28} />
+                </div>
+                <h3 className="text-2xl font-bold mb-3 text-white">Process Discovery Insight</h3>
+                <p className="text-zinc-400 leading-relaxed mb-8">
+                   Install the Chrome Extension and let our AI passively observe your most tedious workflows. We'll automatically map the sequence and recommend the perfect LangGraph architecture.
+                </p>
+                <Link href="/login" className="text-blue-400 font-bold hover:text-blue-300 flex items-center gap-2 group-hover:gap-3 transition-all">
+                   Explore Discovery <ArrowRight size={18} />
+                </Link>
+             </div>
+
+             {/* Recorder Card */}
+             <div className="bg-gradient-to-b from-purple-900/20 to-zinc-950 border border-purple-500/30 p-8 rounded-3xl relative overflow-hidden group hover:border-purple-500/50 transition-colors z-10 shadow-2xl">
+                <div className="w-14 h-14 bg-purple-500/20 rounded-2xl flex items-center justify-center mb-6 text-purple-400">
+                  <Video size={28} />
+                </div>
+                <h3 className="text-2xl font-bold mb-3 text-white">E2B Execution Replayer</h3>
+                <p className="text-zinc-400 leading-relaxed mb-8">
+                   Record specific DOM interactions and securely convert them into headless Python Playwright scripts. Execute them instantly in an isolated E2B Micro-VM sandbox.
+                </p>
+                <Link href="/login" className="text-purple-400 font-bold hover:text-purple-300 flex items-center gap-2 group-hover:gap-3 transition-all">
+                   Try Replayer <ArrowRight size={18} />
+                </Link>
+             </div>
           </div>
         </section>
 

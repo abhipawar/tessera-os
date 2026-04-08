@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Network, Server, Code, Workflow, BookOpen, AlertTriangle, Lightbulb, Compass, GitBranch, ArrowRight, CheckCircle2, Shield, TrendingUp, Cpu, Lock, Database, Eye, Clock, Box, MonitorPlay, Mic, Headphones, PhoneCall, Volume2 } from 'lucide-react';
+import { Network, Server, Code, Workflow, BookOpen, AlertTriangle, Lightbulb, Compass, GitBranch, ArrowRight, CheckCircle2, Shield, TrendingUp, Cpu, Lock, Database, Eye, Clock, Box, MonitorPlay, Mic, Headphones, PhoneCall, Volume2, Video } from 'lucide-react';
 
 export default function SystemDocumentation() {
   const [activeTab, setActiveTab] = useState('architecture');
@@ -13,6 +13,7 @@ export default function SystemDocumentation() {
     { id: 'e2b', label: 'E2B Sandboxed Execution', icon: Cpu },
     { id: 'vlm', label: 'VLM', icon: Eye, soon: true },
     { id: 'audio', label: 'Voice AI Engine', icon: Mic, soon: true },
+    { id: 'recorder', label: 'Process Recorder & Replayer', icon: Video },
     { id: 'telemetry', label: 'Telemetry & Discovery', icon: ActivityIcon },
     { id: 'scale', label: 'Cost & Scalability', icon: TrendingUp },
     { id: 'strategy', label: 'Strategy & Vision', icon: Compass },
@@ -563,6 +564,63 @@ export default function SystemDocumentation() {
                       <strong className="text-red-300 text-xs block mb-1">3. Context Flush</strong>
                       <span className="text-zinc-400 leading-relaxed block mt-2">LangGraph halts, flushes the interrupted thought context, appends the human's newly recognized question to state, and restarts the loop entirely.</span>
                    </div>
+                </div>
+             </div>
+          </div>
+        )}
+
+        {/* TAB 7: PROCESS RECORDER */}
+        {activeTab === 'recorder' && (
+          <div className="space-y-6 animate-fade-in">
+             <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+               <Video className="text-indigo-400" />
+               Process Recorder & E2B Replayer
+             </h3>
+             <p className="text-zinc-400 leading-relaxed">
+               The Process Recorder leverages a local Chrome Extension to physically trap <code>click</code> and <code>input</code> events across legacy web apps, while simultaneously routing the payload into an automated Execution Pipeline.
+             </p>
+
+             <div className="mt-6 border border-zinc-800 rounded-xl bg-zinc-950 p-6 shadow-2xl relative">
+                <h4 className="font-bold text-zinc-300 uppercase tracking-widest text-sm mb-6 border-b border-zinc-800 pb-4">Data Ingestion & Replication Flow</h4>
+                
+                <div className="flex flex-col gap-4 max-w-4xl mx-auto">
+                   
+                   {/* Capture Phase */}
+                   <div className="flex gap-4 items-stretch">
+                      <div className="w-10 bg-indigo-900/30 border border-indigo-500/30 flex items-center justify-center rounded-lg text-indigo-400 font-bold">1</div>
+                      <div className="flex-1 bg-zinc-900 border border-zinc-800 p-4 rounded-lg">
+                         <h5 className="font-bold text-white text-sm mb-1">Telemetry Capture (Chrome Extension)</h5>
+                         <p className="text-xs text-zinc-400">Extracts DOM XPath selectors natively. Takes synchronous base64 visual snapshots using <code>chrome.tabs.captureVisibleTab()</code>. Automatically scrubs PII from password input fields locally.</p>
+                      </div>
+                   </div>
+
+                   {/* Storage Phase */}
+                   <div className="flex gap-4 items-stretch ml-4">
+                      <div className="w-10 bg-blue-900/30 border border-blue-500/30 flex items-center justify-center rounded-lg text-blue-400 font-bold">2</div>
+                      <div className="flex-1 bg-zinc-900 border border-zinc-800 p-4 rounded-lg">
+                         <h5 className="font-bold text-white text-sm mb-1">State Management (Supabase)</h5>
+                         <p className="text-xs text-zinc-400">Stores metadata in Postgres. Moves heavy base64 screenshot blobs into the <code>process_screenshots</code> Storage Bucket to preserve index performance on the main <code>recording_events</code> timeline.</p>
+                      </div>
+                   </div>
+
+                   {/* LLM Phase */}
+                   <div className="flex gap-4 items-stretch ml-8">
+                      <div className="w-10 bg-purple-900/30 border border-purple-500/30 flex items-center justify-center rounded-lg text-purple-400 font-bold">3</div>
+                      <div className="flex-1 bg-zinc-900 border border-purple-800/50 p-4 rounded-lg shadow-inner">
+                         <h5 className="font-bold text-purple-300 text-sm mb-1">Intent Synthesis (LangChain)</h5>
+                         <p className="text-xs text-zinc-400">FastAPI backend processes the raw sequential array mapping (<i>Click Div &rarr; Type Text &rarr; Click Button</i>) and feeds it into an LLM context window to generate a clean, executive SOP summary.</p>
+                      </div>
+                   </div>
+
+                   {/* Execution Phase */}
+                   <div className="flex gap-4 items-stretch ml-12">
+                      <div className="w-10 bg-emerald-900/40 border border-emerald-500/50 flex items-center justify-center rounded-lg text-emerald-400 font-bold shadow-[0_0_15px_rgba(16,185,129,0.2)]">4</div>
+                      <div className="flex-1 bg-emerald-950/20 border-2 border-emerald-500/50 p-4 rounded-lg">
+                         <h5 className="font-bold text-emerald-400 text-sm mb-1">Headless Replication (E2B Sandbox)</h5>
+                         <p className="text-xs text-zinc-300">The <code>/replicate</code> API dynamically cross-compiles the DB timeline into a native Python Playwright script. The script is deployed into a secure E2B container which fires up Chromium and mechanically simulates the exact stored trajectory against the target domain.</p>
+                      </div>
+                   </div>
+
                 </div>
              </div>
           </div>

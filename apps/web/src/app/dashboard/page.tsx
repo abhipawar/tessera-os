@@ -15,7 +15,8 @@ import {
     Download,
     ShieldCheck,
     X,
-    AlertTriangle
+    AlertTriangle,
+    Video
 } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -29,6 +30,8 @@ export default function Dashboard() {
     const [recentCharts, setRecentCharts] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [showInstallModal, setShowInstallModal] = useState(false);
+    const [showRecorderModal, setShowRecorderModal] = useState(false);
+    const [sessionToken, setSessionToken] = useState<string | null>(null);
 
     // Synthesis State
     const [isSynthesizing, setIsSynthesizing] = useState(false);
@@ -52,6 +55,12 @@ export default function Dashboard() {
         };
 
         fetchRecentWorkspaces();
+
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session?.access_token) {
+                setSessionToken(session.access_token);
+            }
+        });
     }, []);
 
     const handleSynthesize = async () => {
@@ -129,6 +138,66 @@ export default function Dashboard() {
                         </ol>
                         <div className="flex justify-end pt-2 border-t border-zinc-800/50">
                             <button onClick={() => setShowInstallModal(false)} className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 rounded-lg font-medium transition-colors shadow-lg shadow-blue-500/20">
+                                Got it
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Recorder Install Modal */}
+            {showRecorderModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 text-white">
+                    <div className="bg-zinc-900 border border-purple-500/30 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative animate-in zoom-in-95 duration-200 shadow-purple-900/20">
+                        <button
+                            onClick={() => setShowRecorderModal(false)}
+                            className="absolute top-4 right-4 text-zinc-400 hover:text-white"
+                        >
+                            <X size={20} />
+                        </button>
+                        <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                            <Download className="text-purple-500" /> Install Recorder Extension
+                        </h3>
+                        <p className="text-zinc-400 mb-6 text-sm">
+                            The recorder extension is currently in Developer Preview. Follow these steps to install it in your chromium-based browser:
+                        </p>
+                        <ol className="list-decimal list-inside space-y-3 text-sm text-zinc-300 mb-6">
+                            <li>Open a new tab and navigate to <code className="bg-zinc-800 px-1.5 py-0.5 rounded text-purple-400 font-mono text-xs">chrome://extensions/</code></li>
+                            <li>Toggle <strong>Developer mode</strong> in the top right corner.</li>
+                            <li>Click the <strong>Load unpacked</strong> button.</li>
+                            <li>Select the <code className="bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-200 font-mono text-xs">apps/recorder-extension</code> folder in your local Tessera OS repository.</li>
+                            <li>Click the extension icon, paste your <strong>Extension Token</strong>, and start recording!</li>
+                        </ol>
+
+                        {sessionToken && (
+                            <div className="mb-6 p-4 bg-zinc-950/80 rounded-xl border border-purple-500/20 flex flex-col items-start gap-2 animate-in fade-in">
+                                <label className="text-xs text-purple-400 font-bold uppercase tracking-wider">Your Extension Token</label>
+                                <div className="flex w-full gap-2">
+                                    <input type="password" readOnly value={sessionToken} className="flex-1 bg-zinc-900 border border-zinc-700/50 rounded-lg px-3 py-2 text-xs text-zinc-300 font-mono focus:outline-none" />
+                                    <button 
+                                        onClick={(e) => { 
+                                            navigator.clipboard.writeText(sessionToken); 
+                                            const btn = e.currentTarget;
+                                            const originalText = btn.innerText;
+                                            btn.innerText = 'Copied!';
+                                            btn.classList.add('bg-emerald-600', 'text-white');
+                                            btn.classList.remove('bg-purple-600');
+                                            setTimeout(() => {
+                                                btn.innerText = originalText;
+                                                btn.classList.remove('bg-emerald-600');
+                                                btn.classList.add('bg-purple-600');
+                                            }, 2000);
+                                        }} 
+                                        className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm font-bold text-white transition-colors"
+                                    >
+                                        Copy
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="flex justify-end pt-2 border-t border-zinc-800/50">
+                            <button onClick={() => setShowRecorderModal(false)} className="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 rounded-lg font-medium transition-colors shadow-lg shadow-purple-500/20">
                                 Got it
                             </button>
                         </div>
@@ -284,6 +353,36 @@ export default function Dashboard() {
                         </div>
                     </div>
                 </section>
+
+                {/* PROCESS RECORDER DASHBOARD LINK */}
+                <section className="bg-gradient-to-r from-purple-900/20 to-indigo-900/20 border border-purple-500/30 rounded-3xl p-8 relative overflow-hidden group mt-1 mb-2">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 blur-[60px] rounded-full pointer-events-none group-hover:bg-purple-500/20 transition-all duration-700" />
+                    
+                    <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center gap-8 justify-between">
+                        <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-3">
+                                <span className="px-3 py-1 bg-purple-500/20 text-purple-400 text-xs font-bold rounded-full border border-purple-500/30 uppercase tracking-wider flex items-center gap-1.5">
+                                    <Video size={14} /> Headless E2B Execution
+                                </span>
+                            </div>
+                            <h3 className="text-2xl font-bold text-white mb-2">Process Recorder & Replayer</h3>
+                            <p className="text-zinc-300 mb-2 text-lg">
+                                Turn your recorded visual SOPs into deterministic Playwright execution scripts instantly. Review timelines and launch E2B Micro-VMs.
+                            </p>
+                        </div>
+
+                        <div className="shrink-0 flex flex-col items-center gap-3 p-6 bg-zinc-950/50 border border-zinc-800 rounded-2xl w-full md:w-auto">
+                            <button onClick={() => setShowRecorderModal(true)} className="flex items-center justify-center gap-2 px-6 py-2.5 w-full border border-purple-500/50 hover:bg-purple-600/10 text-purple-400 font-bold rounded-xl transition-colors">
+                                <Download size={18} />
+                                Install Extension
+                            </button>
+                            <Link href="/recorder" className="flex items-center justify-center gap-2 px-6 py-3 w-full bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl transition-colors shadow-lg shadow-purple-900/20 whitespace-nowrap">
+                                Open Replayer Dashboard <ArrowRight size={18} />
+                            </Link>
+                        </div>
+                    </div>
+                </section>
+
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1">
                     {/* PLATFORM MODULES (NAVIGATION) */}
