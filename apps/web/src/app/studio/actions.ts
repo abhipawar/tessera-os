@@ -10,7 +10,8 @@ export async function saveWorkspaceAction(payload: {
     edgesJson: string;
     activeUserNode: string | null;
 }) {
-    const supabase = await createClient()
+    try {
+        const supabase = await createClient()
     const { data: { user }, error: userError } = await supabase.auth.getUser()
 
     if (!user || userError) {
@@ -53,7 +54,7 @@ export async function saveWorkspaceAction(payload: {
     }
 
     // Server-side graph validation warning
-    let warningMsg: string | undefined = undefined;
+    let warningMsg: string | null = null;
     try {
         const parsedNodes = JSON.parse(payload.nodesJson) || [];
         const hasSupervisor = parsedNodes.some((n: any) => n.id === 'supervisor');
@@ -70,13 +71,16 @@ export async function saveWorkspaceAction(payload: {
         console.error("DEBUG: Failed to parse nodes for validation", e);
     }
 
+    const parsedNodesForDb = JSON.parse(payload.nodesJson);
+    const parsedEdgesForDb = JSON.parse(payload.edgesJson);
+
     if (payload.currentChartId) {
         const { error } = await adminDb
             .from('workspaces')
             .update({
                 name: payload.chartName,
-                nodes: payload.nodesJson,
-                edges: payload.edgesJson,
+                nodes: parsedNodesForDb,
+                edges: parsedEdgesForDb,
                 updated_at: new Date().toISOString()
             })
             .eq('id', payload.currentChartId)
@@ -90,8 +94,8 @@ export async function saveWorkspaceAction(payload: {
             .insert({
                 name: payload.chartName,
                 tenant_id: tenantId,
-                nodes: payload.nodesJson,
-                edges: payload.edgesJson
+                nodes: parsedNodesForDb,
+                edges: parsedEdgesForDb
             })
             .select()
 
@@ -108,6 +112,10 @@ export async function saveWorkspaceAction(payload: {
             return { success: true, newChartId: newId, warning: warningMsg }
         }
         return { error: 'Failed to create new workspace context in the central database.' }
+    }
+    } catch (e: any) {
+        console.error("CRITICAL EXCEPTION IN saveWorkspaceAction SERVER ACTION:", e);
+        return { error: `Server exception: ${e.message || String(e)}` };
     }
 }
 

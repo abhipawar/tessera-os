@@ -34,12 +34,14 @@ def build_tenant_tools(workspace_id: str, requested_tool_ids: List[str]) -> List
         return []
 
     try:
-        print(f"--- [Tool Factory] Searching for {len(requested_tool_ids)} requested tools... ---")
+        print(f"--- [Tool Factory] Searching for {len(requested_tool_ids)} requested tools: {requested_tool_ids} ---")
         ws_resp = supabase_client.table("workspaces").select("tenant_id").eq("id", workspace_id).execute()
         if not ws_resp.data: return []
         tenant_id = ws_resp.data[0]["tenant_id"]
+        print(f"      -> [Tool Factory] tenant_id={tenant_id}")
 
         creds_resp = supabase_client.table("tenant_tools").select("id, tool_id, credentials, connection_name").eq("tenant_id", tenant_id).in_("id", requested_tool_ids).execute()
+        print(f"      -> [Tool Factory] creds_resp matched {len(creds_resp.data)} rows: {[r['id'] for r in creds_resp.data] if creds_resp.data else 'NONE'}")
         if not creds_resp.data: return []
         
         tool_data_map = {row["id"]: {"global_tool_id": row["tool_id"], "credentials": row["credentials"], "connection_name": row.get("connection_name")} for row in creds_resp.data}
@@ -56,6 +58,7 @@ def build_tenant_tools(workspace_id: str, requested_tool_ids: List[str]) -> List
             g_id = t_data["global_tool_id"]
             t_creds = decrypt_credentials(t_data["credentials"])
             t_name = global_tools_map.get(g_id, "")
+            print(f"      -> [Tool Factory DEBUG] tenant_tool_id={tenant_t_id}, global_id={g_id}, resolved_name='{t_name}'")
             
             if "Database" in t_name or "Application Database" in t_name:
                 
@@ -292,6 +295,73 @@ def build_tenant_tools(workspace_id: str, requested_tool_ids: List[str]) -> List
                     args_schema=WebhookExecutionSchema
                 )
                 langchain_tools.append(zapier_tool)
+                
+            elif "Composio" in t_name:
+                try:
+                    from composio import Composio
+                    from composio_langchain import LangchainProvider
+                    
+                    composio_api_key = t_creds.get("api_key", os.environ.get("COMPOSIO_API_KEY"))
+                    if not composio_api_key:
+                        print("      -> [Composio] WARNING: No API key found. Skipping.")
+                        continue
+                        
+                    composio_client = Composio(api_key=composio_api_key, provider=LangchainProvider())
+                    
+                    # Inclusive/exclusive patterns to extract high-value tools dynamically
+                    USEFUL_PATTERNS = [
+                        "LIST_", "GET_", "CREATE_", "SEND_", "SEARCH_", "FIND_", "FETCH_", 
+                        "STAR_", "RUN_SQL"
+                    ]
+                    EXCLUDE_PATTERNS = [
+                        "CODESPACE", "BLOB", "DEPLOYMENT", "CHECK_RUN", "CHECK_SUITE", "GIST", 
+                        "PAGES", "WEBHOOK", "VARIABLE", "SECRET", "COLLABORATOR", "MIGRATION", 
+                        "ORGANIZATION", "API_KEY", "THIRD_PARTY", "HOSTNAME", "SUBDOMAIN", 
+                        "REPLICA", "BANS", "RESTRICTIONS", "PGSODIUM", "SSL_ENFORCEMENT"
+                    ]
+                    
+                    # Dynamically discover which apps are connected
+                    composio_user_id = "default"
+                    active_apps = set()
+                    try:
+                        accounts = composio_client.connected_accounts.list()
+                        for acc in accounts.items:
+                            if acc.status == "ACTIVE" and hasattr(acc, 'toolkit'):
+                                active_apps.add(acc.toolkit.slug)
+                                # Resolve user_id from first active account
+                                if composio_user_id == "default" and acc.user_id:
+                                    composio_user_id = acc.user_id
+                    except Exception as disc_err:
+                        print(f"      -> [Composio] Discovery failed ({disc_err}), skipping.")
+                    
+                    if not active_apps:
+                        print("      -> [Composio] No active connected apps found.")
+                        continue
+                    
+                    print(f"      -> [Composio] Discovered {len(active_apps)} active apps: {active_apps} (user: {composio_user_id})")
+                    
+                    # Fetch and filter tools per active app
+                    for app_slug in active_apps:
+                        try:
+                            # Fetch up to 150 tools for the toolkit
+                            toolkit_tools = composio_client.tools.get(composio_user_id, toolkits=[app_slug], limit=150)
+                            filtered_tools = []
+                            for t in toolkit_tools:
+                                action_name = t.name.upper()
+                                # Match useful verbs
+                                if any(pat in action_name for pat in USEFUL_PATTERNS):
+                                    # Skip noisy admin tools
+                                    if not any(ex in action_name for ex in EXCLUDE_PATTERNS):
+                                        filtered_tools.append(t)
+                            
+                            print(f"      -> [Composio] App '{app_slug}' loaded {len(filtered_tools)} filtered tools (out of {len(toolkit_tools)})")
+                            langchain_tools.extend(filtered_tools)
+                        except Exception as app_err:
+                            print(f"      -> [Composio] Error loading tools for '{app_slug}': {app_err}")
+                    
+                    
+                except Exception as composio_err:
+                    print(f"      -> [Composio] Error loading tools: {composio_err}")
                 
         print(f"--- [Tool Factory] Successfully built {len(langchain_tools)} dynamic tools! ---")
         return langchain_tools

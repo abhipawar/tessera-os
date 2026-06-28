@@ -110,6 +110,7 @@ def test_connection(payload: ConnectionTestRequest, req: Request):
         return {"success": False, "error": "Access Denied"}
         
     try:
+        print(f"DEBUG: test_connection payload: tool_type={payload.tool_type}, provider={payload.provider}, api_key={payload.api_key}")
         if payload.tool_type == "llm":
             if not payload.api_key or not payload.provider:
                 return {"success": False, "error": "Missing Provider or API Key."}
@@ -173,6 +174,20 @@ def test_connection(payload: ConnectionTestRequest, req: Request):
                 return {"success": True, "message": "Successfully authenticated with Resend! (Restricted Key Mode)"}
             else:
                 return {"success": False, "error": "Invalid Resend API Key. Authentication failed."}
+            
+        elif payload.tool_type == "api" and payload.provider == "composio":
+            if not payload.api_key:
+                return {"success": False, "error": "Missing Composio API Key."}
+                
+            res = requests.get("https://backend.composio.dev/api/v3.1/tools", headers={"x-api-key": payload.api_key}, timeout=5)
+            if res.status_code == 200:
+                return {"success": True, "message": "Successfully authenticated with Composio API!"}
+            else:
+                try:
+                    err_msg = res.json().get("error", {}).get("message", "Authentication failed.")
+                except:
+                    err_msg = "Authentication failed."
+                return {"success": False, "error": f"Invalid Composio API Key: {err_msg}"}
             
         else:
             return {"success": False, "error": "Unsupported connection type."}

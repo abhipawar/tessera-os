@@ -17,6 +17,8 @@ from psycopg_pool import ConnectionPool
 # 1. IMPORT OPENAI AND PORTKEY (The Universal Gateway)
 from langchain_openai import ChatOpenAI
 from portkey_ai import createHeaders, PORTKEY_GATEWAY_URL
+from composio import Composio
+from composio_langchain import LangchainProvider
 
 load_dotenv()
 
@@ -192,8 +194,13 @@ llm = ChatOpenAI(
     temperature=0,
 )
 
-# BIND BOTH TOOLS TO THE LLM
-tools = [run_python_code, mutate_database, save_skill_to_memory, search_skill_library]
+# Configure Composio tools (e.g. GitHub integration)
+composio = Composio(provider=LangchainProvider())
+# We default to the "github" toolkit. You can add other toolkits (e.g. ["github", "slack"]) here.
+composio_tools = composio.tools.get("default", toolkits=["github"])
+
+# BIND ALL TOOLS TO THE LLM
+tools = [run_python_code, mutate_database, save_skill_to_memory, search_skill_library] + composio_tools
 llm_with_tools = llm.bind_tools(tools)
 
 class TenantState(TypedDict):

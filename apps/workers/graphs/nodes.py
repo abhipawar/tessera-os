@@ -92,6 +92,52 @@ def get_llm(llm_config: dict = None):
             }
         )
 
+def format_tool_output_fallback(content_str: str) -> str:
+    import json
+    import ast
+    
+    try:
+        # Try evaluating as python dict literal or parsing as JSON
+        try:
+            data = json.loads(content_str)
+        except:
+            data = ast.literal_eval(content_str)
+            
+        if not isinstance(data, dict):
+            return content_str
+            
+        # Extract the core data payload
+        inner_data = data.get("data", data)
+        if not isinstance(inner_data, dict):
+            return content_str
+            
+        # Detect common lists of items
+        # e.g., 'tables', 'repositories', 'projects', etc.
+        list_key = None
+        for k, v in inner_data.items():
+            if isinstance(v, list):
+                list_key = k
+                break
+                
+        if list_key:
+            items = inner_data[list_key]
+            if not items:
+                return f"No {list_key} found."
+                
+            # If they are dictionaries, make a clean summary table or bullet list
+            if isinstance(items[0], dict):
+                output = f"### Found {len(items)} {list_key.replace('_', ' ')}\n\n"
+                for idx, item in enumerate(items, 1):
+                    name = item.get("name") or item.get("full_name") or item.get("title") or item.get("id") or f"Item {idx}"
+                    desc = item.get("description") or item.get("status") or ""
+                    desc_str = f" - *{desc}*" if desc else ""
+                    output += f"{idx}. **{name}**{desc_str}\n"
+                return output
+                
+        return content_str
+    except Exception:
+        return content_str
+
 def get_safe_string(content) -> str:
     if isinstance(content, str): 
         return content
@@ -107,7 +153,7 @@ def get_safe_string(content) -> str:
         return " ".join(extracted)
     return str(content)
 
-def create_worker_node(agent_name: str, system_prompt: str, tools: list, workspace_id: str, tenant_id: str, llm_config: dict = None):
+def create_worker_node(agent_name: str, system_prompt: str, tools: list, workspace_id: str, tenant_id: str, llm_config: dict = None, output_schema: dict = None):
     tool_map = {t.name: t for t in tools}
     
     def node_func(state: AgentState):
@@ -131,6 +177,7 @@ def create_worker_node(agent_name: str, system_prompt: str, tools: list, workspa
         if tools:
             print(f"      -> [System] Binding {len(tools)} tools to Worker '{agent_name}'")
             instructions += "\n\nCRITICAL SYSTEM OVERRIDE: If your 'BACKGROUND CONTEXT' tells you to 'write' code or queries, you must ignore that limitation. Your true job is to EXECUTE them. You have been granted system tools. You MUST invoke these tools to answer questions. NEVER guess. NEVER just output the SQL code in your chat response. You must execute the tool, look at the returned data, and then answer the user!"
+            instructions += "\n\nFORMATTING INSTRUCTION: Always present tool outputs, database lists, and execution results in a clean, human-readable markdown format (e.g. numbered lists, bullet points, headers, or markdown tables). Do NOT print raw JSON/dict objects or raw database schema strings unless specifically requested by the user."
             worker_llm = llm.bind_tools(tools)
         else:
             print(f"      -> [System] Worker '{agent_name}' has NO tools assigned.")
@@ -189,7 +236,7 @@ def create_worker_node(agent_name: str, system_prompt: str, tools: list, workspa
                                 "input_payload": tool_args,
                                 "output_preview": str(e)[:2000],
                                 "status": "error"
-                            }).execute()
+                             }).execute()
                         except: pass
             
             print(f"      -> [Tool Execution] Feeding data back to '{agent_name}'...")
@@ -199,7 +246,8 @@ def create_worker_node(agent_name: str, system_prompt: str, tools: list, workspa
         
         if not content:
             if current_messages and isinstance(current_messages[-1], ToolMessage):
-                content = f"I am {agent_name}. I executed my tool and found this data: {current_messages[-1].content}"
+                formatted_data = format_tool_output_fallback(current_messages[-1].content)
+                content = f"I am {agent_name}. I executed my tool and retrieved the following:\n\n{formatted_data}"
             else:
                 content = f"Hello, I am {agent_name}. I have processed your request."
             

@@ -551,6 +551,65 @@ files = [
 ]
 
 [[package]]
+name = "composio"
+version = "0.15.0"
+description = "SDK for integrating Composio with your applications."
+optional = false
+python-versions = "<4,>=3.9"
+groups = ["main"]
+files = [
+    {file = "composio-0.15.0-py3-none-any.whl", hash = "sha256:1c51dfb7a4e291a353accaea8d090e2b630361a9b7398502f604cddfb93a8b6a"},
+    {file = "composio-0.15.0.tar.gz", hash = "sha256:b6deb3a12e021799826fb191cb74b9c3fdf9555ba908a832ec6b1a6b63d4da17"},
+]
+
+[package.dependencies]
+composio-client = "1.39.0"
+json-schema-to-pydantic = ">=0.4.8"
+openai = "*"
+pydantic = ">=2.6.4"
+pysher = ">=1.0.8"
+typing-extensions = ">=4.0.0"
+
+[[package]]
+name = "composio-client"
+version = "1.39.0"
+description = "The official Python library for the composio API"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "composio_client-1.39.0-py3-none-any.whl", hash = "sha256:bf6050dc0d523bd1e9d52e39e162f5b23bd029aa441b5c4a18e1751aae58571d"},
+    {file = "composio_client-1.39.0.tar.gz", hash = "sha256:2086493925117b956a3166da18414925cb50829172c8211591137fcdc3d60c7d"},
+]
+
+[package.dependencies]
+anyio = ">=3.5.0,<5"
+distro = ">=1.7.0,<2"
+httpx = ">=0.23.0,<1"
+pydantic = ">=1.9.0,<3"
+sniffio = "*"
+typing-extensions = ">=4.14,<5"
+
+[package.extras]
+aiohttp = ["aiohttp", "httpx-aiohttp (>=0.1.9)"]
+
+[[package]]
+name = "composio-langchain"
+version = "0.15.0"
+description = "Use Composio to get an array of tools with your Langchain agent."
+optional = false
+python-versions = "<4,>=3.9"
+groups = ["main"]
+files = [
+    {file = "composio_langchain-0.15.0-py3-none-any.whl", hash = "sha256:9d251bc772c58ecfa63511f059681b2e225538dfbb6a500fe8b34885eae32a61"},
+    {file = "composio_langchain-0.15.0.tar.gz", hash = "sha256:ef64bbff8f61d444fca071c4086b06e850c4ad45341a4a3c3f2f04ee4dca4ab7"},
+]
+
+[package.dependencies]
+composio = "*"
+langchain = ">=1.1.0,<2.0.0"
+
+[[package]]
 name = "cryptography"
 version = "46.0.5"
 description = "cryptography is a package which provides cryptographic recipes and primitives to Python developers."
@@ -1297,6 +1356,24 @@ files = [
 ]
 
 [[package]]
+name = "json-schema-to-pydantic"
+version = "0.4.11"
+description = "A Python library for automatically generating Pydantic v2 models from JSON Schema definitions"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "json_schema_to_pydantic-0.4.11-py3-none-any.whl", hash = "sha256:da2ccc39d070ee03dbcf0517d16720e3e33f7aa8d61257ace09af8c51bd46348"},
+    {file = "json_schema_to_pydantic-0.4.11.tar.gz", hash = "sha256:35448ed711a28dd33396b095c8492939b4925aa30eb31942e9b8e08d04279465"},
+]
+
+[package.dependencies]
+pydantic = ">=2.10.4"
+
+[package.extras]
+dev = ["pytest (>=8.3.4)", "pytest-cov (>=6.0.0)"]
+
+[[package]]
 name = "jsonpatch"
 version = "1.33"
 description = "Apply JSON-Patches (RFC 6902)"
@@ -1322,6 +1399,41 @@ files = [
     {file = "jsonpointer-3.0.0-py2.py3-none-any.whl", hash = "sha256:13e088adc14fca8b6aa8177c044e12701e6ad4b28ff10e65f2267a90109c9942"},
     {file = "jsonpointer-3.0.0.tar.gz", hash = "sha256:2b2d729f2091522d61c3b31f82e11870f60b68f43fbc705cb76bf4b832af59ef"},
 ]
+
+[[package]]
+name = "langchain"
+version = "1.2.10"
+description = "Building applications with LLMs through composability"
+optional = false
+python-versions = "<4.0.0,>=3.10.0"
+groups = ["main"]
+files = [
+    {file = "langchain-1.2.10-py3-none-any.whl", hash = "sha256:e07a377204451fffaed88276b8193e894893b1003e25c5bca6539288ccca3698"},
+    {file = "langchain-1.2.10.tar.gz", hash = "sha256:bdcd7218d9c79a413cf15e106e4eb94408ac0963df9333ccd095b9ed43bf3be7"},
+]
+
+[package.dependencies]
+langchain-core = ">=1.2.10,<2.0.0"
+langgraph = ">=1.0.8,<1.1.0"
+pydantic = ">=2.7.4,<3.0.0"
+
+[package.extras]
+anthropic = ["langchain-anthropic"]
+aws = ["langchain-aws"]
+azure-ai = ["langchain-azure-ai"]
+community = ["langchain-community"]
+deepseek = ["langchain-deepseek"]
+fireworks = ["langchain-fireworks"]
+google-genai = ["langchain-google-genai"]
+google-vertexai = ["langchain-google-vertexai"]
+groq = ["langchain-groq"]
+huggingface = ["langchain-huggingface"]
+mistralai = ["langchain-mistralai"]
+ollama = ["langchain-ollama"]
+openai = ["langchain-openai"]
+perplexity = ["langchain-perplexity"]
+together = ["langchain-together"]
+xai = ["langchain-xai"]
 
 [[package]]
 name = "langchain-anthropic"
@@ -2854,6 +2966,21 @@ files = [
 ]
 
 [[package]]
+name = "pysher"
+version = "1.0.8"
+description = "Pusher websocket client for python, based on Erik Kulyk's PythonPusherClient"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "Pysher-1.0.8.tar.gz", hash = "sha256:7849c56032b208e49df67d7bd8d49029a69042ab0bb45b2ed59fa08f11ac5988"},
+]
+
+[package.dependencies]
+requests = ">=2.26.0"
+websocket-client = "!=0.49"
+
+[[package]]
 name = "python-dateutil"
 version = "2.9.0.post0"
 description = "Extensions to the standard Python datetime module"
@@ -3773,6 +3900,23 @@ files = [
 bracex = ">=2.1.1"
 
 [[package]]
+name = "websocket-client"
+version = "1.9.0"
+description = "WebSocket client for Python with low level API options"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "websocket_client-1.9.0-py3-none-any.whl", hash = "sha256:af248a825037ef591efbf6ed20cc5faa03d3b47b9e5a2230a529eeee1c1fc3ef"},
+    {file = "websocket_client-1.9.0.tar.gz", hash = "sha256:9e813624b6eb619999a97dc7958469217c3176312b3a16a4bd1bc7e08a46ec98"},
+]
+
+[package.extras]
+docs = ["Sphinx (>=6.0)", "myst-parser (>=2.0.0)", "sphinx_rtd_theme (>=1.1.0)"]
+optional = ["python-socks", "wsaccel"]
+test = ["pytest", "websockets"]
+
+[[package]]
 name = "websockets"
 version = "15.0.1"
 description = "An implementation of the WebSocket Protocol (RFC 6455 & 7692)"
@@ -4261,4 +4405,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<4.0.0"
-content-hash = "fb2a12c9ad5411ee0ca7d7b5af04d4ad875fcafc8f3a60e1341b60e092a3236a"
+content-hash = "abf871ed4fb861a2d0cf3fedf30748aba950844cf456e59e5785f083b460d521"

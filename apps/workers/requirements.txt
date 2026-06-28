@@ -10,3 +10,4 @@ psycopg
 psycopg-pool
 fastapi
 uvicorn
+composio-langchain

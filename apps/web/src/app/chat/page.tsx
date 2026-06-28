@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { createBrowserClient } from '@supabase/ssr'
@@ -13,6 +13,11 @@ type Message = {
   content: string
   name?: string // Used to identify which Agent is speaking
 }
+
+const supabase = createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 export default function ChatDashboard() {
   const [prompt, setPrompt] = useState("")
@@ -35,11 +40,6 @@ export default function ChatDashboard() {
   const [auditLogs, setAuditLogs] = useState<any[]>([])
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
-
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
 
   const getImpersonationHeaders = (baseHeaders: Record<string, string> = {}) => {
     if (typeof document === 'undefined') return baseHeaders;
@@ -172,10 +172,13 @@ export default function ChatDashboard() {
     return () => clearInterval(interval);
   }, [showLogs, selectedWorkspaceId, supabase]);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom when new messages arrive or processing state changes
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+    const timer = setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }, 50)
+    return () => clearTimeout(timer)
+  }, [messages, isProcessing])
 
   const runTenantAgent = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -483,6 +486,9 @@ export default function ChatDashboard() {
                     </div>
                   </div>
                 )}
+
+                {/* Scroll anchor - this must exist for auto-scroll to work */}
+                <div ref={messagesEndRef} />
               </div>
             </div>
           </div>
